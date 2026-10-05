@@ -16,7 +16,12 @@ from functools import cache
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-EXEMPT = {"ch04-uses-forms.yml", "ch04-bad-ref.yml", "ch16-sha-policy.yml", "ch16-tag-object-sha.yml"}
+EXEMPT = {
+    "ch04-uses-forms.yml",
+    "ch04-bad-ref.yml",
+    "ch16-sha-policy.yml",
+    "ch16-tag-object-sha.yml",
+}
 LINE = re.compile(r"^(?P<indent>\s*(?:-\s+)?uses:\s*)(?P<ref>[^\s#]+)(?P<rest>.*)$")
 SHA = re.compile(r"^[0-9a-f]{40}$")
 
@@ -62,8 +67,39 @@ def pin_file(path: Path, check_only: bool) -> int:
     return changed
 
 
+def is_commit(repo: str, sha: str) -> bool:
+    """True if ``sha`` is a commit in ``repo`` (a tag-object SHA is not)."""
+    r = subprocess.run(
+        ["gh", "api", f"repos/{repo}/git/commits/{sha}"], capture_output=True, text=True
+    )
+    return r.returncode == 0
+
+
+def verify() -> int:
+    """Check that every pinned SHA is a commit, not an annotated tag object."""
+    bad = 0
+    for path in sorted((ROOT / ".github" / "workflows").glob("*.yml")):
+        if path.name in EXEMPT:
+            continue
+        for line in path.read_text().splitlines():
+            m = LINE.match(line)
+            if not m or "@" not in m["ref"]:
+                continue
+            if m["ref"].startswith(("./", "docker://")):
+                continue
+            repo_path, _, sha = m["ref"].partition("@")
+            repo = "/".join(repo_path.split("/")[:2])
+            if SHA.match(sha) and not is_commit(repo, sha):
+                print(f"NOT A COMMIT: {path.name}: {m['ref']}")
+                bad += 1
+    print(f"verify: {bad} pin(s) are not commits")
+    return 1 if bad else 0
+
+
 def main() -> None:
     """CLI entry point."""
+    if "--verify" in sys.argv:
+        sys.exit(verify())
     check = "--check" in sys.argv
     total = 0
     for path in sorted((ROOT / ".github" / "workflows").glob("*.yml")):

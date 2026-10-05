@@ -1,0 +1,22 @@
+{
+  "run_id": 37328228420,
+  "conclusion": "success",
+  "displayTitle": "ch16 attest",
+  "event": "workflow_dispatch",
+  "headSha": "de7964a4a354a7b7962cd73d5cef507fa56889eb",
+  "reports": {
+    "build": {
+      "attested": "yes",
+      "attestation_id_set": "yes",
+      "digest": "sha256:baec4267987d866bb1e98db092d595e0eb6a043e1c6ef28517866a693b0e5e91"
+    },
+    "verify": {
+      "digest_matches_build": "yes",
+      "genuine_verify": "ok",
+      "predicate": "https://slsa.dev/provenance/v1",
+      "signer": "Friend09/practice_git_intro_to_github_actions/.github/workflows/ch16-attest.yml@refs/heads/main",
+      "tampered_verify": "rejected",
+      "msg": "_Error:_HTTP_404:_Not_Found_(https://api.github.com/repos/Friend09/practice_git_intro_to_github_actions/attestations/sha256:0d0363d4f7a15d990b7247ad6da7374a7d11"
+    }
+  }
+}

@@ -1,0 +1,127 @@
+{
+  "verified": "2026-10-05",
+  "pinning": {
+    "references_pinned_by_script": 29,
+    "exempt_workflows": [
+      "ch04-uses-forms.yml",
+      "ch04-bad-ref.yml",
+      "ch16-sha-policy.yml",
+      "ch16-tag-object-sha.yml"
+    ],
+    "dependabot": {
+      "pr": 3,
+      "author": "app/dependabot",
+      "opened": "2026-10-05T14:44:01Z",
+      "config": ".github/dependabot.yml (github-actions, weekly, grouped)",
+      "proposed": {
+        "from": "a892a5a61159132606e93a2fa6f4358831b04d26",
+        "to": "dc37677b2e1c63e2034f94d8a5b11f265b73ba33",
+        "comment_kept": "# v1.14.2"
+      },
+      "state_after": "closed by Dependabot (we applied the fix by hand)"
+    },
+    "tag_object_vs_commit": {
+      "action": "pypa/gh-action-pypi-publish",
+      "tag": "v1.14.2",
+      "ref_object_type": "tag",
+      "tag_object_sha": "a892a5a61159132606e93a2fa6f4358831b04d26",
+      "commit_sha": "dc37677b2e1c63e2034f94d8a5b11f265b73ba33",
+      "probe_run": 37327302627,
+      "tag_object_downloaded_at_setup": true,
+      "commit_downloaded_at_setup": true,
+      "both_failed_later_with": "Trusted publishing exchange failure: OpenID Connect token retrieval failed (missing id-token permission)"
+    },
+    "verify_script": "scripts/pin_actions.py --verify checks each pinned SHA is a commit via GET /git/commits/{sha}"
+  },
+  "injection": {
+    "run_id": 37327434888,
+    "payload": "x\"; echo \"REPORT injected_user=$(id -un) injected_host=$(hostname | cut -c1-6)\"; echo \"",
+    "vulnerable": {
+      "title_seen": "x",
+      "injected_user": "runner",
+      "injected_host": "runner",
+      "command_line_run": "echo \"REPORT vulnerable_title=x\"; echo \"REPORT injected_user=$(id -un) injected_host=$(hostname | cut -c1-6)\"; echo \"\""
+    },
+    "safe": {
+      "payload_printed_literally": true,
+      "injected_user_literal": "$(id -un)"
+    },
+    "actionlint_flags_inputs_title": false,
+    "actionlint_flags_pull_request_title": true
+  },
+  "pr_context": {
+    "pull_request": {
+      "run_id": 37327726357,
+      "workflow_version": "head-version",
+      "marker": "head-content",
+      "github_sha": "11ad8f8",
+      "ref": "refs/pull/4/merge",
+      "head_sha": "b859f59"
+    },
+    "pull_request_target": {
+      "run_id": 37327727095,
+      "workflow_version": "base-version",
+      "marker": "base-content",
+      "github_sha": "26b759a",
+      "ref": "refs/heads/main",
+      "head_sha": "b859f59",
+      "head_marker_under_target": "head-content"
+    },
+    "pr_merge_commit_sha": "11ad8f8aa780de92aa0efad13f1a54d0ca56b242",
+    "pr_base_sha": "26b759a27fca322d078a5207198c01ce6382f41f"
+  },
+  "sha_policy": {
+    "setting": "PUT repos/OWNER/REPO/actions/permissions {sha_pinning_required: true}",
+    "off_run": 37327868250,
+    "on_run": 37327919016,
+    "off": {
+      "pinned": "success",
+      "unpinned_tag": "success",
+      "tag_object_sha": "setup ok, failed at runtime"
+    },
+    "on": {
+      "pinned": "success",
+      "unpinned_tag": "failure at Set up job",
+      "tag_object_sha": "setup ok, failed at runtime"
+    },
+    "message": "The action actions/checkout@v7 is not allowed in Friend09/practice_git_intro_to_github_actions because all actions must be pinned to a full-length commit SHA.",
+    "restored_to": false
+  },
+  "allow_list": {
+    "all_allowed_run": 37328032337,
+    "all_allowed": {
+      "github_owned": "success",
+      "third_party": "success"
+    },
+    "restricted": {
+      "setting": {
+        "allowed_actions": "selected",
+        "github_owned_allowed": true,
+        "verified_allowed": false,
+        "patterns_allowed": []
+      },
+      "run_id": 37328071702,
+      "conclusion": "startup_failure",
+      "jobs": 0,
+      "cli_message": "This run likely failed because of a workflow file issue.",
+      "api_message_available": false,
+      "github_owned_job_ran": false
+    },
+    "restored_to": "all"
+  },
+  "attestation": {
+    "run_id": 37328228420,
+    "action": "actions/attest-build-provenance v4.2.2 (composite) pinned 4d101475d8b20a2381f78447822ac1eab6504dd8",
+    "permissions": [
+      "id-token: write",
+      "attestations: write"
+    ],
+    "wheel_digest": "sha256:baec4267987d866bb1e98db092d595e0eb6a043e1c6ef28517866a693b0e5e91",
+    "verify_in_workflow": "ok",
+    "predicate": "https://slsa.dev/provenance/v1",
+    "signer": "Friend09/practice_git_intro_to_github_actions/.github/workflows/ch16-attest.yml@refs/heads/main",
+    "verify_on_laptop": "ok (exit 0)",
+    "tampered_digest": "sha256:0d0363d4f7a15d990b7247ad6da7374a7d111634e068ba10ad9471a4b5a121bd",
+    "tampered": "rejected: HTTP 404 Not Found on /attestations/<tampered digest>"
+  }
+}

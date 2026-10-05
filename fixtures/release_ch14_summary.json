@@ -126,6 +126,6 @@
   "guarded_job": {
     "name": "publish_pypi_guarded",
     "guard": "vars.GHA_ENABLE_PYPI == 'true'",
-    "action": "pypa/gh-action-pypi-publish v1.14.2 pinned by SHA a892a5a61159132606e93a2fa6f4358831b04d26"
+    "action": "pypa/gh-action-pypi-publish v1.14.2 pinned by SHA dc37677b2e1c63e2034f94d8a5b11f265b73ba33"
   }
 }
