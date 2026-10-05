@@ -1,0 +1,125 @@
+name: ch12 containers
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  service:
+    runs-on: ubuntu-latest
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 10
+    steps:
+      - name: Talk to the service over localhost
+        run: |
+          python3 - <<'PY'
+          import socket
+          s = socket.create_connection(("localhost", 6379), timeout=5)
+          s.sendall(b"PING\r\n")
+          print("REPORT redis_reply=" + s.recv(16).decode().strip())
+          PY
+
+  in_container:
+    runs-on: ubuntu-latest
+    container:
+      image: python:3.12-slim
+    steps:
+      - name: Where am I?
+        run: |
+          . /etc/os-release
+          echo "REPORT container_os=$PRETTY_NAME python=$(python -V) git=$(command -v git || echo none)"
+      - uses: actions/checkout@v7
+      - name: Files after checkout
+        run: echo "REPORT files_after_checkout=$(find . -mindepth 1 -maxdepth 1 | wc -l) has_pyproject=$([ -f pyproject.toml ] && echo yes || echo no)"
+
+  uppercase_tag:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Build with an uppercase owner (expected to fail)
+        id: bad
+        continue-on-error: true
+        working-directory: sandbox/tally
+        run: docker build -t "ghcr.io/${GITHUB_REPOSITORY_OWNER}/tally:test" .
+      - name: Report
+        env:
+          OUTCOME: ${{ steps.bad.outcome }}
+          OWNER: ${{ github.repository_owner }}
+        run: echo "REPORT uppercase_build_outcome=$OUTCOME owner=$OWNER"
+
+  publish_denied:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+      - name: Push without packages write (expected to fail)
+        id: denied
+        continue-on-error: true
+        working-directory: sandbox/tally
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          owner="${GITHUB_REPOSITORY_OWNER,,}"
+          echo "$GH_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+          docker build -t "ghcr.io/$owner/tally-denied:test" .
+          docker push "ghcr.io/$owner/tally-denied:test"
+      - name: Report
+        env:
+          OUTCOME: ${{ steps.denied.outcome }}
+        run: echo "REPORT denied_push_outcome=$OUTCOME"
+
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      digest: ${{ steps.push.outputs.digest }}
+    steps:
+      - uses: actions/checkout@v7
+      - name: Build and push to GHCR
+        id: push
+        working-directory: sandbox/tally
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SHA: ${{ github.sha }}
+          REPO: ${{ github.repository }}
+        run: |
+          owner="${GITHUB_REPOSITORY_OWNER,,}"
+          image="ghcr.io/$owner/tally"
+          echo "$GH_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+          docker build --label "org.opencontainers.image.source=https://github.com/$REPO" -t "$image:$SHA" -t "$image:latest" .
+          docker push "$image:$SHA"
+          docker push "$image:latest"
+          digest=$(docker inspect --format='{{index .RepoDigests 0}}' "$image:$SHA" | cut -d@ -f2)
+          echo "digest=$digest" >> "$GITHUB_OUTPUT"
+          echo "REPORT pushed image=$image tag_sha=${SHA:0:7} digest=$digest"
+
+  verify:
+    needs: [publish]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
+    env:
+      DIGEST: ${{ needs.publish.outputs.digest }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Pull by digest and run
+        run: |
+          owner="${GITHUB_REPOSITORY_OWNER,,}"
+          echo "$GH_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+          docker pull "ghcr.io/$owner/tally@$DIGEST" >/dev/null
+          out=$(docker run --rm "ghcr.io/$owner/tally@$DIGEST")
+          echo "REPORT verify_output=$out digest=$DIGEST"
