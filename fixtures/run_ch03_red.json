@@ -1,0 +1,54 @@
+{
+  "conclusion": "failure",
+  "event": "workflow_dispatch",
+  "head_sha": "18514aeb631bd1dd01e63fac04b8aff1a6d706f5",
+  "run_id": 37311583393,
+  "steps": [
+    {
+      "conclusion": "success",
+      "n": 1,
+      "name": "Set up job"
+    },
+    {
+      "conclusion": "success",
+      "n": 2,
+      "name": "Check out repository"
+    },
+    {
+      "conclusion": "success",
+      "n": 3,
+      "name": "Set up Python"
+    },
+    {
+      "conclusion": "success",
+      "n": 4,
+      "name": "Install pytest"
+    },
+    {
+      "conclusion": "success",
+      "n": 5,
+      "name": "Break add() on purpose"
+    },
+    {
+      "conclusion": "failure",
+      "n": 6,
+      "name": "Run tests"
+    },
+    {
+      "conclusion": "skipped",
+      "n": 11,
+      "name": "Post Set up Python"
+    },
+    {
+      "conclusion": "success",
+      "n": 12,
+      "name": "Post Check out repository"
+    },
+    {
+      "conclusion": "success",
+      "n": 13,
+      "name": "Complete job"
+    }
+  ],
+  "title": "Tally CI (fail=true) by Friend09"
+}

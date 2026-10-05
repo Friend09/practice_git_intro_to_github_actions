@@ -1,0 +1,32 @@
+name: ch04 uses forms
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  forms:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 1. Tag reference (movable major)
+        uses: actions/checkout@v7
+
+      - name: 2. Full-SHA reference (immutable)
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: 3. Local composite action (path form)
+        id: greet
+        uses: ./.github/actions/tally-greet
+        with:
+          who: Tally
+
+      - name: 4. Docker image form
+        uses: docker://alpine:3.20
+        with:
+          entrypoint: /bin/echo
+          args: hello from a container step
+
+      - name: 5. Read the composite output
+        run: echo "composite said ${{ steps.greet.outputs.message }}"

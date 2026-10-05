@@ -1,0 +1,21 @@
+name: Tally greet
+description: A tiny local composite action used in Chapter 04.
+inputs:
+  who:
+    description: Name to greet
+    required: false
+    default: world
+outputs:
+  message:
+    description: The greeting produced
+    value: ${{ steps.say.outputs.message }}
+runs:
+  using: composite
+  steps:
+    - id: say
+      shell: bash
+      env:
+        WHO: ${{ inputs.who }}
+      run: |
+        echo "message=hello, $WHO" >> "$GITHUB_OUTPUT"
+        echo "hello, $WHO"
