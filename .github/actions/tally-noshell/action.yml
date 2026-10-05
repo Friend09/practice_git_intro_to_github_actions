@@ -1,0 +1,6 @@
+name: Tally no shell (deliberately invalid)
+description: A composite step with no shell, to see how GitHub reports it (Chapter 19).
+runs:
+  using: composite
+  steps:
+    - run: echo "this step has no shell"

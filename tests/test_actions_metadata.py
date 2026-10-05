@@ -12,7 +12,11 @@ import yaml
 from intro_gha import REPO_ROOT
 from intro_gha.semver import parse
 
-ACTIONS = sorted((REPO_ROOT / ".github" / "actions").glob("*/action.yml"))
+# tally-noshell is invalid on purpose (Chapter 19, failure mode).
+ACTIONS = [
+    p for p in sorted((REPO_ROOT / ".github" / "actions").glob("*/action.yml"))
+    if p.parent.name != "tally-noshell"
+]
 SH = REPO_ROOT / ".github" / "actions" / "tally-version" / "parse.sh"
 
 
