@@ -1,0 +1,10 @@
+{
+  "run_id": 37313041440,
+  "event": "push",
+  "conclusion": "failure",
+  "workflowName": ".github/workflows/ch05-no-runner.yml",
+  "jobs": [],
+  "cli_message": "This run likely failed because of a workflow file issue.",
+  "cause": "unquoted ': ' inside a run: scalar (Chapter 00 quoting rule)",
+  "actionlint_message": "could not parse as YAML: mapping values are not allowed in this context [syntax-check]"
+}

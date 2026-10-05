@@ -1,0 +1,4 @@
+# Custom self-hosted runner labels used by demo workflows (Chapter 05).
+self-hosted-runner:
+  labels:
+    - tally-gpu

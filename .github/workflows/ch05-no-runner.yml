@@ -11,4 +11,4 @@ jobs:
     runs-on: [self-hosted, tally-gpu]
     timeout-minutes: 5
     steps:
-      - run: echo "this never prints: no runner has the label tally-gpu"
+      - run: echo "this never prints - no runner has the label tally-gpu"
