@@ -1,0 +1,14 @@
+name: ch06 tags only
+
+on:
+  push:
+    tags: ['demo-v*']
+
+permissions:
+  contents: read
+
+jobs:
+  hello:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "tags-only fired for ${{ github.ref }}"

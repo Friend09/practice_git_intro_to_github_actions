@@ -1,0 +1,18 @@
+name: ch06 tag aware
+
+on:
+  push:
+    branches: ['**']
+    tags-ignore: ['**']
+    paths:
+      - 'sandbox/**'
+      - '.github/workflows/ch06-tag-aware.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  hello:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "tag-aware fired for ${{ github.ref }}"

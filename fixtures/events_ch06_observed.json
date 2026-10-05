@@ -1,0 +1,34 @@
+{
+  "verified": "2026-10-05",
+  "note": "Real outcomes observed in this repo. 'fired' lists workflows that created a run.",
+  "workflows": ["ci.yml", "ch03-tally-ci.yml", "ch06-events.yml"],
+  "observations": [
+    {"id": "push_main_workflow_file", "run_ids": [37314006999, 37314007157],
+     "event": {"name": "push", "ref": "refs/heads/main", "changed": [".github/workflows/ch06-events.yml", ".github/workflows/ch06-upstream.yml"]},
+     "fired": ["ci.yml", "ch06-events.yml"]},
+    {"id": "tag_push_by_user", "run_ids": [37314113036, 37314112978],
+     "event": {"name": "push", "ref": "refs/tags/demo-v1", "changed": []},
+     "fired": ["ch03-tally-ci.yml", "ch06-events.yml"]},
+    {"id": "tag_push_by_github_token", "run_ids": [],
+     "event": {"name": "push", "ref": "refs/tags/demo-v-token", "changed": [], "by_github_token": true},
+     "fired": []},
+    {"id": "branch_push_sandbox", "run_ids": [],
+     "event": {"name": "push", "ref": "refs/heads/demo/ch06-pr", "changed": ["sandbox/tally/tally/__init__.py"]},
+     "fired": ["ch03-tally-ci.yml"]},
+    {"id": "pr_opened_sandbox", "run_ids": [37314622251, 37314622219],
+     "event": {"name": "pull_request", "action": "opened", "base": "main", "changed": ["sandbox/tally/tally/__init__.py"]},
+     "fired": ["ci.yml", "ch06-events.yml"]},
+    {"id": "pr_closed", "run_ids": [],
+     "event": {"name": "pull_request", "action": "closed", "base": "main", "changed": ["sandbox/tally/tally/__init__.py"]},
+     "fired": []},
+    {"id": "tag_deleted", "run_ids": [],
+     "event": {"name": "push", "ref": "refs/tags/demo-v1", "changed": [], "deleted": true},
+     "fired": []}
+  ],
+  "event_dumps": {
+    "push_tag": {"run_id": 37314113036, "event": "push", "ref": "refs/tags/demo-v1", "ref_type": "tag", "ref_name": "demo-v1", "sha": "4c4ee30f7c3c8b3fa0ce000febc0c3ef79af0485"},
+    "pull_request": {"run_id": 37314622219, "event": "pull_request", "action": "opened", "ref": "refs/pull/1/merge", "ref_type": "branch", "ref_name": "1/merge", "sha": "b2459d8377e1235d3cd4f03189cef15776ece77a", "pr_head_sha": "de54f8aa3746637d73b6f14a972569e758ec5273", "head_ref": "demo/ch06-pr", "base_ref": "main", "api_merge_commit_sha": "b2459d8377e1235d3cd4f03189cef15776ece77a"},
+    "repository_dispatch": {"run_id": 37314448134, "event": "repository_dispatch", "action": "tally-ping", "ref": "refs/heads/main", "sha": "4c4ee30f7c3c8b3fa0ce000febc0c3ef79af0485"},
+    "workflow_run": {"upstream_run_id": 37314725398, "upstream_head_sha": "de54f8aa3746637d73b6f14a972569e758ec5273", "upstream_branch": "demo/ch06-pr", "downstream_sha": "4c4ee30f7c3c8b3fa0ce000febc0c3ef79af0485", "downstream_ref": "refs/heads/main", "default_branch_head": "4c4ee30f7c3c8b3fa0ce000febc0c3ef79af0485"}
+  }
+}
