@@ -1,0 +1,106 @@
+name: ch14 release
+
+on:
+  push:
+    tags:
+      - 'v[0-9]*.[0-9]*.[0-9]*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version without the v (for example 0.1.1)'
+        required: true
+      prerelease:
+        description: 'Mark the release as a pre-release'
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.ver.outputs.version }}
+      tag: ${{ steps.ver.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Work out and validate the version
+        id: ver
+        env:
+          EVENT: ${{ github.event_name }}
+          REF_NAME: ${{ github.ref_name }}
+          INPUT_VERSION: ${{ inputs.version }}
+        run: |
+          if [ "$EVENT" = "push" ]; then v="${REF_NAME#v}"; else v="$INPUT_VERSION"; fi
+          if ! printf '%s' "$v" | grep -Eq '^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-[0-9A-Za-z.-]+)?$'; then
+            echo "::error title=Not a semantic version::'$v' is not MAJOR.MINOR.PATCH"
+            exit 1
+          fi
+          echo "version=$v" >> "$GITHUB_OUTPUT"
+          echo "tag=v$v" >> "$GITHUB_OUTPUT"
+          echo "REPORT event=$EVENT version=$v tag=v$v"
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+
+      - name: Stamp the version and build
+        working-directory: sandbox/tally
+        env:
+          VERSION: ${{ steps.ver.outputs.version }}
+        run: |
+          python -m pip install --quiet build
+          sed -i "s/^version = .*/version = \"$VERSION\"/" pyproject.toml
+          python -m build
+          echo "REPORT built=$(find dist -type f -printf '%f ' | sort | tr -s ' ')"
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: dist
+          path: sandbox/tally/dist/
+          retention-days: 1
+
+  release:
+    needs: [build]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      TAG: ${{ needs.build.outputs.tag }}
+      VERSION: ${{ needs.build.outputs.version }}
+      PRERELEASE: ${{ inputs.prerelease }}
+      EVENT: ${{ github.event_name }}
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: dist
+          path: dist/
+
+      - name: Checksums
+        working-directory: dist
+        run: sha256sum ./* > SHA256SUMS
+
+      - name: Create the release
+        run: |
+          flags=(--title "Tally $VERSION" --generate-notes --target "$GITHUB_SHA")
+          if [ "$EVENT" = "push" ] || [ "$PRERELEASE" = "true" ]; then flags+=(--prerelease); fi
+          gh release create "$TAG" dist/* "${flags[@]}" --repo "$GITHUB_REPOSITORY"
+          echo "REPORT release_created=$TAG assets=$(gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json assets -q '[.assets[].name]|join(",")')"
+
+  publish_pypi_guarded:
+    needs: [build]
+    if: ${{ vars.GHA_ENABLE_PYPI == 'true' }}
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: dist
+          path: dist/
+      - uses: pypa/gh-action-pypi-publish@a892a5a61159132606e93a2fa6f4358831b04d26 # v1.14.2

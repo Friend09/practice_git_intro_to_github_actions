@@ -1,0 +1,12 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tally-demo"
+version = "0.0.0"
+description = "Tally: the running example of the Intro to GitHub Actions course"
+requires-python = ">=3.11"
+
+[tool.setuptools]
+packages = ["tally"]
