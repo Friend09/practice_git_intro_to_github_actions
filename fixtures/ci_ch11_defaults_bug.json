@@ -1,0 +1,10 @@
+{
+  "run_id": 37321351215,
+  "job": "ci-ok (required check)",
+  "all_other_jobs": "success",
+  "job_conclusion": "failure",
+  "needs_values_seen": {"lint": "success", "test": "success"},
+  "error": "An error occurred trying to start process '/usr/bin/bash' with working directory '/home/runner/work/practice_git_intro_to_github_actions/practice_git_intro_to_github_actions/sandbox/tally'. No such file or directory",
+  "cause": "workflow-level defaults.run.working-directory applied to a job that never ran actions/checkout, so the directory did not exist",
+  "fix": "move defaults.run.working-directory into the jobs that check out the repo"
+}

@@ -25,14 +25,13 @@ concurrency:
   group: ch11-${{ github.ref }}
   cancel-in-progress: true
 
-defaults:
-  run:
-    working-directory: sandbox/tally
-
 jobs:
   lint:
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: sandbox/tally
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v7
@@ -51,6 +50,9 @@ jobs:
     name: test (py${{ matrix.python }})
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: sandbox/tally
     strategy:
       fail-fast: false
       matrix:

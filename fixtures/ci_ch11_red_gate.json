@@ -1,0 +1,29 @@
+{
+  "run_id": 37321016076,
+  "conclusion": "failure",
+  "displayTitle": "ch11: Tally stats module, dev requirements, python CI workflow",
+  "event": "push",
+  "headSha": "abb1abbe36f1ac8bd6888bddc03139a306af1726",
+  "reports": {
+    "test (py3.14)": {
+      "python": "Python 3.14.7",
+      "coverage_total": "53",
+      "gate": "80"
+    },
+    "test (py3.13)": {
+      "python": "Python 3.13.15",
+      "coverage_total": "53",
+      "gate": "80"
+    },
+    "test (py3.11)": {
+      "python": "Python 3.11.16",
+      "coverage_total": "53",
+      "gate": "80"
+    },
+    "test (py3.12)": {
+      "python": "Python 3.12.14",
+      "coverage_total": "53",
+      "gate": "80"
+    }
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "run_id": 37321165485,
+  "conclusion": "failure",
+  "displayTitle": "ch11: test median and empty inputs (coverage to 100%)",
+  "event": "push",
+  "headSha": "2de60b9f94e5b4f2dc88c1d486f60fa2e91e2eaa",
+  "reports": {
+    "test (py3.12)": {
+      "python": "Python 3.12.14",
+      "coverage_total": "100",
+      "gate": "80"
+    },
+    "test (py3.14)": {
+      "python": "Python 3.14.7",
+      "coverage_total": "100",
+      "gate": "80"
+    },
+    "test (py3.11)": {
+      "python": "Python 3.11.16",
+      "coverage_total": "100",
+      "gate": "80"
+    },
+    "test (py3.13)": {
+      "python": "Python 3.13.15",
+      "coverage_total": "100",
+      "gate": "80"
+    }
+  }
+}

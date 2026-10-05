@@ -1,0 +1,184 @@
+{
+  "cold_run": 37321016076,
+  "warm_run": 37321351215,
+  "cold": {
+    "test (py3.14)": {
+      "job_seconds": 14,
+      "conclusion": "failure",
+      "steps": {
+        "Set up job": 1,
+        "Run actions/checkout@v7": 2,
+        "Run actions/setup-python@v7": 2,
+        "Run python -m pip install -r requirements-dev.txt": 4,
+        "Test with coverage gate": 1,
+        "Report": 0,
+        "Run actions/upload-artifact@v7": 1,
+        "Post Run actions/setup-python@v7": 0,
+        "Post Run actions/checkout@v7": 0,
+        "Complete job": 0
+      }
+    },
+    "test (py3.13)": {
+      "job_seconds": 9,
+      "conclusion": "failure",
+      "steps": {
+        "Set up job": 0,
+        "Run actions/checkout@v7": 1,
+        "Run actions/setup-python@v7": 1,
+        "Run python -m pip install -r requirements-dev.txt": 3,
+        "Test with coverage gate": 1,
+        "Report": 0,
+        "Run actions/upload-artifact@v7": 1,
+        "Post Run actions/setup-python@v7": 0,
+        "Post Run actions/checkout@v7": 0,
+        "Complete job": 0
+      }
+    },
+    "lint": {
+      "job_seconds": 10,
+      "conclusion": "success",
+      "steps": {
+        "Set up job": 0,
+        "Run actions/checkout@v7": 1,
+        "Run actions/setup-python@v7": 1,
+        "Run python -m pip install -r requirements-dev.txt": 3,
+        "Inject a lint error (demo only)": 0,
+        "Ruff": 0,
+        "Post Run actions/setup-python@v7": 2,
+        "Post Run actions/checkout@v7": 0,
+        "Complete job": 0
+      }
+    },
+    "test (py3.11)": {
+      "job_seconds": 9,
+      "conclusion": "failure",
+      "steps": {
+        "Set up job": 1,
+        "Run actions/checkout@v7": 1,
+        "Run actions/setup-python@v7": 0,
+        "Run python -m pip install -r requirements-dev.txt": 4,
+        "Test with coverage gate": 1,
+        "Report": 0,
+        "Run actions/upload-artifact@v7": 0,
+        "Post Run actions/setup-python@v7": 0,
+        "Post Run actions/checkout@v7": 1,
+        "Complete job": 0
+      }
+    },
+    "test (py3.12)": {
+      "job_seconds": 12,
+      "conclusion": "failure",
+      "steps": {
+        "Set up job": 1,
+        "Run actions/checkout@v7": 0,
+        "Run actions/setup-python@v7": 2,
+        "Run python -m pip install -r requirements-dev.txt": 4,
+        "Test with coverage gate": 1,
+        "Report": 0,
+        "Run actions/upload-artifact@v7": 1,
+        "Post Run actions/setup-python@v7": 0,
+        "Post Run actions/checkout@v7": 0,
+        "Complete job": 0
+      }
+    },
+    "ci-ok (required check)": {
+      "job_seconds": 3,
+      "conclusion": "failure",
+      "steps": {
+        "Set up job": 1,
+        "Run echo \"REPORT lint=$LINT test=$TEST\"": 0,
+        "Complete job": 0
+      }
+    }
+  },
+  "warm": {
+    "lint": {
+      "job_seconds": 8,
+      "conclusion": "success",
+      "steps": {
+        "Set up job": 0,
+        "Run actions/checkout@v7": 1,
+        "Run actions/setup-python@v7": 1,
+        "Run python -m pip install -r requirements-dev.txt": 3,
+        "Inject a lint error (demo only)": 0,
+        "Ruff": 0,
+        "Post Run actions/setup-python@v7": 0,
+        "Post Run actions/checkout@v7": 0,
+        "Complete job": 0
+      }
+    },
+    "test (py3.13)": {
+      "job_seconds": 13,
+      "conclusion": "success",
+      "steps": {
+        "Set up job": 1,
+        "Run actions/checkout@v7": 0,
+        "Run actions/setup-python@v7": 3,
+        "Run python -m pip install -r requirements-dev.txt": 3,
+        "Test with coverage gate": 2,
+        "Report": 0,
+        "Run actions/upload-artifact@v7": 1,
+        "Post Run actions/setup-python@v7": 0,
+        "Post Run actions/checkout@v7": 0,
+        "Complete job": 0
+      }
+    },
+    "test (py3.12)": {
+      "job_seconds": 14,
+      "conclusion": "success",
+      "steps": {
+        "Set up job": 1,
+        "Run actions/checkout@v7": 1,
+        "Run actions/setup-python@v7": 2,
+        "Run python -m pip install -r requirements-dev.txt": 4,
+        "Test with coverage gate": 2,
+        "Report": 0,
+        "Run actions/upload-artifact@v7": 1,
+        "Post Run actions/setup-python@v7": 0,
+        "Post Run actions/checkout@v7": 0,
+        "Complete job": 0
+      }
+    },
+    "test (py3.14)": {
+      "job_seconds": 17,
+      "conclusion": "success",
+      "steps": {
+        "Set up job": 1,
+        "Run actions/checkout@v7": 1,
+        "Run actions/setup-python@v7": 4,
+        "Run python -m pip install -r requirements-dev.txt": 4,
+        "Test with coverage gate": 2,
+        "Report": 0,
+        "Run actions/upload-artifact@v7": 1,
+        "Post Run actions/setup-python@v7": 0,
+        "Post Run actions/checkout@v7": 0,
+        "Complete job": 0
+      }
+    },
+    "test (py3.11)": {
+      "job_seconds": 11,
+      "conclusion": "success",
+      "steps": {
+        "Set up job": 1,
+        "Run actions/checkout@v7": 0,
+        "Run actions/setup-python@v7": 2,
+        "Run python -m pip install -r requirements-dev.txt": 3,
+        "Test with coverage gate": 1,
+        "Report": 0,
+        "Run actions/upload-artifact@v7": 1,
+        "Post Run actions/setup-python@v7": 0,
+        "Post Run actions/checkout@v7": 0,
+        "Complete job": 0
+      }
+    },
+    "ci-ok (required check)": {
+      "job_seconds": 4,
+      "conclusion": "failure",
+      "steps": {
+        "Set up job": 0,
+        "Run echo \"REPORT lint=$LINT test=$TEST\"": 1,
+        "Complete job": 0
+      }
+    }
+  }
+}
