@@ -1,0 +1,46 @@
+name: ch09 output limits
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  p400k:
+    runs-on: ubuntu-latest
+    outputs:
+      blob: ${{ steps.make.outputs.blob }}
+    steps:
+      - id: make
+        run: echo "blob=$(head -c 400000 /dev/zero | tr '\0' 'a')" >> "$GITHUB_OUTPUT"
+  p1m:
+    runs-on: ubuntu-latest
+    outputs:
+      blob: ${{ steps.make.outputs.blob }}
+    steps:
+      - id: make
+        run: echo "blob=$(head -c 1000000 /dev/zero | tr '\0' 'a')" >> "$GITHUB_OUTPUT"
+  p1_1m:
+    runs-on: ubuntu-latest
+    outputs:
+      blob: ${{ steps.make.outputs.blob }}
+    steps:
+      - id: make
+        run: echo "blob=$(head -c 1100000 /dev/zero | tr '\0' 'a')" >> "$GITHUB_OUTPUT"
+  consumer:
+    needs: [p400k, p1m, p1_1m]
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    env:
+      A: ${{ needs.p400k.outputs.blob }}
+      B: ${{ needs.p1m.outputs.blob }}
+      C: ${{ needs.p1_1m.outputs.blob }}
+      RA: ${{ needs.p400k.result }}
+      RB: ${{ needs.p1m.result }}
+      RC: ${{ needs.p1_1m.result }}
+    steps:
+      - run: |
+          echo "REPORT p400k_result=$RA p400k_len=${#A}"
+          echo "REPORT p1m_result=$RB p1m_len=${#B}"
+          echo "REPORT p1_1m_result=$RC p1_1m_len=${#C}"
