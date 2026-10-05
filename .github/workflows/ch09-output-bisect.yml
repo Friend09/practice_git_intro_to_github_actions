@@ -1,0 +1,23 @@
+name: ch09 output bisect
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  p520k:
+    runs-on: ubuntu-latest
+    outputs:
+      blob: ${{ steps.make.outputs.blob }}
+    steps:
+      - id: make
+        run: echo "blob=$(head -c 520000 /dev/zero | tr '\0' 'a')" >> "$GITHUB_OUTPUT"
+  p530k:
+    runs-on: ubuntu-latest
+    outputs:
+      blob: ${{ steps.make.outputs.blob }}
+    steps:
+      - id: make
+        run: echo "blob=$(head -c 530000 /dev/zero | tr '\0' 'a')" >> "$GITHUB_OUTPUT"
