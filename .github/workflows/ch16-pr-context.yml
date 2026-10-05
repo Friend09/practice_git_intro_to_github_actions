@@ -10,7 +10,7 @@ permissions:
   contents: read
 
 env:
-  WORKFLOW_VERSION: base-version
+  WORKFLOW_VERSION: head-version
 
 jobs:
   inspect:
