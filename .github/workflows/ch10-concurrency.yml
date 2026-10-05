@@ -1,0 +1,30 @@
+name: ch10 concurrency
+
+on:
+  workflow_dispatch:
+    inputs:
+      cancel:
+        description: 'cancel-in-progress'
+        type: boolean
+        default: false
+      tag:
+        description: 'Label for this dispatch'
+        default: x
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ch10-demo
+  cancel-in-progress: ${{ inputs.cancel }}
+
+jobs:
+  slow:
+    runs-on: ubuntu-latest
+    env:
+      TAG: ${{ inputs.tag }}
+    steps:
+      - run: |
+          echo "REPORT tag=$TAG started=$(date -u +%H:%M:%S)"
+          sleep 40
+          echo "REPORT tag=$TAG finished=$(date -u +%H:%M:%S)"

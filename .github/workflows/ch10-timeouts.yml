@@ -1,0 +1,31 @@
+name: ch10 timeouts
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  job_timeout:
+    runs-on: ubuntu-latest
+    timeout-minutes: 1
+    steps:
+      - run: |
+          echo "REPORT job_timeout_started=$(date -u +%H:%M:%S)"
+          sleep 120
+          echo "REPORT job_timeout_never_printed=yes"
+  step_timeout:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Slow step with its own timeout
+        id: slow
+        timeout-minutes: 1
+        continue-on-error: true
+        run: |
+          echo "REPORT step_timeout_started=$(date -u +%H:%M:%S)"
+          sleep 120
+      - name: Next step still runs
+        env:
+          OUTCOME: ${{ steps.slow.outcome }}
+        run: echo "REPORT slow_outcome=$OUTCOME next_step_ran=yes"

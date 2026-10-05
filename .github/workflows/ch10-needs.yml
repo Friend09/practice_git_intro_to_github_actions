@@ -1,0 +1,44 @@
+name: ch10 needs
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  a:
+    runs-on: ubuntu-latest
+    steps:
+      - run: exit 1
+  b:
+    needs: [a]
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "never runs - a failed"
+  c:
+    needs: [b]
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "never runs - b was skipped"
+  report_always:
+    needs: [a, b, c]
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    env:
+      A: ${{ needs.a.result }}
+      B: ${{ needs.b.result }}
+      C: ${{ needs.c.result }}
+    steps:
+      - run: echo "REPORT a=$A b=$B c=$C"
+  report_on_failure:
+    needs: [a, b, c]
+    if: ${{ failure() }}
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "REPORT failure_job_ran=yes"
+  report_default:
+    needs: [a]
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "REPORT default_job_ran=never"

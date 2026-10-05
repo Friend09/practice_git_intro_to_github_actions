@@ -1,0 +1,42 @@
+name: ch10 matrix
+
+on:
+  workflow_dispatch:
+    inputs:
+      fail_fast:
+        description: 'strategy.fail-fast'
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+jobs:
+  legs:
+    name: leg (${{ matrix.os }}, ${{ matrix.py }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    continue-on-error: ${{ matrix.experimental || false }}
+    strategy:
+      fail-fast: ${{ inputs.fail_fast }}
+      max-parallel: 2
+      matrix:
+        os: [ubuntu-latest, ubuntu-22.04]
+        py: ['3.11', '3.12', '3.13']
+        exclude:
+          - os: ubuntu-22.04
+            py: '3.11'
+        include:
+          - os: ubuntu-latest
+            py: '3.14'
+            experimental: true
+    steps:
+      - name: Work
+        env:
+          LEG: ${{ matrix.os }}/${{ matrix.py }}
+          BAD: ${{ matrix.os == 'ubuntu-22.04' && matrix.py == '3.12' }}
+        run: |
+          echo "REPORT start leg=$LEG at=$(date -u +%H:%M:%S)"
+          if [ "$BAD" = "true" ]; then sleep 3; echo "REPORT leg=$LEG failing=yes"; exit 1; fi
+          sleep 15
+          echo "REPORT leg=$LEG done=yes"
