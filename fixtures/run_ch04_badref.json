@@ -1,0 +1,7 @@
+{
+  "run_id": 37312465693,
+  "conclusion": "failure",
+  "failed_step": "Set up job",
+  "error": "Unable to resolve action `astral-sh/setup-uv@v10`, unable to find version `v10`",
+  "steps_run": 1
+}

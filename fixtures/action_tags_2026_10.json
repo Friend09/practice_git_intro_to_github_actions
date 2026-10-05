@@ -1,0 +1,17 @@
+{
+  "verified": "2026-10-05",
+  "actions/checkout": {
+    "latest_release": "v7.0.1",
+    "tags": {"v4": "11d5960a3267", "v5": "fbc6f3992d24", "v6": "d23441a48e51", "v7": "3d3c42e5aac5", "v7.0.1": "3d3c42e5aac5", "v7.0.0": "9c091bb21b7c"},
+    "runtime": {"v4": "node20", "v6": "node24", "v7": "node24"}
+  },
+  "actions/setup-python": {
+    "latest_release": "v7.0.0",
+    "runtime": {"v5": "node20", "v7": "node24"}
+  },
+  "astral-sh/setup-uv": {
+    "latest_release": "v10.2.0",
+    "floating_major_tags": ["v5", "v7"],
+    "missing_floating_tags": ["v10"]
+  }
+}

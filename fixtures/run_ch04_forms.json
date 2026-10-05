@@ -1,0 +1,20 @@
+{
+  "run_id": 37312325910,
+  "conclusion": "success",
+  "download_log_lines": [
+    "Download action repository 'actions/checkout@v7' (SHA:3d3c42e5aac5ba805825da76410c181273ba90b1)",
+    "Download action repository 'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1' (SHA:3d3c42e5aac5ba805825da76410c181273ba90b1)"
+  ],
+  "steps": [
+    {"n": 1, "name": "Set up job", "conclusion": "success"},
+    {"n": 2, "name": "Pull alpine:3.20", "conclusion": "success"},
+    {"n": 3, "name": "1. Tag reference (movable major)", "conclusion": "success"},
+    {"n": 4, "name": "2. Full-SHA reference (immutable)", "conclusion": "success"},
+    {"n": 5, "name": "3. Local composite action (path form)", "conclusion": "success"},
+    {"n": 6, "name": "4. Docker image form", "conclusion": "success"},
+    {"n": 7, "name": "5. Read the composite output", "conclusion": "success"},
+    {"n": 13, "name": "Post 2. Full-SHA reference (immutable)", "conclusion": "success"},
+    {"n": 14, "name": "Post 1. Tag reference (movable major)", "conclusion": "success"},
+    {"n": 15, "name": "Complete job", "conclusion": "success"}
+  ]
+}
