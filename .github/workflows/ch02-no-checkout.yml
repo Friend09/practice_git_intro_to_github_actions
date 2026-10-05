@@ -1,0 +1,21 @@
+name: ch02 no checkout
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Files in workspace BEFORE checkout
+        run: |
+          echo "count=$(find "$GITHUB_WORKSPACE" -mindepth 1 -maxdepth 1 | wc -l)"
+          test -f pyproject.toml && echo "pyproject.toml: present" || echo "pyproject.toml: MISSING"
+      - uses: actions/checkout@v4
+      - name: Files in workspace AFTER checkout
+        run: |
+          echo "count=$(find "$GITHUB_WORKSPACE" -mindepth 1 -maxdepth 1 | wc -l)"
+          test -f pyproject.toml && echo "pyproject.toml: present" || echo "pyproject.toml: MISSING"
