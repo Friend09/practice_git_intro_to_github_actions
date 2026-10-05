@@ -1,0 +1,22 @@
+name: ch02 run anatomy
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "lint on $RUNNER_OS, event=${{ github.event_name }}"
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "test on $RUNNER_OS, sha=${{ github.sha }}"
+  build:
+    needs: [lint, test]
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "build starts only after lint and test"

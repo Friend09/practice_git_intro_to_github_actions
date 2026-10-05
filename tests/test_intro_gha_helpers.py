@@ -2,7 +2,7 @@
 
 import pytest
 
-from intro_gha.cost import billed_minutes, run_cost
+from intro_gha.cost import billed_minutes, job_cost_mills, run_cost_mills
 from intro_gha.matrix import check_limit, expand_matrix
 from intro_gha.triggers import matches_filter, paths_trigger
 from intro_gha.workflow import execution_waves
@@ -49,10 +49,11 @@ def test_single_star_stops_at_slash() -> None:
     assert matches_filter("b.py", ["*.py"])
 
 
-def test_billing_rounds_up_and_multiplies() -> None:
-    """61 s on macOS bills ceil(61/60)=2 min x 10 = 20."""
-    assert billed_minutes(61, "macos") == 20
-    assert run_cost([(30, "linux"), (61, "windows")]) == 1 + 4
+def test_billing_rounds_up_per_job() -> None:
+    """61 s bills 2 min; on macOS that is 2 x 62 = 124 mills ($0.124)."""
+    assert billed_minutes(61) == 2
+    assert job_cost_mills(61, "macos") == 124
+    assert run_cost_mills([(30, "linux"), (61, "windows")]) == 6 + 20
 
 
 def test_execution_waves() -> None:
