@@ -1,0 +1,27 @@
+name: ch15 rate limit
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  hammer:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Make 1150 cheap authenticated calls with GITHUB_TOKEN
+        run: |
+          url="https://api.github.com/repos/$GITHUB_REPOSITORY"
+          hdr() { curl -s -D - -o /dev/null -H "Authorization: Bearer $GH_TOKEN" "$url" | tr -d '\r' | grep -iE "^x-ratelimit-(limit|remaining|resource):" | tr '\n' ' '; }
+          echo "REPORT before=[$(hdr)]"
+          ok=0; bad=0; first_bad=none
+          for i in $(seq 1 1150); do
+            code=$(curl -s -o /dev/null -w '%{http_code}' -H "Authorization: Bearer $GH_TOKEN" "$url")
+            if [ "$code" = "200" ]; then ok=$((ok+1)); else bad=$((bad+1)); [ "$first_bad" = none ] && first_bad="$i:$code"; fi
+          done
+          echo "REPORT calls=1150 ok=$ok bad=$bad first_bad=$first_bad"
+          echo "REPORT after=[$(hdr)]"
