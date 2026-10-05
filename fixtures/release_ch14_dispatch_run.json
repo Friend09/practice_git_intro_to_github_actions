@@ -1,0 +1,20 @@
+{
+  "run_id": 37324433803,
+  "conclusion": "success",
+  "displayTitle": "ch14 release",
+  "event": "workflow_dispatch",
+  "headSha": "eee7c81be31fbfe3d3910762edd444c524ae5e04",
+  "reports": {
+    "build": {
+      "event": "workflow_dispatch",
+      "version": "0.1.2",
+      "tag": "v0.1.2",
+      "built": "tally_demo-0.1.2-py3-none-any.whl tally_demo-0.1.2.tar.gz"
+    },
+    "release": {
+      "notes_start_tag": "v0.1.1",
+      "release_created": "v0.1.2",
+      "assets": "SHA256SUMS,tally_demo-0.1.2-py3-none-any.whl,tally_demo-0.1.2.tar.gz"
+    }
+  }
+}

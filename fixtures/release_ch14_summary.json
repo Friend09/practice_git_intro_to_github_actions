@@ -1,0 +1,131 @@
+{
+  "verified": "2026-10-05",
+  "tag_push": {
+    "run_id": 37323902752,
+    "tag": "v0.1.0",
+    "created_by": "user credentials",
+    "conclusion": "success",
+    "jobs": {
+      "build": "success",
+      "release": "success",
+      "publish_pypi_guarded": "skipped"
+    },
+    "other_workflows_fired_on_the_tag": [
+      "ch03 tally ci",
+      "ch11 python ci"
+    ],
+    "release": {
+      "name": "Tally 0.1.0",
+      "prerelease": true,
+      "draft": false,
+      "target": "35fe0d57468b3131cb60d8601e246f96807e0122",
+      "created_at": "2026-10-05T14:20:11Z",
+      "assets": [
+        {
+          "name": "SHA256SUMS",
+          "size": 194,
+          "digest": "sha256:50143b93d4de5d65c1f27fb6e5b50a7afde4414298faf9c0279c832ef6467e16"
+        },
+        {
+          "name": "tally_demo-0.1.0-py3-none-any.whl",
+          "size": 2035,
+          "digest": "sha256:c7093cb66a4baf6f29514af27e451c31baa346bd9aeab22c88bb3b40a664b9da"
+        },
+        {
+          "name": "tally_demo-0.1.0.tar.gz",
+          "size": 1909,
+          "digest": "sha256:6a6d9caf4b923f2af153af78479e4e727d070e25abd082959ef6582d052510b6"
+        }
+      ]
+    },
+    "wheel_metadata": {
+      "Name": "tally-demo",
+      "Version": "0.1.0"
+    },
+    "checksums_verified": true
+  },
+  "notes": {
+    "preview_for_v0.1.0": {
+      "categories": [
+        "Features"
+      ],
+      "lists_prs": [
+        "#2 Document clamp behavior at the boundaries"
+      ],
+      "has_new_contributors": true,
+      "full_changelog_link": "commits/v0.1.0",
+      "direct_commits_listed": false,
+      "config_file": ".github/release.yml"
+    }
+  },
+  "dispatch": {
+    "run_id": 37324188233,
+    "tag": "v0.1.1",
+    "tag_created_by": "GITHUB_TOKEN",
+    "push_runs_started_for_tag": 0,
+    "target": "35fe0d5",
+    "auto_notes_repeated_pr_2": true,
+    "notes_with_previous_tag_v0.1.0": "empty changes, compare v0.1.0...v0.1.1",
+    "is_latest": false
+  },
+  "invalid_version": {
+    "run_id": 37324320986,
+    "input": "v1.0",
+    "build": "failure",
+    "release": "skipped",
+    "annotation_title": "Not a semantic version",
+    "annotation_message": "'v1.0' is not MAJOR.MINOR.PATCH"
+  },
+  "notes_start_tag": {
+    "run_id": 37324433803,
+    "tag": "v0.1.2",
+    "notes_start_tag": "v0.1.1",
+    "notes_body_changes": "empty",
+    "compare": "v0.1.1...v0.1.2"
+  },
+  "immutable": {
+    "setting_endpoint": "repos/OWNER/REPO/immutable-releases",
+    "baseline": {
+      "upload_asset": "ok",
+      "delete_asset": "ok"
+    },
+    "run_id": 37324580446,
+    "tag": "v0.1.3",
+    "created_ok_with_assets": true,
+    "upload_extra_asset": "HTTP 422: Cannot upload assets to an immutable release.",
+    "delete_asset": "HTTP 422: Cannot delete asset from an immutable release",
+    "delete_tag": "Repository rule violations found: Cannot delete this tag",
+    "release_api_immutable": true,
+    "after_disabling_setting": {
+      "v0.1.3": true,
+      "v0.1.2": false
+    }
+  },
+  "releases_listed": [
+    {
+      "tag": "v0.1.3",
+      "prerelease": true,
+      "latest": false
+    },
+    {
+      "tag": "v0.1.2",
+      "prerelease": true,
+      "latest": false
+    },
+    {
+      "tag": "v0.1.1",
+      "prerelease": true,
+      "latest": false
+    },
+    {
+      "tag": "v0.1.0",
+      "prerelease": true,
+      "latest": false
+    }
+  ],
+  "guarded_job": {
+    "name": "publish_pypi_guarded",
+    "guard": "vars.GHA_ENABLE_PYPI == 'true'",
+    "action": "pypa/gh-action-pypi-publish v1.14.2 pinned by SHA a892a5a61159132606e93a2fa6f4358831b04d26"
+  }
+}
