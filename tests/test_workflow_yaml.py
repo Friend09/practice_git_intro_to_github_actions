@@ -62,3 +62,15 @@ def test_remote_actions_are_sha_pinned() -> None:
             continue
         loose = unpinned(load_workflow(path))
         assert not loose, (path.name, loose)
+
+
+def test_github_script_does_not_shadow_its_result_output() -> None:
+    """github-script's built-in ``result`` output overwrites setOutput('result')."""
+    for path in FILES:
+        wf = load_workflow(path)
+        for job in wf.get("jobs", {}).values():
+            for step in job.get("steps", []):
+                if str(step.get("uses", "")).startswith("actions/github-script@"):
+                    script = str(step.get("with", {}).get("script", ""))
+                    assert "setOutput('result'" not in script, path.name
+                    assert 'setOutput("result"' not in script, path.name

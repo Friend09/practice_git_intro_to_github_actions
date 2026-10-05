@@ -32,21 +32,21 @@ jobs:
             let reply;
             if (!allowed.includes(process.env.ASSOC)) {
               reply = 'Not authorized (' + process.env.ASSOC + ').';
-              core.setOutput('result', 'denied');
+              core.setOutput('outcome', 'denied');
             } else if (sub === 'ping') {
               reply = 'pong';
-              core.setOutput('result', 'ping');
+              core.setOutput('outcome', 'ping');
             } else if (sub === 'echo') {
               reply = rest.join(' ') || '(nothing to echo)';
-              core.setOutput('result', 'echo');
+              core.setOutput('outcome', 'echo');
             } else {
               reply = 'Commands: /tally ping, /tally echo <text>';
-              core.setOutput('result', 'help');
+              core.setOutput('outcome', 'help');
             }
             await github.rest.issues.createComment({ owner, repo, issue_number, body: reply });
             core.setOutput('assoc', process.env.ASSOC);
       - name: Report
         env:
-          RESULT: ${{ steps.cmd.outputs.result }}
+          OUTCOME: ${{ steps.cmd.outputs.outcome }}
           ASSOC: ${{ steps.cmd.outputs.assoc }}
-        run: echo "REPORT chatops result=$RESULT assoc=$ASSOC"
+        run: echo "REPORT chatops outcome=$OUTCOME assoc=$ASSOC"
