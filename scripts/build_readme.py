@@ -91,7 +91,9 @@ def build() -> str:
         out.append("| --- | --- | --- | --- | --- |")
         for c in (c for c in CHAPTERS if c.phase == phase):
             link = f"[{c.title}](learning_modules/chapter_{chapter_stem(c)}.md)"
-            out.append(f"| [ ] | {c.num:02d} | {link} | {c.book} | {c.depth} |")
+            done = (ROOT / "learning_modules" / f"chapter_{chapter_stem(c)}.md").exists()
+            mark = "[x]" if done else "[ ]"
+            out.append(f"| {mark} | {c.num:02d} | {link} | {c.book} | {c.depth} |")
     out.append(OUTRO)
     return "\n".join(out)
 

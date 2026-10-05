@@ -1,0 +1,14 @@
+{
+  "run_id": 37312789542,
+  "repo_visibility": "public",
+  "conclusion": "success",
+  "jobs": [
+    {"label": "ubuntu-latest", "os": "Linux", "arch": "X64", "environment": "github-hosted", "cpu": 4, "mem_mb": 15989, "started_at": "2026-10-05T12:54:29Z", "completed_at": "2026-10-05T12:54:32Z"},
+    {"label": "ubuntu-22.04", "os": "Linux", "arch": "X64", "environment": "github-hosted", "cpu": 4, "mem_mb": 15988, "started_at": "2026-10-05T12:54:29Z", "completed_at": "2026-10-05T12:54:37Z"},
+    {"label": "windows-latest", "os": "Windows", "arch": "X64", "environment": "github-hosted", "cpu": 4, "mem_mb": 16379, "started_at": "2026-10-05T12:54:29Z", "completed_at": "2026-10-05T12:54:32Z"},
+    {"label": "macos-latest", "os": "macOS", "arch": "ARM64", "environment": "github-hosted", "cpu": 3, "mem_mb": 7168, "started_at": "2026-10-05T12:54:35Z", "completed_at": "2026-10-05T12:54:40Z"}
+  ],
+  "guarded_job": {"name": "self-hosted-guarded", "conclusion": "skipped", "started_at": "2026-10-05T12:54:26Z", "completed_at": "2026-10-05T12:54:26Z"},
+  "docs_public_specs": {"ubuntu-latest": [4, 16], "windows-latest": [4, 16], "macos-latest": [3, 7]},
+  "docs_private_specs": {"ubuntu-latest": [2, 8], "windows-latest": [2, 8], "macos-latest": [3, 7]}
+}

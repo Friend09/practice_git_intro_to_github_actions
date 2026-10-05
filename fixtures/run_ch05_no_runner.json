@@ -1,0 +1,10 @@
+{
+  "run_id": 37313375076,
+  "label_requested": ["self-hosted", "tally-gpu"],
+  "observed_after_seconds": 55,
+  "job_status": "queued",
+  "job_runner_name": null,
+  "action_taken": "gh run cancel",
+  "final_conclusion": "cancelled",
+  "docs_queue_limit_hours": 24
+}

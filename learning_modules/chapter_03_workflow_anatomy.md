@@ -100,8 +100,8 @@ jobs:
     timeout-minutes: 5
     defaults: { run: { working-directory: sandbox/tally } }
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with: { python-version: '${{ env.PYTHON_VERSION }}' }
       - run: python -m pip install pytest
       - if: ${{ inputs.fail }}
@@ -109,7 +109,7 @@ jobs:
       - run: python -m pytest -v
 ```
 
-(The real file adds a `name:` to every step; they appear in the run logs below.)
+(The real file adds a `name:` to every step; they appear in the run logs below. The two runs below executed when the file used `checkout@v4` and `setup-python@v5`; Chapter 04 Section 8 explains why we later bumped both to `@v7`. The step results are identical.)
 
 ## 3. The File, Key by Key
 

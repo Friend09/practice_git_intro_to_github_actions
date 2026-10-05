@@ -40,12 +40,12 @@ Optional deep-dives (Ch 21-22) can be skipped on a first pass.
 
 | Done | Ch | Title | Book | Depth |
 | --- | --- | --- | --- | --- |
-| [ ] | 00 | [Essentials: YAML, Git Refs, CI/CD Vocabulary](learning_modules/chapter_00_essentials_yaml_git_cicd.md) | Ch 1 | Core |
-| [ ] | 01 | [Why Actions? Cost vs Scripts and Jenkins](learning_modules/chapter_01_why_actions.md) | Ch 1 | Core |
-| [ ] | 02 | [How Actions Works: Event, Workflow, Job, Step, Runner](learning_modules/chapter_02_how_actions_works.md) | Ch 2 | Core |
-| [ ] | 03 | [Workflow YAML Anatomy and Your First Green Check](learning_modules/chapter_03_workflow_anatomy.md) | Ch 4 | Core |
-| [ ] | 04 | [What's in an Action: uses, Marketplace, Versioning](learning_modules/chapter_04_whats_in_an_action.md) | Ch 3 | Core |
-| [ ] | 05 | [Runners: Hosted, Larger, Self-Hosted, ARC](learning_modules/chapter_05_runners.md) | Ch 5 | Core |
+| [x] | 00 | [Essentials: YAML, Git Refs, CI/CD Vocabulary](learning_modules/chapter_00_essentials_yaml_git_cicd.md) | Ch 1 | Core |
+| [x] | 01 | [Why Actions? Cost vs Scripts and Jenkins](learning_modules/chapter_01_why_actions.md) | Ch 1 | Core |
+| [x] | 02 | [How Actions Works: Event, Workflow, Job, Step, Runner](learning_modules/chapter_02_how_actions_works.md) | Ch 2 | Core |
+| [x] | 03 | [Workflow YAML Anatomy and Your First Green Check](learning_modules/chapter_03_workflow_anatomy.md) | Ch 4 | Core |
+| [x] | 04 | [What's in an Action: uses, Marketplace, Versioning](learning_modules/chapter_04_whats_in_an_action.md) | Ch 3 | Core |
+| [x] | 05 | [Runners: Hosted, Larger, Self-Hosted, ARC](learning_modules/chapter_05_runners.md) | Ch 5 | Core |
 
 ### Phase 2: Core Mechanics
 
