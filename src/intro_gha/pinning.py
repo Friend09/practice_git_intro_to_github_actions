@@ -32,4 +32,5 @@ def classify(ref: str) -> str:
 
 def unpinned(workflow: dict[str, Any]) -> list[str]:
     """Remote references that are movable (not a full 40-hex commit SHA)."""
-    return [r for r in uses_refs(workflow) if classify(r) in ("tag-or-branch", "no-ref")]
+    movable = ("tag-or-branch", "no-ref")
+    return [r for r in uses_refs(workflow) if classify(r) in movable]
