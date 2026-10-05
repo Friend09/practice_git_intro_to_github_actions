@@ -1,0 +1,92 @@
+name: ch19 custom actions
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  composite:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Valid version through the local composite action
+        id: ok
+        uses: ./.github/actions/tally-version
+        with:
+          version: 1.2.3-rc.1
+      - name: Invalid version (expected to fail)
+        id: bad
+        continue-on-error: true
+        uses: ./.github/actions/tally-version
+        with:
+          version: '1.2'
+      - name: Report
+        env:
+          NORMALIZED: ${{ steps.ok.outputs.normalized }}
+          PARTS: ${{ steps.ok.outputs.major }}.${{ steps.ok.outputs.minor }}.${{ steps.ok.outputs.patch }}
+          PRE: ${{ steps.ok.outputs.is-prerelease }}
+          BAD_OUTCOME: ${{ steps.bad.outcome }}
+          BAD_NORMALIZED: ${{ steps.bad.outputs.normalized }}
+        run: echo "REPORT composite_normalized=$NORMALIZED parts=$PARTS prerelease=$PRE bad_outcome=$BAD_OUTCOME bad_normalized=[$BAD_NORMALIZED]"
+
+  remote_reference:
+    runs-on: ubuntu-latest
+    steps:
+      # No checkout: the action is downloaded from this repository at a commit, by path.
+      - name: Use the composite action the way another repository would
+        id: v
+        uses: Friend09/practice_git_intro_to_github_actions/.github/actions/tally-version@c41ee3a9fba818d86e0faeae6631bc1c08f5fcf5
+        with:
+          version: 3.4.5
+      - name: Report
+        env:
+          PARTS: ${{ steps.v.outputs.major }}.${{ steps.v.outputs.minor }}.${{ steps.v.outputs.patch }}
+        run: echo "REPORT remote_ref_parts=$PARTS"
+
+  javascript:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Run the JavaScript action
+        id: js
+        uses: ./.github/actions/tally-js
+        with:
+          who-to-greet: Tally
+          shout: 'true'
+      - name: Report
+        env:
+          GREETING: ${{ steps.js.outputs.greeting }}
+          NAMES: ${{ steps.js.outputs.input-env-names }}
+          NODE: ${{ steps.js.outputs.node-version }}
+        run: echo "REPORT js_greeting=$GREETING js_inputs=$NAMES js_node=$NODE"
+      - name: Unit-test the action with node --test
+        run: node --test .github/actions/tally-js/test/ | tail -8
+
+  javascript_post_after_failure:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: ./.github/actions/tally-js
+        with:
+          who-to-greet: Tally
+      - name: Fail on purpose after the action ran
+        run: exit 1
+
+  docker_built:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Container action built from a Dockerfile
+        id: built
+        uses: ./.github/actions/tally-docker
+        with:
+          who: Tally
+
+  docker_prebuilt:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Container action using a prebuilt image
+        uses: ./.github/actions/tally-docker-prebuilt

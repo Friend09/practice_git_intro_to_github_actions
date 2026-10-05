@@ -3,6 +3,6 @@ description: A container action that pulls a prebuilt public image instead of bu
 runs:
   using: docker
   image: docker://alpine:3.20
-  entrypoint: /bin/echo
   args:
+    - echo
     - "REPORT prebuilt_action=ran"
