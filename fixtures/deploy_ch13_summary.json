@@ -1,0 +1,131 @@
+{
+  "verified": "2026-10-05",
+  "repo_created": "2026-10-05",
+  "docs_note": "repositories created after 2026-07-15 use an immutable default sub format that includes owner and repository IDs",
+  "oidc": {
+    "main_run": 37322740443,
+    "branch_run": 37322900067,
+    "issuer": "https://token.actions.githubusercontent.com",
+    "jwks_uri": "https://token.actions.githubusercontent.com/.well-known/jwks",
+    "alg": "RS256",
+    "lifetime_seconds": 300,
+    "claims": {
+      "with_environment_main": {
+        "sub": "repo:Friend09@7501015/practice_git_intro_to_github_actions@1405684500:environment:staging",
+        "ref": "refs/heads/main",
+        "environment": "staging",
+        "aud": "sts.amazonaws.com",
+        "sha": "db3826321acac1133d5f2430d0ce992dcae306ff",
+        "repository": "Friend09/practice_git_intro_to_github_actions",
+        "job_workflow_ref": "Friend09/practice_git_intro_to_github_actions/.github/workflows/ch13-deploy.yml@refs/heads/main"
+      },
+      "without_environment_main": {
+        "sub": "repo:Friend09@7501015/practice_git_intro_to_github_actions@1405684500:ref:refs/heads/main",
+        "ref": "refs/heads/main",
+        "environment": null
+      },
+      "with_environment_branch": {
+        "sub": "repo:Friend09@7501015/practice_git_intro_to_github_actions@1405684500:environment:staging",
+        "ref": "refs/heads/demo/ch13",
+        "environment": "staging"
+      },
+      "without_environment_branch": {
+        "sub": "repo:Friend09@7501015/practice_git_intro_to_github_actions@1405684500:ref:refs/heads/demo/ch13",
+        "ref": "refs/heads/demo/ch13",
+        "environment": null
+      }
+    },
+    "claim_names": [
+      "actor",
+      "actor_id",
+      "aud",
+      "base_ref",
+      "check_run_id",
+      "environment",
+      "environment_node_id",
+      "event_name",
+      "exp",
+      "head_ref",
+      "iat",
+      "iss",
+      "job_workflow_ref",
+      "job_workflow_sha",
+      "jti",
+      "nbf",
+      "ref",
+      "ref_protected",
+      "ref_type",
+      "repository",
+      "repository_id",
+      "repository_owner",
+      "repository_owner_id",
+      "repository_visibility",
+      "run_attempt",
+      "run_id",
+      "run_number",
+      "runner_environment",
+      "sha",
+      "sub",
+      "workflow",
+      "workflow_ref",
+      "workflow_sha"
+    ],
+    "signature_valid": true,
+    "wrong_audience": "rejected",
+    "tampered_signature": "rejected",
+    "no_id_token_permission": {
+      "request_url": "absent",
+      "request_token_present": false
+    }
+  },
+  "deployments": {
+    "branch_restriction": {
+      "run_id": 37322900067,
+      "branch": "demo/ch13",
+      "environment": "production",
+      "job_conclusion": "failure",
+      "annotations": [
+        "Branch \"demo/ch13\" is not allowed to deploy to production due to environment protection rules.",
+        "The deployment was rejected or didn't satisfy other protection rules."
+      ],
+      "statuses": [
+        "waiting",
+        "failure"
+      ],
+      "policy": {
+        "custom_branch_policies": true,
+        "protected_branches": false,
+        "allowed": [
+          "main"
+        ]
+      }
+    },
+    "approved": {
+      "run_id": 37322974953,
+      "branch": "main",
+      "environment": "production",
+      "job_conclusion": "success",
+      "statuses": [
+        "waiting",
+        "waiting",
+        "queued",
+        "in_progress",
+        "success"
+      ],
+      "environment_url": "https://tally.example.invalid"
+    },
+    "staging": {
+      "statuses": [
+        "in_progress",
+        "success"
+      ],
+      "environment_url": "https://tally.example.invalid/staging"
+    }
+  },
+  "guarded_job": {
+    "name": "deploy_cloud_guarded",
+    "conclusion": "skipped",
+    "guard": "vars.GHA_ENABLE_AWS_OIDC == 'true'",
+    "action": "aws-actions/configure-aws-credentials v6.3.0 (node24), pinned by SHA e1253824e5c10ff9df46874f81ed3ec929e19cfd"
+  }
+}

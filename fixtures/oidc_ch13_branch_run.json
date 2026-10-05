@@ -1,0 +1,34 @@
+{
+  "run_id": 37322900067,
+  "reports": {
+    "oidc_with_environment": {
+      "with_environment_signature": "valid alg=RS256",
+      "with_environment_iss": "https://token.actions.githubusercontent.com",
+      "with_environment_sub": "repo:Friend09@7501015/practice_git_intro_to_github_actions@1405684500:environment:staging",
+      "with_environment_aud": "sts.amazonaws.com",
+      "with_environment_ref": "refs/heads/demo/ch13",
+      "with_environment_ref_type": "branch",
+      "with_environment_sha": "db3826321acac1133d5f2430d0ce992dcae306ff",
+      "with_environment_repository": "Friend09/practice_git_intro_to_github_actions",
+      "with_environment_repository_owner": "Friend09",
+      "with_environment_environment": "staging",
+      "with_environment_event_name": "workflow_dispatch",
+      "with_environment_runner_environment": "github-hosted",
+      "with_environment_job_workflow_ref": "Friend09/practice_git_intro_to_github_actions/.github/workflows/ch13-deploy.yml@refs/heads/demo/ch13",
+      "with_environment_lifetime_seconds": "300",
+      "with_environment_claim_names": "actor,actor_id,aud,base_ref,check_run_id,environment,environment_node_id,event_name,exp,head_ref,iat,iss,job_workflow_ref,job_workflow_sha,jti,nbf,ref,ref_protected,ref_type,repository,repository_id,repository_owner,repository_owner_id,repository_visibility,run_attempt,run_id,run_number,runner_environment,sha,sub,workflow,workflow_ref,workflow_sha",
+      "with_environment_wrong_audience": "rejected",
+      "with_environment_tampered_signature": "rejected"
+    },
+    "oidc_without_permission": {
+      "no_permission_request_url": "absent",
+      "no_permission_request_token": ""
+    },
+    "oidc_without_environment": {
+      "without_environment_sub": "repo:Friend09@7501015/practice_git_intro_to_github_actions@1405684500:ref:refs/heads/demo/ch13",
+      "without_environment_ref": "refs/heads/demo/ch13",
+      "without_environment_environment": "None",
+      "without_environment_job_workflow_ref": "Friend09/practice_git_intro_to_github_actions/.github/workflows/ch13-deploy.yml@refs/heads/demo/ch13"
+    }
+  }
+}
