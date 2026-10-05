@@ -1,0 +1,36 @@
+{
+  "run_id": 37322069271,
+  "conclusion": "success",
+  "displayTitle": "ch12 containers",
+  "event": "workflow_dispatch",
+  "headSha": "2d37aef402fe7c7d5adba73157558495c61ad4bd",
+  "reports": {
+    "publish": {
+      "pushed": "",
+      "image": "ghcr.io/friend09/tally",
+      "tag_sha": "2d37aef",
+      "digest": "sha256:a54376929fa5cf6437159c5653bba212f72914f8ed35810654f24973bc94d21b"
+    },
+    "uppercase_tag": {
+      "uppercase_build_outcome": "failure",
+      "owner": "Friend09"
+    },
+    "service": {
+      "redis_reply": "+PONG"
+    },
+    "in_container": {
+      "container_os": "Debian GNU/Linux 13 (trixie)",
+      "python": "Python 3.12.15",
+      "git": "none",
+      "files_after_checkout": "20",
+      "has_pyproject": "yes"
+    },
+    "publish_denied": {
+      "denied_push_outcome": "failure"
+    },
+    "verify": {
+      "verify_output": "5",
+      "digest": "sha256:a54376929fa5cf6437159c5653bba212f72914f8ed35810654f24973bc94d21b"
+    }
+  }
+}

@@ -1,0 +1,63 @@
+{
+  "verified": "2026-10-05",
+  "run_id": 37322069271,
+  "head_sha": "2d37aef402fe7c7d5adba73157558495c61ad4bd",
+  "service": {
+    "reply": "+PONG",
+    "health_progression": [
+      "starting",
+      "healthy"
+    ],
+    "job_seconds": 8,
+    "networking": "job on runner uses localhost:6379 (ports mapped)"
+  },
+  "container_job": {
+    "os": "Debian GNU/Linux 13 (trixie)",
+    "python": "Python 3.12.15",
+    "git": "none",
+    "checkout_note": "The repository will be downloaded using the GitHub REST API",
+    "files_after_checkout": 20,
+    "has_pyproject": true,
+    "job_seconds": 7
+  },
+  "uppercase": {
+    "outcome": "failure",
+    "owner": "Friend09",
+    "error": "ERROR: failed to build: invalid tag \"ghcr.io/Friend09/tally:test\": repository name must be lowercase"
+  },
+  "denied": {
+    "permissions": {
+      "contents": "read"
+    },
+    "outcome": "failure",
+    "error": "denied: installation not allowed to Create organization package",
+    "package_created": false,
+    "anonymous_tags_list_http": 403,
+    "package_lookup_with_gh_token": "404 Package not found (while the existing 'tally' package answered 403 needs read:packages scope)"
+  },
+  "publish": {
+    "image": "ghcr.io/friend09/tally",
+    "tags": [
+      "2d37aef402fe7c7d5adba73157558495c61ad4bd",
+      "latest"
+    ],
+    "digest": "sha256:a54376929fa5cf6437159c5653bba212f72914f8ed35810654f24973bc94d21b",
+    "job_seconds": 23,
+    "layers": 6,
+    "compressed_bytes": 47236038,
+    "visibility": "public (anonymous manifest and tag-list requests returned HTTP 200)"
+  },
+  "verify": {
+    "pulled_by": "digest",
+    "run_output": "5",
+    "digest_equal": true,
+    "job_seconds": 10
+  },
+  "docs": {
+    "services_require": "Ubuntu (Linux) runners",
+    "job_in_container_hostname": "service label",
+    "job_on_runner_hostname": "localhost with mapped ports",
+    "token_permission": "packages: write",
+    "visibility": "package inherits the visibility and permissions model of the repository where the workflow is run"
+  }
+}

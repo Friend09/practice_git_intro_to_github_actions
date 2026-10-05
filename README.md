@@ -62,7 +62,7 @@ Optional deep-dives (Ch 21-22) can be skipped on a first pass.
 | Done | Ch | Title | Book | Depth |
 | --- | --- | --- | --- | --- |
 | [x] | 11 | [CI for Python: Lint, Test, Coverage Matrix](learning_modules/chapter_11_ci_for_python.md) | Ch 4, 7 | Core |
-| [ ] | 12 | [Containers, Service Containers and GHCR](learning_modules/chapter_12_containers_and_ghcr.md) | Ch 5, 12 | Core |
+| [x] | 12 | [Containers, Service Containers and GHCR](learning_modules/chapter_12_containers_and_ghcr.md) | Ch 5, 12 | Core |
 | [ ] | 13 | [Continuous Deployment: Environments and OIDC](learning_modules/chapter_13_continuous_deployment.md) | Ch 6, 9 | Core |
 | [ ] | 14 | [Release Automation: Tags, Changelogs, Packages](learning_modules/chapter_14_release_automation.md) | Ch 12 | Core |
 
