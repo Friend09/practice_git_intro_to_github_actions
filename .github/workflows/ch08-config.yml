@@ -1,0 +1,82 @@
+name: ch08 config
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  SCOPE: workflow
+
+jobs:
+  scopes:
+    runs-on: ubuntu-latest
+    env:
+      SCOPE: job
+    steps:
+      - name: Job-level value
+        run: echo "REPORT scope_at_job=$SCOPE"
+      - name: Step-level value
+        env:
+          SCOPE: step
+        run: echo "REPORT scope_at_step=$SCOPE"
+      - name: Write to GITHUB_ENV
+        run: |
+          echo "FROM_FILE=written-by-previous-step" >> "$GITHUB_ENV"
+          echo "REPORT same_step_sees=${FROM_FILE:-unset}"
+      - name: Read it in the next step
+        run: |
+          echo "REPORT next_step_sees=$FROM_FILE next_step_expr=${{ env.FROM_FILE }}"
+      - name: Default variables
+        run: |
+          echo "REPORT CI=$CI GITHUB_ACTIONS=$GITHUB_ACTIONS repo=$GITHUB_REPOSITORY event=$GITHUB_EVENT_NAME runner_os=$RUNNER_OS"
+          echo "REPORT workspace_prefix=${GITHUB_WORKSPACE%/*}"
+
+  workflow_scope_only:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "REPORT scope_at_workflow=$SCOPE"
+
+  vars_and_secrets:
+    runs-on: ubuntu-latest
+    env:
+      DEMO_SECRET: ${{ secrets.DEMO_SECRET }}
+      STAGING_ONLY: ${{ secrets.STAGING_ONLY }}
+      TALLY_COLOR: ${{ vars.TALLY_COLOR }}
+      MISSING: ${{ vars.DOES_NOT_EXIST }}
+    steps:
+      - name: Variables
+        run: |
+          echo "REPORT repo_color=$TALLY_COLOR missing_var=[$MISSING]"
+          echo "REPORT env_secret_not_visible_outside_env_len=${#STAGING_ONLY}"
+      - name: Secret masking
+        run: |
+          echo "REPORT secret_direct=$DEMO_SECRET"
+          echo "REPORT secret_len=${#DEMO_SECRET}"
+          echo "REPORT secret_reversed=$(printf %s "$DEMO_SECRET" | rev)"
+          echo "REPORT secret_base64=$(printf %s "$DEMO_SECRET" | base64)"
+      - name: Register a mask for a derived value
+        run: |
+          derived=$(printf %s "$DEMO_SECRET" | base64 | tr 'A-Za-z' 'N-ZA-Mn-za-m')
+          echo "::add-mask::$derived"
+          echo "REPORT derived_after_mask=$derived"
+
+  staging:
+    runs-on: ubuntu-latest
+    environment: staging
+    env:
+      TALLY_COLOR: ${{ vars.TALLY_COLOR }}
+      DEMO_SECRET: ${{ secrets.DEMO_SECRET }}
+      STAGING_ONLY: ${{ secrets.STAGING_ONLY }}
+    steps:
+      - run: |
+          echo "REPORT staging_color=$TALLY_COLOR"
+          echo "REPORT staging_sees_repo_secret_len=${#DEMO_SECRET} staging_only_len=${#STAGING_ONLY}"
+
+  production:
+    needs: [staging]
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - run: echo "REPORT production_deployed=yes"
