@@ -1,0 +1,33 @@
+{
+  "run_id": 37338751943,
+  "conclusion": "failure",
+  "displayTitle": "ch23 tally pipeline",
+  "event": "workflow_dispatch",
+  "headSha": "74d7cdb697541fa3ae6c13012f49a24544d41f7e",
+  "reports": {
+    "test (3.11)": {
+      "test": "",
+      "python": "3.11",
+      "break": "true"
+    },
+    "test (3.13)": {
+      "test": "",
+      "python": "3.13",
+      "break": "true"
+    },
+    "test (3.12)": {
+      "test": "",
+      "python": "3.12",
+      "break": "true"
+    },
+    "summary": {
+      "summary": "",
+      "lint": "success",
+      "test": "failure",
+      "build": "skipped",
+      "verify": "skipped",
+      "staging": "skipped",
+      "production": "skipped"
+    }
+  }
+}

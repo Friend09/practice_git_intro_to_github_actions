@@ -5,4 +5,4 @@
 - [x] Phase 2 (Ch 06-10) done
 - [x] Phase 3 (Ch 11-14) done
 - [x] Phase 4 (Ch 15-18) done
-- [ ] Phase 5 (Ch 19-23)
+- [x] Phase 5 (Ch 19-23)

@@ -83,7 +83,7 @@ Optional deep-dives (Ch 21-22) can be skipped on a first pass.
 | [x] | 20 | [Reusable Workflows and Workflow Templates](learning_modules/chapter_20_reusable_workflows.md) | Ch 12 | Core |
 | [x] | 21 | [Advanced Techniques: Dynamic Matrices, github-script, ChatOps](learning_modules/chapter_21_advanced_techniques.md) | Ch 13 | Optional Deep-Dive |
 | [x] | 22 | [Migrating to Actions: Jenkins, GitLab, Importer](learning_modules/chapter_22_migrating_to_actions.md) | Ch 14 | Optional Deep-Dive |
-| [ ] | 23 | [Capstone: The Full Tally Pipeline](learning_modules/chapter_23_capstone.md) | all | Core |
+| [x] | 23 | [Capstone: The Full Tally Pipeline](learning_modules/chapter_23_capstone.md) | all | Core |
 
 ## Running the labs
 

@@ -1,0 +1,46 @@
+{
+  "run_id": 37338733951,
+  "conclusion": "success",
+  "displayTitle": "ch23 tally pipeline",
+  "event": "workflow_dispatch",
+  "headSha": "74d7cdb697541fa3ae6c13012f49a24544d41f7e",
+  "reports": {
+    "test (3.11)": {
+      "test": "",
+      "python": "3.11",
+      "break": "false"
+    },
+    "test (3.12)": {
+      "test": "",
+      "python": "3.12",
+      "break": "false"
+    },
+    "test (3.13)": {
+      "test": "",
+      "python": "3.13",
+      "break": "false"
+    },
+    "build": {
+      "build": "",
+      "digest": "sha256:2bb486690c2aa144d880598731ce3985150a0f431430edeefae2ca178f3a1360"
+    },
+    "verify": {
+      "verify": "",
+      "digest_match": "yes",
+      "attestation": "verified"
+    },
+    "deploy_staging": {
+      "deployed_to": "staging",
+      "sha": "74d7cdb"
+    },
+    "summary": {
+      "summary": "",
+      "lint": "success",
+      "test": "success",
+      "build": "success",
+      "verify": "success",
+      "staging": "success",
+      "production": "skipped"
+    }
+  }
+}
