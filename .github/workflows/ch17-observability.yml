@@ -1,0 +1,60 @@
+name: ch17 observability
+
+on:
+  workflow_dispatch:
+    inputs:
+      fail_first_attempt:
+        description: 'Make the flaky job fail on attempt 1'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  commands:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Emit 15 annotations of each level
+        run: |
+          for i in $(seq 1 15); do
+            echo "::notice file=sandbox/tally/tally/add.py,line=$i,title=notice-$i::notice number $i"
+            echo "::warning file=sandbox/tally/tally/add.py,line=$i,title=warning-$i::warning number $i"
+            echo "::error file=sandbox/tally/tally/add.py,line=$i,title=error-$i::error number $i"
+          done
+          echo "::group::A folded group"
+          echo "inside the group"
+          echo "::endgroup::"
+          echo "::debug::this message appears only when debug logging is on"
+          echo "REPORT emitted_notice=15 emitted_warning=15 emitted_error=15"
+      - name: Write a job summary
+        run: |
+          {
+            echo "## Tally summary"
+            echo
+            echo "| metric | value |"
+            echo "| --- | --- |"
+            echo "| tests | 5 |"
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "REPORT summary_bytes=$(wc -c < "$GITHUB_STEP_SUMMARY")"
+      - name: A conditional step (its expression is traced in debug mode)
+        if: ${{ github.event_name == 'workflow_dispatch' && success() }}
+        run: echo "REPORT conditional_step=ran"
+
+  flaky:
+    runs-on: ubuntu-latest
+    env:
+      FAIL: ${{ inputs.fail_first_attempt }}
+    steps:
+      - name: Fail on the first attempt only
+        run: |
+          echo "REPORT flaky_attempt=$GITHUB_RUN_ATTEMPT"
+          if [ "$GITHUB_RUN_ATTEMPT" = "1" ] && [ "$FAIL" = "true" ]; then
+            echo "::error title=Simulated flake::attempt 1 fails on purpose"
+            exit 1
+          fi
+
+  stable:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "REPORT stable_attempt=$GITHUB_RUN_ATTEMPT"
