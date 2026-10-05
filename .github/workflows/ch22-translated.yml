@@ -63,3 +63,10 @@ jobs:
       - run: echo "REPORT post=always lint=$LINT test=$TEST deploy=$DEPLOY"
       - if: ${{ failure() }}
         run: echo "REPORT post=failure ran=yes"
+
+  on_failure:
+    needs: [test]
+    if: ${{ failure() }}
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "REPORT on_failure=job-level-failure() ran=yes"
