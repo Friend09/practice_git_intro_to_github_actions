@@ -1,0 +1,13 @@
+.DS_Store
+.venv/
+.ipynb_checkpoints/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+output/*
+!output/.gitkeep
+.env
+uv.lock.bak
