@@ -1,0 +1,40 @@
+name: ch05 runners
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  hosted:
+    name: hosted (${{ matrix.label }})
+    runs-on: ${{ matrix.label }}
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        label: [ubuntu-latest, ubuntu-22.04, windows-latest, macos-latest]
+    steps:
+      - name: Report (Linux)
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          echo "REPORT label=${{ matrix.label }} os=$RUNNER_OS arch=$RUNNER_ARCH env=$RUNNER_ENVIRONMENT cpu=$(nproc) mem_mb=$(awk '/MemTotal/{print int($2/1024)}' /proc/meminfo)"
+      - name: Report (macOS)
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          echo "REPORT label=${{ matrix.label }} os=$RUNNER_OS arch=$RUNNER_ARCH env=$RUNNER_ENVIRONMENT cpu=$(sysctl -n hw.ncpu) mem_mb=$(( $(sysctl -n hw.memsize) / 1048576 ))"
+      - name: Report (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $mem = [math]::Round((Get-CimInstance Win32_ComputerSystem).TotalPhysicalMemory / 1MB)
+          Write-Output "REPORT label=${{ matrix.label }} os=$env:RUNNER_OS arch=$env:RUNNER_ARCH env=$env:RUNNER_ENVIRONMENT cpu=$([Environment]::ProcessorCount) mem_mb=$mem"
+
+  self-hosted-guarded:
+    if: ${{ vars.GHA_ENABLE_SELFHOSTED == 'true' }}
+    runs-on: [self-hosted, linux]
+    steps:
+      - run: echo "REPORT label=self-hosted env=$RUNNER_ENVIRONMENT"
