@@ -1,0 +1,26 @@
+name: ch16 tag object sha (probe)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  tag_object_sha:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      # a892a5a6... is the annotated TAG OBJECT for v1.14.2, not the commit
+      - uses: pypa/gh-action-pypi-publish@a892a5a61159132606e93a2fa6f4358831b04d26
+        with:
+          packages-dir: does-not-exist/
+
+  commit_sha:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      # dc37677b... is the commit the tag points at
+      - uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
+        with:
+          packages-dir: does-not-exist/
