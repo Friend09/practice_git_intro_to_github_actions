@@ -18,7 +18,10 @@ WFS = {n: load_workflow(WORKFLOWS_DIR / n) for n in OBS["workflows"]}
 @pytest.mark.parametrize("obs", OBS["observations"], ids=lambda o: o["id"])
 def test_model_matches_observed_runs(obs: dict) -> None:
     """The model predicts exactly the workflows that really fired."""
-    predicted = sorted(n for n, wf in WFS.items() if would_fire(wf, obs["event"]))
+    present = obs.get("workflows", OBS["workflows"])
+    predicted = sorted(
+        n for n in present if would_fire(WFS[n], obs["event"])
+    )
     assert predicted == sorted(obs["fired"])
 
 

@@ -27,3 +27,13 @@
 - `cost.py` first used 1x/2x/10x multipliers; current docs give per-minute dollar rates (Linux $0.006, Windows $0.010, macOS $0.062), so the helper and Ch 01 use mills and per-job round-up only.
 - Ch 04: the repo's own workflows pinned `checkout@v4`/`setup-python@v5` (node20, scheduled for removal 2026-09-23). Bumped to `@v7`; `setup-uv@v5` to `@v10.2.0` because no floating `v10` tag exists.
 - Claims dropped because the docs did not confirm them: "Docker actions are Linux-only", Windows/macOS minute multipliers.
+
+### Ch 06 live verification (2026-10-05)
+Ten real experiments on this repo, all reproduced by `intro_gha.events.would_fire` (see `fixtures/events_ch06_observed.json`):
+- A `paths`-only push trigger **fires on tag pushes** (paths are not applied to tags): runs 37314112978, 37315414127.
+- `branches`-only ignores tag pushes; `tags`-only ignores branch pushes.
+- Tag created with `GITHUB_TOKEN` matched `demo-v*` yet started **0 runs**; the same push by user credentials started 2.
+- PR run: `github.sha` = merge commit (`b2459d83`) = API `merge_commit_sha`; `github.event.pull_request.head.sha` = `de54f8aa`.
+- `workflow_run` downstream ran on main's HEAD (`4c4ee30f`) while reporting the upstream's commit (`de54f8aa`).
+- `tags-ignore: ['**']` alone would also block branch pushes; the working fix is `branches: ['**']` + `tags-ignore: ['**']` (run 37315330848 fired, tag run did not).
+- Deleting a tag and closing a PR started no runs. Throwaway PR #1, branches and tags were removed afterwards.

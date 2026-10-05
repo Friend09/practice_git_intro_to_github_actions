@@ -29,7 +29,7 @@
 
 > **🔬 Platform Engineer's Lens:** A trigger that does not fire raises no error, no warning and no red X. It just does not exist. Every failure in this chapter is of that kind, and every one was reproduced for real on this repo's runs. The cost is a pull request that merges with no checks, a release that never builds, or a nightly job that quietly stopped months ago.
 
-> **🚦 Native vs Marketplace vs Custom:** Trigger logic is entirely native. The "custom" work is only to *predict* it. This chapter ships a small executable model (`intro_gha/events.py`) that reproduces seven real outcomes, so you can check a filter before pushing it.
+> **🚦 Native vs Marketplace vs Custom:** Trigger logic is entirely native. The "custom" work is only to *predict* it. This chapter ships a small executable model (`intro_gha/events.py`) that reproduces ten real outcomes, so you can check a filter before pushing it.
 
 ## What You'll Learn
 
@@ -44,6 +44,28 @@
 ## Table of Contents
 
 <!-- TOC -->
+- [1. Events Are the Front Door](#1-events-are-the-front-door)
+- [2. Running Example: One Workflow, Many Doors](#2-running-example-one-workflow-many-doors)
+- [3. What an Event Looks Like Inside a Run](#3-what-an-event-looks-like-inside-a-run)
+- [4. `push`: Branches, Tags and Paths](#4-push-branches-tags-and-paths)
+- [5. `pull_request`: The Merge Ref](#5-pull_request-the-merge-ref)
+- [6. `workflow_dispatch` and `repository_dispatch`](#6-workflow_dispatch-and-repository_dispatch)
+- [7. `schedule`: Cron](#7-schedule-cron)
+- [8. `workflow_run` and the Token Rule](#8-workflow_run-and-the-token-rule)
+- [9. Filter Patterns](#9-filter-patterns)
+- [10. Activity Types](#10-activity-types)
+- [11. The Long Tail of Events](#11-the-long-tail-of-events)
+- [12. Forks and `pull_request_target`](#12-forks-and-pull_request_target)
+- [13. Case Study: The Tag That Ran the Wrong Tests](#13-case-study-the-tag-that-ran-the-wrong-tests)
+- [14. Comparison: Ways to Start a Workflow](#14-comparison-ways-to-start-a-workflow)
+- [15. Practical Tips](#15-practical-tips)
+- [16. Demonstrated Failure Modes](#16-demonstrated-failure-modes)
+- [17. Key Takeaways](#17-key-takeaways)
+- [18. Exercises](#18-exercises)
+- [19. Additional Resources](#19-additional-resources)
+- [20. Appendix A: Code Index](#20-appendix-a-code-index)
+   - [A.1 The `would_fire` model](#a1-the-would_fire-model)
+   - [A.2 Cron evaluation](#a2-cron-evaluation)
 <!-- /TOC -->
 
 ---
@@ -54,7 +76,7 @@ Chapter 02 said an event selects workflows. Chapter 03 used two triggers. This c
 
 ## 2. Running Example: One Workflow, Many Doors
 
-> 📌 **Running Example: `ch06-events.yml` and its experiments.** One workflow subscribed to five triggers (`push`, `pull_request`, `workflow_dispatch`, `repository_dispatch`, `schedule`) whose only job prints a `REPORT` of what the event looked like. Around it we ran seven real experiments on this repo on 2026-10-05: a push to `main`, a tag push from a laptop, a tag push by `GITHUB_TOKEN`, a branch push, a pull request opened, the PR closed, and a tag deleted. For each we recorded **which of three workflows fired**: `ci.yml`, `ch03-tally-ci.yml` and `ch06-events.yml`. Data: `fixtures/events_ch06_observed.json`. We return to it in Sections 4, 5, 8 and 16.
+> 📌 **Running Example: `ch06-events.yml` and its experiments.** One workflow subscribed to five triggers (`push`, `pull_request`, `workflow_dispatch`, `repository_dispatch`, `schedule`) whose only job prints a `REPORT` of what the event looked like. Around it we ran ten real experiments on this repo on 2026-10-05: a push to `main`, a tag push from a laptop, a tag push by `GITHUB_TOKEN`, a branch push, a pull request opened, the PR closed, and a tag deleted. For each we recorded **which workflows fired**: `ci.yml`, `ch03-tally-ci.yml` and `ch06-events.yml`, later joined by two probe workflows (Section 4). Data: `fixtures/events_ch06_observed.json`. We return to it in Sections 4, 5, 8 and 16.
 
 ```yaml
 on:
@@ -101,6 +123,16 @@ Here is the single most useful table in this chapter. Each row is a **real exper
 | 3 | Push tag `demo-v-token` using `GITHUB_TOKEN` | no | no | no |
 | 4 | Push branch `demo/ch06-pr`, changed `sandbox/...` | no | **fired** | no |
 | 5 | Delete tag `demo-v1` | no | no | no |
+
+Three more experiments with two extra probe workflows, `ch06-tag-aware.yml` (`branches: ['**']`, `tags-ignore: ['**']`, `paths`) and `ch06-tags-only.yml` (`tags: ['demo-v*']` only):
+
+| # | Experiment | `tag-aware` | `tags-only` |
+| --- | --- | --- | --- |
+| 6 | Push to `main`, changed the two probe files | **fired** | no |
+| 7 | Push branch `demo/ch06-b`, changed `sandbox/...` | **fired** | no |
+| 8 | Push tag `demo-v2` | no | **fired** |
+
+Rows 7 and 8 together confirm that a **tags-only trigger ignores branch pushes**, and row 8 that `tags-ignore` cleanly excludes tags once `branches` is also defined.
 
 **Reading the table, rule by rule:**
 
@@ -245,7 +277,7 @@ A pull request from a **fork** runs with a read-only token and no secrets by def
 
 ## 13. Case Study: The Tag That Ran the Wrong Tests
 
-A team writes `on: push: paths: ['src/**']` believing "tests run only when source changes". Releasing means pushing tags. Every release tag **also runs the full test suite**, because `paths` is ignored for tags (our experiment, row 2: `ch03` fired on a tag with no changed files). Nobody noticed because the extra runs were green. The fix, if unwanted: add `tags-ignore: ['**']`, which makes the trigger tag-aware and branch-only.
+A team writes `on: push: paths: ['src/**']` believing "tests run only when source changes". Releasing means pushing tags. Every release tag **also runs the full test suite**, because `paths` is ignored for tags (our experiment, row 2: `ch03` fired on a tag with no changed files). Nobody noticed because the extra runs were green. The fix, if unwanted: make the trigger explicitly tag-aware with **both** `branches: ['**']` and `tags-ignore: ['**']`. (`tags-ignore` alone would also silence branch pushes, because defining only one ref type blocks the other; Section 16 shows the live proof.)
 
 ## 14. Comparison: Ways to Start a Workflow
 
@@ -271,13 +303,13 @@ A team writes `on: push: paths: ['src/**']` believing "tests run only when sourc
 
 **Failure 1: the tag that starts nothing.** Symptom: you tag a release and the build never runs. Evidence: `demo-v-token` exists on the remote, matches `demo-v*`, and produced **0 runs**; the same pattern from a laptop produced 2. Cause: it was created with `GITHUB_TOKEN`. Fix: create the tag with a personal access token or app token, or call the build as a reusable workflow (Chapters 14 and 20).
 
-**Failure 2: the `paths` filter that does not filter.** Symptom: "path-filtered" tests run on every release. Evidence: `ch03` fired on tag push `demo-v1` with an empty change list. Cause: paths are not applied to tags. Fix: add `tags-ignore: ['**']`.
+**Failure 2: the `paths` filter that does not filter.** Symptom: "path-filtered" tests run on every release. Evidence: `ch03` fired on tag push `demo-v1` with an empty change list. Cause: paths are not applied to tags. Fix: use `branches: ['**']` together with `tags-ignore: ['**']`. We verified it live with `ch06-tag-aware.yml`: it fired on a branch push (run 37315330848) and on `main`, and did **not** fire when tag `demo-v2` was pushed (the same tag started `ch03`, `ch06 events` and `ch06 tags only`).
 
 **Failure 3: the `branches` filter that blocks tags.** Symptom: CI is silent on tags. Evidence: `ci.yml` (`branches: [main]`) did not fire on `demo-v1`. Cause: with only `branches` defined, tag pushes never match. This is usually the *desired* behavior, but it is silent when you meant otherwise.
 
 **Failure 4: the downstream that tests the wrong code.** Symptom: a `workflow_run` workflow passes using stale code. Evidence: downstream `github.sha` was `main`'s commit `4c4ee30f`, not the upstream's `de54f8aa`. Fix: check out `github.event.workflow_run.head_sha`.
 
-All four are asserted in `tests/test_events.py` by comparing the model against the real outcomes.
+Every outcome above is asserted in `tests/test_events.py` by comparing the model against the real runs.
 
 ## 17. Key Takeaways
 
