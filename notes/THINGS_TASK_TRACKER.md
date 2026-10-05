@@ -1,7 +1,7 @@
 # Task Tracker
 
 - [x] Step 0: scaffold, contracts, helpers, tests
-- [ ] Phase 1 (Ch 00-05)
+- [ ] Phase 1 (Ch 00-05): Ch 00 done; 01-05 pending
 - [ ] Phase 2 (Ch 06-10)
 - [ ] Phase 3 (Ch 11-14)
 - [ ] Phase 4 (Ch 15-18)

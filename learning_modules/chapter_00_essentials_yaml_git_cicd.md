@@ -44,6 +44,28 @@
 ## Table of Contents
 
 <!-- TOC -->
+- [1. Why This Chapter Exists](#1-why-this-chapter-exists)
+- [2. Meet Tally: The Running Example](#2-meet-tally-the-running-example)
+- [3. YAML in Ten Minutes](#3-yaml-in-ten-minutes)
+- [4. The Two Traps](#4-the-two-traps)
+- [5. Git Refs: The Names Your Workflows See](#5-git-refs-the-names-your-workflows-see)
+- [6. The Event That Starts Everything](#6-the-event-that-starts-everything)
+- [7. CI, Continuous Delivery, Continuous Deployment](#7-ci-continuous-delivery-continuous-deployment)
+- [8. Pipelines, Stages and Artifacts](#8-pipelines-stages-and-artifacts)
+- [9. Where Workflow Files Live](#9-where-workflow-files-live)
+- [10. YAML Anchors and Aliases](#10-yaml-anchors-and-aliases)
+- [11. Multi-Document Files and Comments](#11-multi-document-files-and-comments)
+- [12. Git Plumbing You Can Ignore for Now](#12-git-plumbing-you-can-ignore-for-now)
+- [13. Case Study: A Typo That Looked Fine](#13-case-study-a-typo-that-looked-fine)
+- [14. Comparison: Three Ways to Automate "Run the Tests"](#14-comparison-three-ways-to-automate-run-the-tests)
+- [15. Practical Tips](#15-practical-tips)
+- [16. Demonstrated Failure Modes](#16-demonstrated-failure-modes)
+- [17. Key Takeaways](#17-key-takeaways)
+- [18. Exercises](#18-exercises)
+- [19. Additional Resources](#19-additional-resources)
+- [20. Appendix A: Code Index](#20-appendix-a-code-index)
+   - [A.1 load_workflow and the `on` fix](#a1-load_workflow-and-the-on-fix)
+   - [A.2 Reproduce both traps](#a2-reproduce-both-traps)
 <!-- /TOC -->
 
 ---
@@ -273,7 +295,7 @@ defaults: &py
 a: *py
 ```
 
-**Important:** GitHub Actions did not support anchors and aliases for a long time and rejected them. Check the current docs before relying on them; where they are unsupported, use reusable workflows or composite actions (Chapter 19, 20) instead.
+**Verified live (2026-10-05):** the workflow-syntax reference does not document anchors, so we tested. `.github/workflows/ch00-yaml-anchors.yml` defines `env: &shared` on a job and reuses it with `env: *shared` on a step. `actionlint` accepts it and run `37307545802` finished `success` in 7 seconds, printing the anchored value. Anchors work today; because they are undocumented in the syntax reference, treat them as a convenience, not a contract, and prefer reusable workflows or composite actions (Chapters 19, 20) for sharing real logic.
 
 ## 11. Multi-Document Files and Comments
 
@@ -363,6 +385,7 @@ All verified 2026-10.
 - GitHub Docs: Understanding GitHub Actions - https://docs.github.com/en/actions/get-started/understand-github-actions
 - GitHub Docs: Workflow syntax reference (file location, extensions) - https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax
 - GitHub Docs: Actions limits (6 hours per job, 256 matrix jobs) - https://docs.github.com/en/actions/reference/limits
+- Live probe run for anchors: https://github.com/Friend09/practice_git_intro_to_github_actions/actions/runs/37307545802
 - YAML 1.1 specification, boolean type (why `on` is `True`) - https://yaml.org/type/bool.html
 - YAML 1.2 specification (what newer parsers fix) - https://yaml.org/spec/1.2.2/
 - Pro Git, "Git Internals: Git References" - https://git-scm.com/book/en/v2/Git-Internals-Git-References
