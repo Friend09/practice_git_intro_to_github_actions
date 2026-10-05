@@ -1,0 +1,21 @@
+name: Tally JS
+description: A dependency-free JavaScript action with main and post steps (Chapter 19).
+inputs:
+  who-to-greet:
+    description: Name to greet (note the hyphen)
+    required: true
+  shout:
+    description: Upper-case the greeting ('true' or 'false')
+    required: false
+    default: 'false'
+outputs:
+  greeting:
+    description: The greeting
+  input-env-names:
+    description: Names of the INPUT_ environment variables the runner provided
+  node-version:
+    description: The Node.js version the action ran on
+runs:
+  using: node24
+  main: main.js
+  post: post.js

@@ -1,0 +1,8 @@
+name: Tally Docker prebuilt
+description: A container action that pulls a prebuilt public image instead of building (Chapter 19).
+runs:
+  using: docker
+  image: docker://alpine:3.20
+  entrypoint: /bin/echo
+  args:
+    - "REPORT prebuilt_action=ran"

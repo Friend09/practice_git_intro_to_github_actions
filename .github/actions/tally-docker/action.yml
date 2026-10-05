@@ -1,0 +1,14 @@
+name: Tally Docker
+description: A container action built from a Dockerfile on every run (Chapter 19).
+inputs:
+  who:
+    description: Name to greet
+    required: true
+outputs:
+  result:
+    description: Always 'ok'
+runs:
+  using: docker
+  image: Dockerfile
+  args:
+    - ${{ inputs.who }}

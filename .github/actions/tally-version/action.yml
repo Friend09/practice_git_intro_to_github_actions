@@ -1,0 +1,30 @@
+name: Tally version
+description: Validate a semantic version and split it into parts (Chapter 19, composite action).
+inputs:
+  version:
+    description: Version without a leading v, for example 1.2.3 or 1.2.3-rc.1
+    required: true
+outputs:
+  normalized:
+    description: The validated version string
+    value: ${{ steps.parse.outputs.normalized }}
+  major:
+    description: Major number
+    value: ${{ steps.parse.outputs.major }}
+  minor:
+    description: Minor number
+    value: ${{ steps.parse.outputs.minor }}
+  patch:
+    description: Patch number
+    value: ${{ steps.parse.outputs.patch }}
+  is-prerelease:
+    description: "'true' if the version has a pre-release suffix"
+    value: ${{ steps.parse.outputs.is_prerelease }}
+runs:
+  using: composite
+  steps:
+    - id: parse
+      shell: bash
+      env:
+        VERSION: ${{ inputs.version }}
+      run: ${{ github.action_path }}/parse.sh
