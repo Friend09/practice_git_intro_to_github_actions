@@ -1,0 +1,92 @@
+name: ch11 python ci
+
+on:
+  push:
+    paths:
+      - 'sandbox/**'
+      - '.github/workflows/ch11-python-ci.yml'
+  pull_request:
+    paths:
+      - 'sandbox/**'
+  workflow_dispatch:
+    inputs:
+      min_cov:
+        description: 'Minimum coverage percent (the gate)'
+        default: '80'
+      lint_bad:
+        description: 'Inject a lint error to see the red lint job'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ch11-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: sandbox/tally
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: sandbox/tally/requirements-dev.txt
+      - run: python -m pip install -r requirements-dev.txt
+      - name: Inject a lint error (demo only)
+        if: ${{ inputs.lint_bad }}
+        run: printf 'import os\n' >> tally/add.py
+      - name: Ruff
+        run: ruff check --output-format=github .
+
+  test:
+    name: test (py${{ matrix.python }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ['3.11', '3.12', '3.13', '3.14']
+    env:
+      MIN_COV: ${{ inputs.min_cov || '80' }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: ${{ matrix.python }}
+          cache: pip
+          cache-dependency-path: sandbox/tally/requirements-dev.txt
+      - run: python -m pip install -r requirements-dev.txt
+      - name: Test with coverage gate
+        run: python -m pytest --cov=tally --cov-report=term-missing --cov-report=xml --cov-fail-under="$MIN_COV"
+      - name: Report
+        if: ${{ always() }}
+        run: |
+          echo "REPORT python=$(python -V) coverage_total=$(python -m coverage report --format=total) gate=$MIN_COV"
+      - uses: actions/upload-artifact@v7
+        if: ${{ always() }}
+        with:
+          name: coverage-${{ matrix.python }}
+          path: sandbox/tally/coverage.xml
+          retention-days: 1
+
+  ci-ok:
+    name: ci-ok (required check)
+    needs: [lint, test]
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    env:
+      LINT: ${{ needs.lint.result }}
+      TEST: ${{ needs.test.result }}
+    steps:
+      - run: |
+          echo "REPORT lint=$LINT test=$TEST"
+          [ "$LINT" = "success" ] && [ "$TEST" = "success" ]
