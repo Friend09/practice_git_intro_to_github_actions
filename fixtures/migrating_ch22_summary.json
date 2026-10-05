@@ -1,0 +1,52 @@
+{
+  "verified": "2026-10-05",
+  "ok_run": {
+    "id": 37337727565,
+    "jobs": {
+      "lint": "success",
+      "test": "success",
+      "deploy": "success",
+      "post": "success"
+    },
+    "post_report": {
+      "post": "always",
+      "lint": "success",
+      "test": "success",
+      "deploy": "success"
+    }
+  },
+  "fail_run": {
+    "id": 37338093415,
+    "first_fail_run_id": 37337741533,
+    "jobs": {
+      "lint": "success",
+      "test": "failure",
+      "deploy": "skipped",
+      "post": "success",
+      "on_failure": "success"
+    },
+    "post_report": {
+      "post": "always",
+      "lint": "success",
+      "test": "failure",
+      "deploy": "skipped"
+    },
+    "post_job_step_level_failure_step": "skipped",
+    "job_level_failure_job": "success"
+  },
+  "docs_failure_function": "Returns true when any previous step of a job fails. If you have a chain of dependent jobs, failure() returns true if any ancestor job fails.",
+  "docs_jenkins_post": "None (no direct equivalent)",
+  "container_checkout": "actions/checkout in python:3.12-slim downloaded a tarball (no git in the image)",
+  "importer": {
+    "docs_commands": [
+      "audit",
+      "forecast",
+      "dry-run",
+      "migrate"
+    ],
+    "docs_install": "gh extension install github/gh-actions-importer (Docker container)",
+    "docs_target": "80% conversion rate",
+    "installed_here": false,
+    "run_here": false
+  }
+}

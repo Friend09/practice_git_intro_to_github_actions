@@ -1,0 +1,27 @@
+{
+  "run_id": 37337727565,
+  "conclusion": "success",
+  "displayTitle": "ch22 translated pipeline",
+  "event": "workflow_dispatch",
+  "headSha": "6a1e231ba4d4f041a821385242d5b5d59fe2e6d1",
+  "reports": {
+    "lint": {
+      "stage": "lint",
+      "color": "blue"
+    },
+    "test": {
+      "stage": "test",
+      "force_fail": "false"
+    },
+    "deploy": {
+      "stage": "deploy",
+      "ran": "yes"
+    },
+    "post": {
+      "post": "always",
+      "lint": "success",
+      "test": "success",
+      "deploy": "success"
+    }
+  }
+}
