@@ -37,3 +37,8 @@ Ten real experiments on this repo, all reproduced by `intro_gha.events.would_fir
 - `workflow_run` downstream ran on main's HEAD (`4c4ee30f`) while reporting the upstream's commit (`de54f8aa`).
 - `tags-ignore: ['**']` alone would also block branch pushes; the working fix is `branches: ['**']` + `tags-ignore: ['**']` (run 37315330848 fired, tag run did not).
 - Deleting a tag and closing a PR started no runs. Throwaway PR #1, branches and tags were removed afterwards.
+
+### Ch 07-08 live verification (2026-10-05)
+- Ch 07: the engine evaluated 32 expressions in 2 runs (37316097820, 37316108422); `intro_gha.expr` reproduces all 64 results. `'false'`/`'0'` strings are truthy; `'10' > '9'` false vs `'10' > 9` true; `failure()` is false after a `continue-on-error` step fails (outcome `failure`, conclusion `success`); `hashFiles(file)` = `sha256(sha256(bytes))`.
+- Ch 08: runs 37317079828 (config) and 37317091672 (environments). Environment var `green` overrides repo var `blue`; env secret length 0 in a job without the environment; secret printed `***` directly and as base64 but a reversed copy leaked until `::add-mask::`; `production` job sat `waiting` 51 s for approval via `pending_deployments` API. Dummy secrets deleted afterwards; `TALLY_COLOR` repo var and `staging`/`production` environments remain.
+- Tooling lesson: `gh api -f` sends strings, so integer fields (`wait_timer`) need `--input` JSON.

@@ -1,0 +1,35 @@
+{
+  "run_id": 37317079828,
+  "conclusion": "success",
+  "displayTitle": "ch08 config",
+  "event": "workflow_dispatch",
+  "headSha": "03d8586cfa365b0b8cce3b4dae26de4bd095ae7d",
+  "reports": {
+    "scopes": {
+      "scope_at_job": "job",
+      "scope_at_step": "step",
+      "same_step_sees": "unset",
+      "next_step_sees": "written-by-previous-step",
+      "next_step_expr": "written-by-previous-step",
+      "CI": "true",
+      "GITHUB_ACTIONS": "true",
+      "repo": "Friend09/practice_git_intro_to_github_actions",
+      "event": "workflow_dispatch",
+      "runner_os": "Linux",
+      "workspace_prefix": "/home/runner/work/practice_git_intro_to_github_actions"
+    },
+    "vars_and_secrets": {
+      "repo_color": "blue",
+      "missing_var": "[]",
+      "env_secret_not_visible_outside_env_len": "0",
+      "secret_direct": "***",
+      "secret_len": "23",
+      "secret_base64": "***",
+      "derived_before_mask": "EULAV-terc3s-omed-yllat",
+      "derived_after_mask": "***"
+    },
+    "workflow_scope_only": {
+      "scope_at_workflow": "workflow"
+    }
+  }
+}

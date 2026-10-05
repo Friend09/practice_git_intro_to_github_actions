@@ -1,0 +1,17 @@
+{
+  "run_id": 37317091672,
+  "conclusion": "success",
+  "displayTitle": "ch08 environments",
+  "event": "workflow_dispatch",
+  "headSha": "03d8586cfa365b0b8cce3b4dae26de4bd095ae7d",
+  "reports": {
+    "staging": {
+      "staging_color": "green",
+      "staging_sees_repo_secret_len": "23",
+      "staging_only_len": "18"
+    },
+    "production": {
+      "production_deployed": "yes"
+    }
+  }
+}

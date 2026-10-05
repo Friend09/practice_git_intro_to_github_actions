@@ -1,0 +1,15 @@
+{
+  "tool": "actionlint 1.7.12",
+  "verified": "2026-10-05",
+  "errors": [
+    {
+      "id": "secrets_in_if",
+      "expression": "if: secrets.DEMO_SECRET != ''",
+      "message": "context \"secrets\" is not allowed here. available contexts are \"env\", \"github\", \"inputs\", \"job\", \"matrix\", \"needs\", \"runner\", \"steps\", \"strategy\", \"vars\"."
+    }
+  ],
+  "gh_cli": {
+    "id": "environment_integer",
+    "message": "Invalid property /wait_timer: `\"0\"` is not of type `integer`. (HTTP 422) -- gh api -f sends strings; use --input with a JSON body"
+  }
+}
