@@ -1,0 +1,41 @@
+{
+  "run_id": 37332265631,
+  "conclusion": "failure",
+  "displayTitle": "ch19 custom actions",
+  "event": "workflow_dispatch",
+  "headSha": "2544f0498c8a353ed397faeea6ba4301572b08dc",
+  "reports": {
+    "javascript_post_after_failure": {
+      "js_post_ran": "yes",
+      "state_started_present": "yes",
+      "elapsed_ms_ge_0": "yes"
+    },
+    "docker_built": {
+      "docker_action": "",
+      "greeting": "hello,_Tally",
+      "os": "alpine",
+      "uid": "0"
+    },
+    "composite": {
+      "composite_normalized": "1.2.3-rc.1",
+      "parts": "1.2.3",
+      "prerelease": "true",
+      "bad_outcome": "failure",
+      "bad_normalized": "[]"
+    },
+    "javascript": {
+      "js_greeting": "HELLO, TALLY",
+      "js_inputs": "INPUT_SHOUT,INPUT_WHO-TO-GREET",
+      "js_node": "v24.19.0",
+      "js_post_ran": "yes",
+      "state_started_present": "yes",
+      "elapsed_ms_ge_0": "yes"
+    },
+    "docker_prebuilt": {
+      "prebuilt_action": "ran"
+    },
+    "remote_reference": {
+      "remote_ref_parts": "3.4.5"
+    }
+  }
+}

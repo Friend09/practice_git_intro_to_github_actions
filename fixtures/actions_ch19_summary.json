@@ -1,0 +1,82 @@
+{
+  "verified": "2026-10-05",
+  "run_id": 37332265631,
+  "actions_commit": "c41ee3a9fba818d86e0faeae6631bc1c08f5fcf5",
+  "composite": {
+    "valid": {
+      "normalized": "1.2.3-rc.1",
+      "parts": "1.2.3",
+      "prerelease": "true"
+    },
+    "invalid": {
+      "input": "1.2",
+      "outcome": "failure",
+      "outputs_empty": true,
+      "annotation_title": "Not a semantic version",
+      "annotation_message": "'1.2' is not MAJOR.MINOR.PATCH"
+    }
+  },
+  "remote_reference": {
+    "uses": "Friend09/practice_git_intro_to_github_actions/.github/actions/tally-version@c41ee3a9fba818d86e0faeae6631bc1c08f5fcf5",
+    "parts": "3.4.5",
+    "download_log": "Download action repository 'Friend09/practice_git_intro_to_github_actions@c41ee3a9...' (SHA:c41ee3a9...)",
+    "checkout_needed": false
+  },
+  "javascript": {
+    "runtime": "node24",
+    "node_version_on_runner": "v24.19.0",
+    "greeting": "HELLO, TALLY",
+    "input_env_names": "INPUT_SHOUT,INPUT_WHO-TO-GREET",
+    "hyphen_preserved": true,
+    "post_ran": true,
+    "state_passed_to_post": true,
+    "post_after_failure": {
+      "job": "javascript_post_after_failure",
+      "failed_step": "Fail on purpose after the action ran",
+      "post_step_conclusion": "success",
+      "post_reported": true
+    },
+    "toolkit_version_note": "@actions/core 3.0.1 on npm (not used; the action is dependency-free)",
+    "unit_tests": {
+      "runner": "node --test",
+      "tests": 2,
+      "passed": 2
+    }
+  },
+  "docker": {
+    "built": {
+      "os": "alpine",
+      "uid": 0,
+      "step_seconds": 8,
+      "greeting": "hello,_Tally"
+    },
+    "prebuilt": {
+      "step_seconds": 2,
+      "ran": true
+    },
+    "dockerfile_built_each_run": true
+  },
+  "broken_actions": {
+    "no_shell": {
+      "github_error": "Failed to load .../tally-noshell/action.yml ... TemplateValidationException: The template is not valid. (Line: 6, Col: 7): Required property is missing: shell",
+      "failed_at": "the step (not Set up job)",
+      "actionlint_exit": 0,
+      "run_id": 37332464081
+    },
+    "missing_main": {
+      "actionlint": "file \"does-not-exist.js\" does not exist in the action directory (runs.main)"
+    },
+    "bad_runtime": {
+      "actionlint": "invalid runner name \"node12\" at runs.using ... valid runners are composite, docker, node20, and node24"
+    },
+    "docker_entrypoint_false_positive": "actionlint reported /bin/echo missing for a docker:// image entrypoint"
+  },
+  "docs": {
+    "post_default": "always()",
+    "pre_default": "always()",
+    "composite_shell_required": true,
+    "outputs_max_job_mb": 1,
+    "outputs_max_run_mb": 50,
+    "input_env_rule": "uppercase, spaces to underscores; hyphens kept"
+  }
+}
