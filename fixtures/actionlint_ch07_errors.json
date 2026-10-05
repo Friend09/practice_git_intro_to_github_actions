@@ -16,6 +16,16 @@
       "id": "status_fn_placement",
       "expression": "success() inside run:",
       "message": "calling function \"success\" is not allowed here. \"success\" is only available in \"jobs.<job_id>.if\", \"jobs.<job_id>.steps.if\"."
+    },
+    {
+      "id": "leading_bang",
+      "expression": "if: !cancelled()",
+      "message": "string should not be empty [syntax-check]; wrapping as ${{ !cancelled() }} passes"
+    },
+    {
+      "id": "env_in_runs_on",
+      "expression": "runs-on: ${{ env.OS }}",
+      "message": "context \"env\" is not allowed here. available contexts are \"github\", \"inputs\", \"matrix\", \"needs\", \"strategy\", \"vars\"."
     }
   ]
 }

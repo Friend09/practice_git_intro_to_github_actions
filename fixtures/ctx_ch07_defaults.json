@@ -1,0 +1,63 @@
+{
+  "run_id": 37316097820,
+  "conclusion": "success",
+  "displayTitle": "ch07 expressions",
+  "event": "workflow_dispatch",
+  "headSha": "0e6ac97d84abc7c27711494b006479751fe254e2",
+  "reports": {
+    "status": {
+      "flaky_outcome": "failure",
+      "flaky_conclusion": "success",
+      "success_step_ran": "yes",
+      "always_step_ran": "yes"
+    },
+    "matrixed (3.12)": {
+      "matrix_py": "3.12",
+      "extra": "[only-on-312]",
+      "matrix_json": "{\"py\":\"3.12\",\"extra\":\"only-on-312\"}",
+      "hash": "1df4e1f839cdb864080ba7277e7331d515c6e8b8695da58fb4a22c04b2820ddf"
+    },
+    "literals": {
+      "eq_num_str": "true",
+      "eq_case": "true",
+      "eq_null_empty": "true",
+      "truthy_string_false": "truthy",
+      "truthy_string_zero": "truthy",
+      "truthy_number_zero": "falsy",
+      "truthy_empty": "falsy",
+      "truthy_null": "falsy",
+      "truthy_fromjson_false": "falsy",
+      "env_flag_text": "truthy",
+      "env_missing_is_empty": "true",
+      "gt_numbers": "true",
+      "gt_strings": "false",
+      "gt_mixed": "true",
+      "and_returns": "b",
+      "or_returns": "default",
+      "not_string": "false",
+      "contains_ci": "true",
+      "startswith": "true",
+      "endswith": "true",
+      "format": "a-b-a",
+      "format_braces": "{literal} x",
+      "join": "x+y+z",
+      "tojson_arr": "[1,2]",
+      "fromjson_num": "3",
+      "contains_array": "true",
+      "event_name": "workflow_dispatch",
+      "ref_name": "main",
+      "runner_os": "Linux",
+      "input_name_default": "world",
+      "input_flag": "false",
+      "input_flag_truthy": "falsy",
+      "pr_title_on_dispatch": "[]",
+      "job_status": "success"
+    },
+    "matrixed (3.10)": {
+      "matrix_py": "3.10",
+      "extra": "[]",
+      "matrix_json": "{\"py\":\"3.10\"}",
+      "hash": "1df4e1f839cdb864080ba7277e7331d515c6e8b8695da58fb4a22c04b2820ddf"
+    }
+  }
+}
