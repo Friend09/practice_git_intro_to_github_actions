@@ -2,3 +2,9 @@
 self-hosted-runner:
   labels:
     - tally-gpu
+
+# Deliberately broken probes (Chapters 19-20): silence only the finding each one demonstrates.
+paths:
+  .github/workflows/ch20-caller-bad-input.yml:
+    ignore:
+      - 'input "who" is required by .*'

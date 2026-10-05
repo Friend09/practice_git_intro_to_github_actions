@@ -1,0 +1,11 @@
+name: ch20 caller denied (expected to fail)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  oidc:
+    uses: ./.github/workflows/ch20-reusable-oidc.yml

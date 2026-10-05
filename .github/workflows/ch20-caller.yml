@@ -1,0 +1,62 @@
+name: ch20 caller
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  CALLER_ENV: from-the-caller
+
+jobs:
+  call_local:
+    uses: ./.github/workflows/ch20-reusable.yml
+    with:
+      who: Tally
+
+  call_matrix:
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ['3.11', '3.12']
+    uses: ./.github/workflows/ch20-reusable.yml
+    with:
+      who: matrix
+      python-version: ${{ matrix.python }}
+      run-tests: false
+
+  call_remote_path:
+    uses: Friend09/practice_git_intro_to_github_actions/.github/workflows/ch20-reusable.yml@58e6665c76701fbc2f31ef401c54bd6a79b94992
+    with:
+      who: remote
+      run-tests: false
+
+  call_inherit:
+    uses: ./.github/workflows/ch20-reusable.yml
+    with:
+      who: inherit
+      run-tests: false
+    secrets: inherit
+
+  call_explicit_secret:
+    uses: ./.github/workflows/ch20-reusable.yml
+    with:
+      who: explicit
+      run-tests: false
+    secrets:
+      demo_secret: ${{ secrets.DEMO_SECRET }}
+
+  consume_output:
+    needs: [call_local]
+    runs-on: ubuntu-latest
+    env:
+      SUMMARY: ${{ needs.call_local.outputs.summary }}
+    steps:
+      - run: echo "REPORT consumed_output=[$SUMMARY]"
+
+  oidc_in_called_workflow:
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/ch20-reusable-oidc.yml

@@ -1,0 +1,11 @@
+name: ch20 caller bad input (expected to fail)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  missing_required_input:
+    uses: ./.github/workflows/ch20-reusable.yml
