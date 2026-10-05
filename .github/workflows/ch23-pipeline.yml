@@ -1,0 +1,174 @@
+name: ch23 tally pipeline
+
+on:
+  workflow_dispatch:
+    inputs:
+      break_tests:
+        description: 'Fail the Python 3.13 test leg on purpose'
+        type: boolean
+        default: false
+      to_production:
+        description: 'Also promote to production (needs vars.GHA_ENABLE_PROD)'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ch23-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  MIN_COV: '80'
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: sandbox/tally
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: sandbox/tally/requirements-dev.txt
+      - run: python -m pip install -r requirements-dev.txt
+      - run: ruff check .
+
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ['3.11', '3.12', '3.13']
+    defaults:
+      run:
+        working-directory: sandbox/tally
+    env:
+      PY: ${{ matrix.python }}
+      BREAK: ${{ inputs.break_tests }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version: ${{ matrix.python }}
+          cache: pip
+          cache-dependency-path: sandbox/tally/requirements-dev.txt
+      - run: python -m pip install -r requirements-dev.txt
+      - run: python -m pytest --cov=tally --cov-fail-under="$MIN_COV" -q
+      - run: |
+          echo "REPORT test python=$PY break=$BREAK"
+          if [ "$BREAK" = "true" ] && [ "$PY" = "3.13" ]; then exit 1; fi
+
+  build:
+    needs: [lint, test]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+    outputs:
+      digest: ${{ steps.d.outputs.digest }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version: '3.12'
+      - name: Build the wheel
+        working-directory: sandbox/tally
+        run: |
+          python -m pip install --quiet build
+          python -m build --wheel
+      - name: Record the wheel digest
+        id: d
+        run: echo "digest=sha256:$(sha256sum sandbox/tally/dist/*.whl | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: sandbox/tally/dist/*.whl
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: tally-wheel
+          path: sandbox/tally/dist/*.whl
+          retention-days: 1
+      - run: echo "REPORT build digest=$DIGEST"
+        env:
+          DIGEST: ${{ steps.d.outputs.digest }}
+
+  verify:
+    needs: [build]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      attestations: read
+    env:
+      GH_TOKEN: ${{ github.token }}
+      EXPECTED: ${{ needs.build.outputs.digest }}
+    steps:
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          name: tally-wheel
+          path: pkg/
+      - name: Check digest and provenance
+        run: |
+          actual="sha256:$(sha256sum pkg/*.whl | cut -d' ' -f1)"
+          [ "$actual" = "$EXPECTED" ]
+          gh attestation verify pkg/*.whl --repo "$GITHUB_REPOSITORY" >/dev/null
+          echo "REPORT verify digest_match=yes attestation=verified"
+
+  deploy_staging:
+    needs: [verify]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: staging
+      url: https://tally.example.invalid/staging
+    steps:
+      - run: echo "REPORT deployed_to=staging sha=${GITHUB_SHA:0:7}"
+
+  deploy_production:
+    needs: [deploy_staging]
+    if: ${{ inputs.to_production && vars.GHA_ENABLE_PROD == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: production
+      url: https://tally.example.invalid/
+    steps:
+      - run: echo "REPORT deployed_to=production sha=${GITHUB_SHA:0:7}"
+
+  summary:
+    needs: [lint, test, build, verify, deploy_staging, deploy_production]
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      RESULTS: ${{ toJSON(needs) }}
+      LINT: ${{ needs.lint.result }}
+      TEST: ${{ needs.test.result }}
+      BUILD: ${{ needs.build.result }}
+      VERIFY: ${{ needs.verify.result }}
+      STAGING: ${{ needs.deploy_staging.result }}
+      PROD: ${{ needs.deploy_production.result }}
+    steps:
+      - name: Write the run summary
+        run: |
+          {
+            echo "### Tally pipeline"
+            echo "| stage | result |"
+            echo "| --- | --- |"
+            echo "| lint | $LINT |"
+            echo "| test | $TEST |"
+            echo "| build | $BUILD |"
+            echo "| verify | $VERIFY |"
+            echo "| staging | $STAGING |"
+            echo "| production | $PROD |"
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "REPORT summary lint=$LINT test=$TEST build=$BUILD verify=$VERIFY staging=$STAGING production=$PROD"
