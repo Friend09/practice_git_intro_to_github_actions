@@ -1,0 +1,26 @@
+name: ch16 script injection
+
+on:
+  workflow_dispatch:
+    inputs:
+      title:
+        description: 'Untrusted text (try a quote followed by a command)'
+        default: 'hello'
+
+permissions:
+  contents: read
+
+jobs:
+  vulnerable:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Interpolate the input straight into the script (UNSAFE)
+        run: echo "REPORT vulnerable_title=${{ inputs.title }}"
+
+  safe:
+    runs-on: ubuntu-latest
+    env:
+      TITLE: ${{ inputs.title }}
+    steps:
+      - name: Pass the input through an environment variable (SAFE)
+        run: echo "REPORT safe_title=$TITLE"
