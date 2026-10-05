@@ -122,7 +122,7 @@ Git has two kinds of tags. A **lightweight** tag points straight at a commit. An
 | `@a892a5a6...` (tag object) | action **downloaded** (`SHA:a892a5a6...`) | failed at run time: `Trusted publishing exchange failure: OpenID Connect token retrieval failed` (we granted no `id-token`) |
 | `@dc37677b...` (commit) | action downloaded (`SHA:dc37677b...`) | the identical run-time failure |
 
-Both resolve and behave identically, so GitHub peels the tag object. But the log's `Download action repository '...' (SHA:...)` line for the first reports a SHA that **is not a commit**; tools that expect a commit may not handle it (we did not test which), and Dependabot, as we saw, did flag it. The fix, applied by hand after the bot closed its PR, is the commit SHA, plus a guard so it cannot recur:
+Both resolve and behave identically, so GitHub peels the tag object. But the log's `Download action repository '...' (SHA:...)` line for the first reports a SHA that **is not a commit**; tools that expect a commit may not handle it (we did not test which), and Dependabot, as we saw, did flag it. The bot then closed PR #3 with the comment "Looks like pypa/gh-action-pypi-publish is no longer updatable, so this is no longer needed." (we had already corrected the pin by then; we did not investigate what 'no longer updatable' keyed on). The fix, applied by hand, is the commit SHA, plus a guard so it cannot recur:
 
 ```bash
 uv run python scripts/pin_actions.py --verify     # each pin must be a commit

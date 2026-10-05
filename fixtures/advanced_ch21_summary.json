@@ -1,0 +1,155 @@
+{
+  "verified": "2026-10-05",
+  "dynamic_matrix": {
+    "unguarded": {
+      "valid": {
+        "run_id": 37333637267,
+        "jobs": [
+          "plan",
+          "run (alpha, 3.11)",
+          "run (beta, 3.12)",
+          "run (gamma, 3.13)"
+        ],
+        "conclusion": "success"
+      },
+      "invalid": {
+        "run_id": 37333707626,
+        "conclusion": "failure",
+        "jobs": [
+          "plan"
+        ],
+        "run_job_present": false,
+        "api_message": false
+      },
+      "empty": {
+        "run_id": 37333767896,
+        "conclusion": "failure",
+        "jobs": [
+          "plan"
+        ],
+        "run_job_present": false,
+        "api_message": false
+      }
+    },
+    "guarded_by_count": {
+      "valid": {
+        "run_id": 37335428986,
+        "legs": 3,
+        "conclusion": "success"
+      },
+      "empty": {
+        "run_id": 37335372099,
+        "run_job": "skipped",
+        "conclusion": "success"
+      },
+      "invalid": {
+        "run_id": 37335483478,
+        "run_job": "skipped",
+        "conclusion": "success",
+        "count_output": "",
+        "silent": true,
+        "count_note": "jq cannot try/catch a malformed input document, so count is empty (jq parse error), not -1"
+      }
+    },
+    "plan_report_valid": "{\"include\":[{\"name\":\"alpha\",\"python\":\"3.11\"},{\"name\":\"beta\",\"python\":\"3.12\"},{\"name\":\"gamma\",\"python\":\"3.13\"}]}",
+    "leg_name_format": "run (alpha, 3.11)",
+    "docs": "fromJSON(needs.<job>.outputs.<x>); docs give no error behavior",
+    "fromjson_empty": {
+      "run_id": 37336333260,
+      "captured": "2026-10-05",
+      "probe": "fromJSON(vars.DOES_NOT_EXIST), an unset repo variable, so the value is the empty string",
+      "step_level": {
+        "conclusion": "failure",
+        "message": "The template is not valid. ... Error reading JToken from JsonReader. Path '', line 0, position 0."
+      },
+      "job_level_if": {
+        "conclusion": "skipped",
+        "steps_run": 0,
+        "note": "no error surfaced; the job was skipped silently"
+      }
+    }
+  },
+  "github_script": {
+    "action": "actions/github-script v9.0.0 (node24), pinned 3a2844b7e9c422d3c10d287c895573f7108da1b3",
+    "node": "v24.19.0",
+    "pr": 6,
+    "created_run": 37334461487,
+    "created": {
+      "action": "created",
+      "files": 1
+    },
+    "updated_run": 37334803026,
+    "updated": {
+      "action": "updated",
+      "files": 2
+    },
+    "comments_on_pr": 1,
+    "title": "Demo: \"quotes\" and $(id -un) in a title",
+    "title_printed_literally": true,
+    "mistaken_pr_5_run": 37334184292,
+    "mistaken_pr_5_comment_files": 5,
+    "builtin_output_result": "The return value of the script, stringified with JSON.stringify",
+    "result_collision": {
+      "setOutput_result_value_seen": "",
+      "other_output_assoc": "OWNER",
+      "runs": [
+        37334895791,
+        37334907699,
+        37334914023
+      ],
+      "fixed_run": 37335212282,
+      "fixed_value": "outcome=ping"
+    }
+  },
+  "chatops": {
+    "issue": 7,
+    "runs": [
+      {
+        "id": 37334883686,
+        "job": "skipped",
+        "why": "PR-close comment, no /tally prefix"
+      },
+      {
+        "id": 37334895791,
+        "job": "success",
+        "command": "ping"
+      },
+      {
+        "id": 37334907699,
+        "job": "success",
+        "command": "echo"
+      },
+      {
+        "id": 37334914023,
+        "job": "success",
+        "command": "nonsense"
+      },
+      {
+        "id": 37334926790,
+        "job": "skipped",
+        "why": "normal comment"
+      }
+    ],
+    "bot_replies": [
+      "pong",
+      "hello from chatops",
+      "Commands: /tally ping, /tally echo <text>"
+    ],
+    "bot_replies_started_runs": 0,
+    "bot_author_association": "NONE",
+    "owner_author_association": "OWNER",
+    "reactions": {
+      "command_comments": "eyes",
+      "normal_comment": ""
+    },
+    "echo_input": "hello    from   chatops",
+    "echo_output": "hello from chatops",
+    "allowed_associations": [
+      "OWNER",
+      "MEMBER",
+      "COLLABORATOR"
+    ],
+    "denial_untested": "single account; modelled in the lab"
+  },
+  "dependabot_comment_on_pr3": "Looks like pypa/gh-action-pypi-publish is no longer updatable, so this is no longer needed."
+}

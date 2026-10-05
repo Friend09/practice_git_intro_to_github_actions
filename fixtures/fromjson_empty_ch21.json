@@ -1,0 +1,14 @@
+{
+  "run_id": 37336333260,
+  "captured": "2026-10-05",
+  "probe": "fromJSON(vars.DOES_NOT_EXIST), an unset repo variable, so the value is the empty string",
+  "step_level": {
+    "conclusion": "failure",
+    "message": "The template is not valid. ... Error reading JToken from JsonReader. Path '', line 0, position 0."
+  },
+  "job_level_if": {
+    "conclusion": "skipped",
+    "steps_run": 0,
+    "note": "no error surfaced; the job was skipped silently"
+  }
+}
