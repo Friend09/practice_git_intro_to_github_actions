@@ -1,0 +1,23 @@
+{
+  "pull_request_target": {
+    "run_id": 37327727095,
+    "conclusion": "success",
+    "event": "pull_request_target",
+    "workflow_version": "base-version",
+    "marker": "base-content",
+    "github_sha": "26b759a",
+    "head_sha": "b859f59",
+    "ref": "refs/heads/main",
+    "head_marker_under_target": "head-content"
+  },
+  "pull_request": {
+    "run_id": 37327726357,
+    "conclusion": "success",
+    "event": "pull_request",
+    "workflow_version": "head-version",
+    "marker": "head-content",
+    "github_sha": "11ad8f8",
+    "head_sha": "b859f59",
+    "ref": "refs/pull/4/merge"
+  }
+}

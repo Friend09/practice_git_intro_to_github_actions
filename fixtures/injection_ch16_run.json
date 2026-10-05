@@ -1,0 +1,19 @@
+{
+  "run_id": 37327434888,
+  "conclusion": "success",
+  "displayTitle": "ch16 script injection",
+  "event": "workflow_dispatch",
+  "headSha": "327d57288244f836680b8f86af34cbd8da712669",
+  "reports": {
+    "vulnerable": {
+      "vulnerable_title": "x",
+      "injected_user": "runner",
+      "injected_host": "runner"
+    },
+    "safe": {
+      "safe_title": "x\"; echo \"REPORT",
+      "injected_user": "$(id -un)",
+      "injected_host": "$(hostname | cut -c1-6)\"; echo \""
+    }
+  }
+}

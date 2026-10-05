@@ -1,0 +1,30 @@
+name: ch16 sha pinning policy
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  pinned:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - run: echo "REPORT pinned_job=ran"
+
+  unpinned_tag:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - run: echo "REPORT unpinned_tag_job=ran"
+
+  tag_object_sha:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      # SHA of the annotated TAG OBJECT, not the commit (see Section 6)
+      - uses: pypa/gh-action-pypi-publish@a892a5a61159132606e93a2fa6f4358831b04d26
+        with:
+          packages-dir: does-not-exist/
+      - run: echo "REPORT tag_object_job=ran"

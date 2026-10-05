@@ -48,7 +48,9 @@ def test_workdir_trap_is_detected() -> None:
     assert jobs_missing_checkout_with_workflow_workdir(buggy) == []
 
 
-PIN_EXEMPT = {"ch04-uses-forms.yml", "ch04-bad-ref.yml"}  # they teach unpinned forms
+PIN_EXEMPT = {  # these teach unpinned or mis-pinned forms on purpose
+    "ch04-uses-forms.yml", "ch04-bad-ref.yml", "ch16-sha-policy.yml",
+}
 
 
 def test_remote_actions_are_sha_pinned() -> None:

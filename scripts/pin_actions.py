@@ -16,7 +16,7 @@ from functools import cache
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-EXEMPT = {"ch04-uses-forms.yml", "ch04-bad-ref.yml"}
+EXEMPT = {"ch04-uses-forms.yml", "ch04-bad-ref.yml", "ch16-sha-policy.yml", "ch16-tag-object-sha.yml"}
 LINE = re.compile(r"^(?P<indent>\s*(?:-\s+)?uses:\s*)(?P<ref>[^\s#]+)(?P<rest>.*)$")
 SHA = re.compile(r"^[0-9a-f]{40}$")
 
