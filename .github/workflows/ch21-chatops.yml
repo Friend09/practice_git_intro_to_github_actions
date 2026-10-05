@@ -1,0 +1,52 @@
+name: ch21 chatops
+
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+jobs:
+  command:
+    if: ${{ startsWith(github.event.comment.body, '/tally') }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run a slash command
+        id: cmd
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          BODY: ${{ github.event.comment.body }}
+          ASSOC: ${{ github.event.comment.author_association }}
+          AUTHOR: ${{ github.event.comment.user.login }}
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const issue_number = context.issue.number;
+            const allowed = ['OWNER', 'MEMBER', 'COLLABORATOR'];
+            const [, sub, ...rest] = process.env.BODY.trim().split(/\s+/);
+            await github.rest.reactions.createForIssueComment({
+              owner, repo, comment_id: context.payload.comment.id, content: 'eyes' });
+            let reply;
+            if (!allowed.includes(process.env.ASSOC)) {
+              reply = 'Not authorized (' + process.env.ASSOC + ').';
+              core.setOutput('result', 'denied');
+            } else if (sub === 'ping') {
+              reply = 'pong';
+              core.setOutput('result', 'ping');
+            } else if (sub === 'echo') {
+              reply = rest.join(' ') || '(nothing to echo)';
+              core.setOutput('result', 'echo');
+            } else {
+              reply = 'Commands: /tally ping, /tally echo <text>';
+              core.setOutput('result', 'help');
+            }
+            await github.rest.issues.createComment({ owner, repo, issue_number, body: reply });
+            core.setOutput('assoc', process.env.ASSOC);
+      - name: Report
+        env:
+          RESULT: ${{ steps.cmd.outputs.result }}
+          ASSOC: ${{ steps.cmd.outputs.assoc }}
+        run: echo "REPORT chatops result=$RESULT assoc=$ASSOC"

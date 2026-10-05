@@ -38,3 +38,16 @@ def test_vulnerable_job_is_flagged_and_safe_job_is_not() -> None:
     """Static analysis agrees with the live experiment."""
     sites = injection_sites(load_workflow(WORKFLOWS_DIR / "ch16-injection.yml"))
     assert [s[0] for s in sites] == ["vulnerable"]
+
+
+def test_github_script_input_is_scanned_too() -> None:
+    """An expression inside actions/github-script's script input is an injection site."""
+    wf = {"jobs": {"j": {"steps": [{
+        "uses": "actions/github-script@" + "a" * 40,
+        "with": {"script": "core.info('${{ github.event.issue.title }}')"}}]}}}
+    assert injection_sites(wf) == [("j", 0, "github.event.issue.title")]
+    safe = {"jobs": {"j": {"steps": [{
+        "uses": "actions/github-script@" + "a" * 40,
+        "env": {"T": "${{ github.event.issue.title }}"},
+        "with": {"script": "core.info(process.env.T)"}}]}}}
+    assert injection_sites(safe) == []

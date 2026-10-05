@@ -32,11 +32,23 @@ def untrusted_expressions(script: str) -> list[str]:
     ]
 
 
+def step_scripts(step: dict[str, Any]) -> list[str]:
+    """Script text a step executes: its ``run:`` and a github-script ``with.script``."""
+    scripts = [step.get("run", "")]
+    if str(step.get("uses", "")).startswith("actions/github-script@"):
+        scripts.append(str(step.get("with", {}).get("script", "")))
+    return scripts
+
+
 def injection_sites(workflow: dict[str, Any]) -> list[tuple[str, int, str]]:
-    """Return ``(job_id, step_index, expression)`` for each unsafe interpolation."""
+    """Return ``(job_id, step_index, expression)`` for each unsafe interpolation.
+
+    Scans ``run:`` scripts and the ``script:`` input of ``actions/github-script``.
+    """
     sites = []
     for job_id, job in workflow.get("jobs", {}).items():
         for i, step in enumerate(job.get("steps", [])):
-            for expr in untrusted_expressions(step.get("run", "")):
-                sites.append((job_id, i, expr))
+            for script in step_scripts(step):
+                for expr in untrusted_expressions(script):
+                    sites.append((job_id, i, expr))
     return sites
