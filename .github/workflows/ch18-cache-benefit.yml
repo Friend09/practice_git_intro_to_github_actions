@@ -1,0 +1,37 @@
+name: ch18 cache benefit
+
+on:
+  workflow_dispatch:
+    inputs:
+      use_cache:
+        description: 'Use the pip cache'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  install:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Set up Python (cache optional)
+        id: py
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version: '3.12'
+          cache: ${{ inputs.use_cache && 'pip' || '' }}
+          cache-dependency-path: sandbox/ch18/requirements.txt
+      - name: Install a heavy dependency set
+        env:
+          USE_CACHE: ${{ inputs.use_cache }}
+        run: |
+          start=$(date +%s)
+          python -m pip install --quiet -r sandbox/ch18/requirements.txt
+          end=$(date +%s)
+          echo "REPORT install_seconds=$((end-start)) cache_input=$USE_CACHE"
+      - name: Size of what was installed
+        run: |
+          echo "REPORT site_packages_mb=$(du -sm "$(python -c 'import site;print(site.getsitepackages()[0])')" | cut -f1) pip_cache_mb=$(du -sm "$(pip cache dir)" 2>/dev/null | cut -f1)"
