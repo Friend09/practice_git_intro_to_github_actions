@@ -1,0 +1,57 @@
+[
+  {
+    "run_id": 37328217567,
+    "title": "ch16: attestation workflow",
+    "cause": "ruff lint error"
+  },
+  {
+    "run_id": 37328012929,
+    "title": "ch16: allow list probe workflow",
+    "cause": "ruff lint error"
+  },
+  {
+    "run_id": 37327837315,
+    "title": "ch16: sha pinning policy probe; PR-context and injection evidence",
+    "cause": "ruff lint error"
+  },
+  {
+    "run_id": 37327268102,
+    "title": "build(deps): bump pypa/gh-action-pypi-publish from a892a5a61159132606e93a2fa6f",
+    "cause": "ruff lint error"
+  },
+  {
+    "run_id": 37326888441,
+    "title": "ch15: token and permissions (chapter, model, lab, notebooks, probes);\u2026",
+    "cause": "ruff lint error"
+  },
+  {
+    "run_id": 37321165484,
+    "title": "ch11: test median and empty inputs (coverage to 100%)",
+    "cause": "ruff lint error"
+  },
+  {
+    "run_id": 37315255484,
+    "title": "ch06: tag-aware and tags-only probes",
+    "cause": "chapter committed before its notebooks/labs"
+  },
+  {
+    "run_id": 37313042900,
+    "title": "ch05: no-runner demo",
+    "cause": "invalid workflow YAML"
+  },
+  {
+    "run_id": 37311208634,
+    "title": "ch02: no-checkout probe",
+    "cause": "ruff lint error"
+  },
+  {
+    "run_id": 37311033374,
+    "title": "ch01 chapter+lab; ch02 demo workflow",
+    "cause": "ruff lint error"
+  },
+  {
+    "run_id": 37307535754,
+    "title": "ch00: YAML anchors probe workflow",
+    "cause": "chapter committed before its notebooks/labs"
+  }
+]

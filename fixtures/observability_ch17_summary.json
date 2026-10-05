@@ -1,0 +1,136 @@
+{
+  "verified": "2026-10-05",
+  "annotations": {
+    "run_id": 37329174822,
+    "emitted_per_level": 15,
+    "surfaced": {
+      "error": 10,
+      "warning": 10,
+      "notice": 11
+    },
+    "platform_notice": "The ubuntu-latest label will migrate to Ubuntu 26 beginning October 19, 2026.",
+    "scope_run_id": 37329444667,
+    "two_steps_of_8_errors": {
+      "step1": 8,
+      "step2": 8,
+      "total": 16
+    },
+    "cap": "10 per level per step (docs state no number)"
+  },
+  "rerun": {
+    "run_id": 37329174822,
+    "attempt1": {
+      "flaky": "failure",
+      "commands": "success",
+      "stable": "success",
+      "stable_attempt_value": 1
+    },
+    "attempt2_via_rerun_failed": {
+      "flaky": "success",
+      "flaky_attempt_value": 2,
+      "stable_attempt_value": 1,
+      "commands_started_again": false,
+      "flaky_started": "15:00:09",
+      "others_started": "14:59:30"
+    }
+  },
+  "debug": {
+    "attempt1": {
+      "total_lines": 187,
+      "debug_lines": 0
+    },
+    "attempt3_via_rerun_debug": {
+      "total_lines": 333,
+      "debug_lines": 140
+    },
+    "trace_example": [
+      "##[debug]Evaluating: ((github.event_name == 'workflow_dispatch') && success())",
+      "##[debug]..Evaluating Equal:",
+      "##[debug]Expanded: (('workflow_dispatch' == 'workflow_dispatch') && true)"
+    ],
+    "debug_command_output_only_with_debug": true
+  },
+  "disabled": {
+    "state": "disabled_manually",
+    "dispatch_error": "HTTP 422: Cannot trigger a 'workflow_dispatch' on a disabled workflow"
+  },
+  "act": {
+    "version": "0.2.89",
+    "list_stages": {
+      "0": [
+        "a"
+      ],
+      "1": [
+        "b",
+        "report_default"
+      ],
+      "2": [
+        "c"
+      ],
+      "3": [
+        "report_always",
+        "report_on_failure"
+      ]
+    },
+    "dry_run_results": {
+      "a": "failure",
+      "report_always": "a=failure b=skipped c=skipped",
+      "report_on_failure": "ran"
+    },
+    "warning": "host mode (-self-hosted) executes run: steps on your machine"
+  },
+  "retention": {
+    "days": 90,
+    "maximum_allowed_days": 90
+  },
+  "timing_endpoint": {
+    "public_repo_billable_ms": 0
+  },
+  "docs": {
+    "summary_limit_per_step": "1 MiB",
+    "summaries_displayed_per_job": 20,
+    "artifacts_per_job_max": 500
+  },
+  "actionlint_catches_in_this_course": [
+    {
+      "chapter": "02",
+      "finding": "SC2012 use find instead of ls"
+    },
+    {
+      "chapter": "05",
+      "finding": "could not parse as YAML: mapping values are not allowed in this context"
+    },
+    {
+      "chapter": "05",
+      "finding": "label \"tally-gpu\" is unknown"
+    },
+    {
+      "chapter": "07",
+      "finding": "unexpected character '+' while lexing expression"
+    },
+    {
+      "chapter": "07",
+      "finding": "github.event.pull_request.title is potentially untrusted"
+    },
+    {
+      "chapter": "07",
+      "finding": "calling function \"success\" is not allowed here"
+    },
+    {
+      "chapter": "07",
+      "finding": "context \"env\" is not allowed here (runs-on)"
+    },
+    {
+      "chapter": "08",
+      "finding": "context \"secrets\" is not allowed here (if)"
+    },
+    {
+      "chapter": "07",
+      "finding": "leading ! in if: needs ${{ }}"
+    },
+    {
+      "chapter": "10",
+      "finding": "could not parse as YAML (unquoted ': ' in run)"
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 UV ?= uv
 
-.PHONY: sync lint test validate lint-workflows run-notebooks pr
+.PHONY: sync lint test validate lint-workflows run-notebooks pr hooks
 
 sync:
 	$(UV) sync --group core
@@ -30,3 +30,7 @@ pr:
 	git switch -c $(BRANCH) && echo "# touch $$(date +%s)" >> sandbox/tally/tally/__init__.py \
 	  && git commit -am "sandbox: demo $(BRANCH)" && git push -u origin $(BRANCH) \
 	  && gh pr create --fill
+
+# Enable the pre-commit gate (ruff + actionlint + pytest) for this clone.
+hooks:
+	git config core.hooksPath .githooks

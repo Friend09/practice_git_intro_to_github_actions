@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+# Pre-commit gate (Chapter 17): the three checks that caught 11 of our own CI failures.
+# Enable once per clone:  git config core.hooksPath .githooks   (or: make hooks)
+set -euo pipefail
+cd "$(git rev-parse --show-toplevel)"
+uv run ruff check .
+if compgen -G ".github/workflows/*.yml" > /dev/null && command -v actionlint > /dev/null; then
+  actionlint .github/workflows/*.yml
+fi
+uv run pytest -q -x
