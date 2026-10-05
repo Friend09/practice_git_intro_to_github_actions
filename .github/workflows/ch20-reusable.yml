@@ -1,0 +1,60 @@
+name: ch20 reusable (called)
+
+on:
+  workflow_call:
+    inputs:
+      who:
+        description: 'Name to greet (required)'
+        type: string
+        required: true
+      python-version:
+        description: 'Python version label'
+        type: string
+        default: '3.12'
+      run-tests:
+        description: 'Whether to run the Tally tests'
+        type: boolean
+        default: true
+    secrets:
+      demo_secret:
+        description: 'An optional secret'
+        required: false
+    outputs:
+      summary:
+        description: 'One-line summary produced by the build job'
+        value: ${{ jobs.build.outputs.summary }}
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    outputs:
+      summary: ${{ steps.s.outputs.summary }}
+    env:
+      WHO: ${{ inputs.who }}
+      PYV: ${{ inputs.python-version }}
+      RUN_TESTS: ${{ inputs.run-tests }}
+      DEMO_SECRET: ${{ secrets.demo_secret }}
+      WORKFLOW_NAME: ${{ github.workflow }}
+      EVENT: ${{ github.event_name }}
+      WORKFLOW_REF: ${{ github.workflow_ref }}
+      COLOR: ${{ vars.TALLY_COLOR }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Report what the called workflow sees
+        id: s
+        env:
+          CALLER_ENV_SEEN: ${{ env.CALLER_ENV }}
+        run: |
+          echo "REPORT called who=$WHO python=$PYV run_tests=$RUN_TESTS secret_len=${#DEMO_SECRET} color=$COLOR caller_env=[$CALLER_ENV_SEEN]"
+          echo "REPORT contexts workflow=[$WORKFLOW_NAME] event=$EVENT"
+          echo "REPORT refs workflow_ref=$WORKFLOW_REF"
+          echo "summary=hello $WHO on python $PYV" >> "$GITHUB_OUTPUT"
+      - name: Tests
+        if: ${{ inputs.run-tests }}
+        working-directory: sandbox/tally
+        run: |
+          python -m pip install --quiet pytest
+          python -m pytest -q | tail -1
