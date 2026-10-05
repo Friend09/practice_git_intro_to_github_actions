@@ -1,0 +1,116 @@
+name: ch09 data
+
+on:
+  workflow_dispatch:
+    inputs:
+      salt:
+        description: 'Cache key salt (change it to force a cache miss)'
+        default: a
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.ver.outputs.version }}
+      notes: ${{ steps.ver.outputs.notes }}
+      digest: ${{ steps.pack.outputs.digest }}
+    steps:
+      - name: Compute outputs
+        id: ver
+        run: |
+          echo "version=0.1.${{ github.run_number }}" >> "$GITHUB_OUTPUT"
+          {
+            echo 'notes<<EOF'
+            echo 'line one'
+            echo 'line two'
+            echo EOF
+          } >> "$GITHUB_OUTPUT"
+      - name: Build a fake distribution
+        id: pack
+        run: |
+          mkdir dist
+          echo "tally ${{ steps.ver.outputs.version }}" > dist/tally.txt
+          head -c 2048 /dev/zero > dist/payload.bin
+          echo "digest=$(cat dist/* | sha256sum | cut -c1-16)" >> "$GITHUB_OUTPUT"
+      - name: Upload the artifact
+        id: up
+        uses: actions/upload-artifact@v7
+        with:
+          name: tally-dist
+          path: dist/
+          retention-days: 1
+      - name: Upload with no matching files (default is a warning)
+        uses: actions/upload-artifact@v7
+        with:
+          name: empty
+          path: nothing-here/*.xyz
+      - name: Upload with no matching files, if-no-files-found error
+        id: strict
+        continue-on-error: true
+        uses: actions/upload-artifact@v7
+        with:
+          name: empty-strict
+          path: nothing-here/*.xyz
+          if-no-files-found: error
+      - name: Upload the same artifact name again
+        id: dup
+        continue-on-error: true
+        uses: actions/upload-artifact@v7
+        with:
+          name: tally-dist
+          path: dist/
+      - name: Report
+        env:
+          STRICT: ${{ steps.strict.outcome }}
+          DUP: ${{ steps.dup.outcome }}
+          ARTIFACT_ID: ${{ steps.up.outputs.artifact-id }}
+          ARTIFACT_URL: ${{ steps.up.outputs.artifact-url }}
+        run: |
+          echo "REPORT strict_outcome=$STRICT duplicate_outcome=$DUP"
+          echo "REPORT artifact_id_set=${ARTIFACT_ID:+yes} url_set=${ARTIFACT_URL:+yes}"
+
+  consume:
+    needs: [build]
+    runs-on: ubuntu-latest
+    env:
+      VERSION: ${{ needs.build.outputs.version }}
+      NOTES: ${{ needs.build.outputs.notes }}
+      DIGEST: ${{ needs.build.outputs.digest }}
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: tally-dist
+          path: got/
+      - name: Verify
+        run: |
+          echo "REPORT version=$VERSION"
+          echo "REPORT notes_lines=$(printf '%s\n' "$NOTES" | wc -l) notes_first=$(printf '%s\n' "$NOTES" | head -1)"
+          echo "REPORT files=$(find got -type f | sort | tr '\n' ',')"
+          echo "REPORT digest_match=$([ "$(cat got/* | sha256sum | cut -c1-16)" = "$DIGEST" ] && echo yes || echo no)"
+          echo "REPORT no_checkout_here=$([ -f pyproject.toml ] && echo present || echo absent)"
+
+  cache:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Restore cache
+        id: cache
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/ch09-deps
+          key: ch09-${{ inputs.salt }}-${{ hashFiles('pyproject.toml') }}
+      - name: Install dependencies (slow on a miss)
+        if: ${{ steps.cache.outputs.cache-hit != 'true' }}
+        run: |
+          mkdir -p ~/.cache/ch09-deps
+          sleep 12
+          head -c 20000000 /dev/urandom > ~/.cache/ch09-deps/deps.bin
+      - name: Report
+        env:
+          HIT: ${{ steps.cache.outputs.cache-hit }}
+          KEY: ch09-${{ inputs.salt }}-${{ hashFiles('pyproject.toml') }}
+        run: |
+          echo "REPORT cache_hit=[$HIT] key=$KEY size_bytes=$(stat -c %s ~/.cache/ch09-deps/deps.bin)"
