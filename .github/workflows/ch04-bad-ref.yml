@@ -1,0 +1,14 @@
+name: ch04 bad ref (expected to fail)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  broken:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Reference a tag that does not exist
+        uses: astral-sh/setup-uv@v10
