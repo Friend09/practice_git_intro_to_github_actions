@@ -1,0 +1,106 @@
+name: ch07 expressions
+
+on:
+  workflow_dispatch:
+    inputs:
+      name:
+        description: 'Optional name (leave empty to test the || default)'
+        required: false
+        default: ''
+      flag:
+        description: 'A boolean input'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+env:
+  FLAG_TEXT: 'false'
+  ZERO_TEXT: '0'
+  EMPTY: ''
+
+jobs:
+  literals:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Truthiness and comparison
+        run: |
+          echo "REPORT eq_num_str=${{ 1 == '1' }}"
+          echo "REPORT eq_case=${{ 'abc' == 'ABC' }}"
+          echo "REPORT eq_null_empty=${{ null == '' }}"
+          echo "REPORT truthy_string_false=${{ 'false' && 'truthy' || 'falsy' }}"
+          echo "REPORT truthy_string_zero=${{ '0' && 'truthy' || 'falsy' }}"
+          echo "REPORT truthy_number_zero=${{ 0 && 'truthy' || 'falsy' }}"
+          echo "REPORT truthy_empty=${{ '' && 'truthy' || 'falsy' }}"
+          echo "REPORT truthy_null=${{ null && 'truthy' || 'falsy' }}"
+          echo "REPORT truthy_fromjson_false=${{ fromJSON('false') && 'truthy' || 'falsy' }}"
+          echo "REPORT env_flag_text=${{ env.FLAG_TEXT && 'truthy' || 'falsy' }}"
+          echo "REPORT env_missing_is_empty=${{ env.NOPE == '' }}"
+          echo "REPORT gt_numbers=${{ 10 > 9 }}"
+          echo "REPORT gt_strings=${{ '10' > '9' }}"
+          echo "REPORT gt_mixed=${{ '10' > 9 }}"
+          echo "REPORT and_returns=${{ 'a' && 'b' }}"
+          echo "REPORT or_returns=${{ '' || 'default' }}"
+          echo "REPORT not_string=${{ !'x' }}"
+      - name: Functions
+        run: |
+          echo "REPORT contains_ci=${{ contains('Hello World', 'WORLD') }}"
+          echo "REPORT startswith=${{ startsWith('refs/heads/main', 'refs/heads/') }}"
+          echo "REPORT endswith=${{ endsWith('report.md', '.md') }}"
+          echo "REPORT format=${{ format('{0}-{1}-{0}', 'a', 'b') }}"
+          echo "REPORT format_braces=${{ format('{{literal}} {0}', 'x') }}"
+          echo "REPORT join=${{ join(fromJSON('["x","y","z"]'), '+') }}"
+          echo "REPORT tojson_arr=${{ toJSON(fromJSON('[1,2]')) }}"
+          echo "REPORT fromjson_num=${{ fromJSON('3') }}"
+          echo "REPORT contains_array=${{ contains(fromJSON('["a","b"]'), 'b') }}"
+      - name: Contexts
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          echo "REPORT event_name=${{ github.event_name }}"
+          echo "REPORT ref_name=${{ github.ref_name }}"
+          echo "REPORT runner_os=${{ runner.os }}"
+          echo "REPORT input_name_default=${{ inputs.name || 'world' }}"
+          echo "REPORT input_flag=${{ inputs.flag }}"
+          echo "REPORT input_flag_truthy=${{ inputs.flag && 'truthy' || 'falsy' }}"
+          echo "REPORT pr_title_on_dispatch=[$PR_TITLE]"
+          echo "REPORT job_status=${{ job.status }}"
+
+  status:
+    runs-on: ubuntu-latest
+    steps:
+      - name: A step that fails but is allowed to
+        id: flaky
+        continue-on-error: true
+        run: exit 1
+      - name: Outcome vs conclusion
+        run: |
+          echo "REPORT flaky_outcome=${{ steps.flaky.outcome }}"
+          echo "REPORT flaky_conclusion=${{ steps.flaky.conclusion }}"
+      - name: Runs only on success()
+        if: ${{ success() }}
+        run: echo "REPORT success_step_ran=yes"
+      - name: Runs only on failure()
+        if: ${{ failure() }}
+        run: echo "REPORT failure_step_ran=yes"
+      - name: Runs always
+        if: ${{ always() }}
+        run: echo "REPORT always_step_ran=yes"
+
+  matrixed:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        py: ['3.10', '3.12']
+        include:
+          - py: '3.12'
+            extra: only-on-312
+    steps:
+      - name: Matrix context
+        run: |
+          echo "REPORT matrix_py=${{ matrix.py }} extra=[${{ matrix.extra }}]"
+          echo "REPORT matrix_json=${{ toJSON(matrix) }}"
+      - uses: actions/checkout@v7
+      - name: hashFiles
+        run: echo "REPORT hash_len=${{ format('{0}', hashFiles('sandbox/tally/tally/add.py')) }}"

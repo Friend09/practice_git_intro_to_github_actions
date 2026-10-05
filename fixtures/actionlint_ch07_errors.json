@@ -1,0 +1,21 @@
+{
+  "tool": "actionlint 1.7.12",
+  "verified": "2026-10-05",
+  "errors": [
+    {
+      "id": "no_arithmetic",
+      "expression": "fromJSON('3') + 1",
+      "message": "got unexpected character '+' while lexing expression, expecting 'a'..'z', 'A'..'Z', '_', '0'..'9', ''', '}', '(', ')', '[', ']', '.', '!', '<', '>', '=', '&', '|', '*', ',', ' ' [expression]"
+    },
+    {
+      "id": "untrusted_input",
+      "expression": "github.event.pull_request.title",
+      "message": "\"github.event.pull_request.title\" is potentially untrusted. avoid using it directly in inline scripts. instead, pass it through an environment variable."
+    },
+    {
+      "id": "status_fn_placement",
+      "expression": "success() inside run:",
+      "message": "calling function \"success\" is not allowed here. \"success\" is only available in \"jobs.<job_id>.if\", \"jobs.<job_id>.steps.if\"."
+    }
+  ]
+}
