@@ -1,0 +1,124 @@
+{
+  "run_id": 37333020006,
+  "jobs": {
+    "call_local / build": {
+      "conclusion": "success",
+      "reports": {
+        "called": "",
+        "who": "Tally",
+        "python": "3.12",
+        "run_tests": "true",
+        "secret_len": "0",
+        "color": "blue",
+        "caller_env": "[]",
+        "contexts": "",
+        "workflow": "[ch20 caller]",
+        "event": "workflow_dispatch",
+        "refs": "",
+        "workflow_ref": "Friend09/practice_git_intro_to_github_actions/.github/workflows/ch20-caller.yml@refs/heads/main"
+      }
+    },
+    "call_explicit_secret / build": {
+      "conclusion": "success",
+      "reports": {
+        "called": "",
+        "who": "explicit",
+        "python": "3.12",
+        "run_tests": "false",
+        "secret_len": "23",
+        "color": "blue",
+        "caller_env": "[]",
+        "contexts": "",
+        "workflow": "[ch20 caller]",
+        "event": "workflow_dispatch",
+        "refs": "",
+        "workflow_ref": "Friend09/practice_git_intro_to_github_actions/.github/workflows/ch20-caller.yml@refs/heads/main"
+      }
+    },
+    "call_remote_path / build": {
+      "conclusion": "success",
+      "reports": {
+        "called": "",
+        "who": "remote",
+        "python": "3.12",
+        "run_tests": "false",
+        "secret_len": "0",
+        "color": "blue",
+        "caller_env": "[]",
+        "contexts": "",
+        "workflow": "[ch20 caller]",
+        "event": "workflow_dispatch",
+        "refs": "",
+        "workflow_ref": "Friend09/practice_git_intro_to_github_actions/.github/workflows/ch20-caller.yml@refs/heads/main"
+      }
+    },
+    "oidc_in_called_workflow / claims": {
+      "conclusion": "success",
+      "reports": {
+        "oidc_sub": "repo:Friend09@7501015/practice_git_intro_to_github_actions@1405684500:ref:refs/heads/main",
+        "oidc_job_workflow_ref": "Friend09/practice_git_intro_to_github_actions/.github/workflows/ch20-reusable-oidc.yml@refs/heads/main",
+        "oidc_workflow_ref": "Friend09/practice_git_intro_to_github_actions/.github/workflows/ch20-caller.yml@refs/heads/main",
+        "oidc_workflow": "ch20 caller",
+        "oidc_event_name": "workflow_dispatch",
+        "oidc_ref": "refs/heads/main"
+      }
+    },
+    "call_matrix (3.12) / build": {
+      "conclusion": "success",
+      "reports": {
+        "called": "",
+        "who": "matrix",
+        "python": "3.12",
+        "run_tests": "false",
+        "secret_len": "0",
+        "color": "blue",
+        "caller_env": "[]",
+        "contexts": "",
+        "workflow": "[ch20 caller]",
+        "event": "workflow_dispatch",
+        "refs": "",
+        "workflow_ref": "Friend09/practice_git_intro_to_github_actions/.github/workflows/ch20-caller.yml@refs/heads/main"
+      }
+    },
+    "call_matrix (3.11) / build": {
+      "conclusion": "success",
+      "reports": {
+        "called": "",
+        "who": "matrix",
+        "python": "3.11",
+        "run_tests": "false",
+        "secret_len": "0",
+        "color": "blue",
+        "caller_env": "[]",
+        "contexts": "",
+        "workflow": "[ch20 caller]",
+        "event": "workflow_dispatch",
+        "refs": "",
+        "workflow_ref": "Friend09/practice_git_intro_to_github_actions/.github/workflows/ch20-caller.yml@refs/heads/main"
+      }
+    },
+    "call_inherit / build": {
+      "conclusion": "success",
+      "reports": {
+        "called": "",
+        "who": "inherit",
+        "python": "3.12",
+        "run_tests": "false",
+        "secret_len": "23",
+        "color": "blue",
+        "caller_env": "[]",
+        "contexts": "",
+        "workflow": "[ch20 caller]",
+        "event": "workflow_dispatch",
+        "refs": "",
+        "workflow_ref": "Friend09/practice_git_intro_to_github_actions/.github/workflows/ch20-caller.yml@refs/heads/main"
+      }
+    },
+    "consume_output": {
+      "conclusion": "success",
+      "reports": {
+        "consumed_output": "[hello Tally on python 3.12]"
+      }
+    }
+  }
+}

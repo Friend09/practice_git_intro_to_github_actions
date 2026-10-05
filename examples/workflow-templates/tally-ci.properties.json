@@ -1,0 +1,7 @@
+{
+  "name": "Tally CI",
+  "description": "Run the shared Python CI workflow for a Tally-style project.",
+  "iconName": "octicon workflow",
+  "categories": ["Python", "Continuous integration"],
+  "filePatterns": ["pyproject.toml$"]
+}
