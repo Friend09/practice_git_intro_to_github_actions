@@ -1,0 +1,141 @@
+{
+  "verified": "2026-10-05",
+  "runs": [
+    {
+      "label": "no cache",
+      "run_id": 37330675284,
+      "job_seconds": 54,
+      "steps": {
+        "Set up job": 1,
+        "Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1": 1,
+        "Set up Python (cache optional)": 0,
+        "Install a heavy dependency set": 49,
+        "Size of what was installed": 0,
+        "Post Set up Python (cache optional)": 0,
+        "Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1": 1,
+        "Complete job": 0
+      },
+      "report": {
+        "install_seconds": "49",
+        "cache_input": "false",
+        "site_packages_mb": "1329",
+        "pip_cache_mb": "301"
+      },
+      "cache_lines": []
+    },
+    {
+      "label": "cache miss (first)",
+      "run_id": 37330856258,
+      "job_seconds": 55,
+      "steps": {
+        "Set up job": 1,
+        "Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1": 1,
+        "Set up Python (cache optional)": 3,
+        "Install a heavy dependency set": 44,
+        "Size of what was installed": 1,
+        "Post Set up Python (cache optional)": 2,
+        "Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1": 0,
+        "Complete job": 0
+      },
+      "report": {
+        "install_seconds": "44",
+        "cache_input": "true",
+        "site_packages_mb": "1329",
+        "pip_cache_mb": "315"
+      },
+      "cache_lines": [
+        "Cache restored successfully",
+        "Cache saved with the key: setup-python-Linux-x64-24.04-Ubuntu-python-3.12.14-pip-377311ad7"
+      ]
+    },
+    {
+      "label": "cache hit",
+      "run_id": 37331043640,
+      "job_seconds": 50,
+      "steps": {
+        "Set up job": 0,
+        "Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1": 1,
+        "Set up Python (cache optional)": 2,
+        "Install a heavy dependency set": 43,
+        "Size of what was installed": 1,
+        "Post Set up Python (cache optional)": 0,
+        "Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1": 0,
+        "Complete job": 0
+      },
+      "report": {
+        "install_seconds": "43",
+        "cache_input": "true",
+        "site_packages_mb": "1329",
+        "pip_cache_mb": "315"
+      },
+      "cache_lines": [
+        "Cache restored successfully",
+        "Cache hit occurred on the primary key setup-python-Linux-x64-24.04-Ubuntu-python-3.12.14-p"
+      ]
+    }
+  ],
+  "uv_runs": [
+    {
+      "label": "uv, cache off",
+      "run_id": 37331343049,
+      "job_seconds": 9,
+      "steps": {
+        "Set up job": 1,
+        "Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1": 1,
+        "Set up uv": 1,
+        "Install the same heavy dependency set with uv": 3,
+        "Post Set up uv": 0,
+        "Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1": 0,
+        "Complete job": 0
+      },
+      "report": {
+        "uv_install_seconds": "3",
+        "cache_input": "false"
+      },
+      "cache_lines": []
+    },
+    {
+      "label": "uv, cache miss",
+      "run_id": 37331411088,
+      "job_seconds": 16,
+      "steps": {
+        "Set up job": 1,
+        "Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1": 1,
+        "Set up uv": 1,
+        "Install the same heavy dependency set with uv": 4,
+        "Post Set up uv": 6,
+        "Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1": 0,
+        "Complete job": 0
+      },
+      "report": {
+        "uv_install_seconds": "4",
+        "cache_input": "true"
+      },
+      "cache_lines": []
+    },
+    {
+      "label": "uv, cache hit",
+      "run_id": 37331557757,
+      "job_seconds": 13,
+      "steps": {
+        "Set up job": 2,
+        "Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1": 1,
+        "Set up uv": 5,
+        "Install the same heavy dependency set with uv": 1,
+        "Post Set up uv": 0,
+        "Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1": 0,
+        "Complete job": 0
+      },
+      "report": {
+        "uv_install_seconds": "1",
+        "cache_input": "true"
+      },
+      "cache_lines": [
+        "Cache hit for: setup-uv-2-x86_64-unknown-linux-gnu-ubuntu-24.04-3.12.3-377311ad76067cc305f26b5431a08",
+        "Cache Size: ~248 MB (260490060 B)",
+        "Cache restored successfully",
+        "Cache hit occurred on key setup-uv-2-x86_64-unknown-linux-gnu-ubuntu-24.04-3.12.3-377311ad76067cc305"
+      ]
+    }
+  ]
+}

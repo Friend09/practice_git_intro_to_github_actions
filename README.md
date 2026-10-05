@@ -73,7 +73,7 @@ Optional deep-dives (Ch 21-22) can be skipped on a first pass.
 | [x] | 15 | [GITHUB_TOKEN, Permissions and Least Privilege](learning_modules/chapter_15_token_and_permissions.md) | Ch 9 | Core |
 | [x] | 16 | [Supply-Chain Security: Pinning, Injection, Attestations](learning_modules/chapter_16_supply_chain_security.md) | Ch 9 | Core |
 | [x] | 17 | [Monitoring, Logging and Debugging](learning_modules/chapter_17_monitoring_debugging.md) | Ch 10 | Core |
-| [ ] | 18 | [Cost, Performance and Limits](learning_modules/chapter_18_cost_performance_limits.md) | Ch 5, 10 | Core |
+| [x] | 18 | [Cost, Performance and Limits](learning_modules/chapter_18_cost_performance_limits.md) | Ch 5, 10 | Core |
 
 ### Phase 5: Extending Actions
 
