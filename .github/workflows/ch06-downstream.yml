@@ -1,0 +1,24 @@
+name: ch06 downstream
+
+on:
+  workflow_run:
+    workflows: ['ch06 upstream']
+    types: [completed]
+
+permissions:
+  contents: read
+
+jobs:
+  react:
+    runs-on: ubuntu-latest
+    env:
+      CONCLUSION: ${{ github.event.workflow_run.conclusion }}
+      UP_EVENT: ${{ github.event.workflow_run.event }}
+      UP_SHA: ${{ github.event.workflow_run.head_sha }}
+      MY_SHA: ${{ github.sha }}
+      MY_REF: ${{ github.ref }}
+    steps:
+      - name: Report
+        run: |
+          echo "REPORT upstream_conclusion=$CONCLUSION upstream_event=$UP_EVENT"
+          echo "REPORT upstream_head_sha=$UP_SHA my_sha=$MY_SHA my_ref=$MY_REF"

@@ -1,0 +1,40 @@
+name: ch06 events
+
+on:
+  push:
+    branches: ['main']
+    tags: ['demo-v*']
+    paths:
+      - 'sandbox/**'
+      - '.github/workflows/ch06-events.yml'
+  pull_request:
+    branches: ['main']
+    paths:
+      - 'sandbox/**'
+  workflow_dispatch:
+  repository_dispatch:
+    types: [tally-ping]
+  schedule:
+    - cron: '23 4 1 1 *'
+
+permissions:
+  contents: read
+
+jobs:
+  dump:
+    runs-on: ubuntu-latest
+    env:
+      EVENT: ${{ github.event_name }}
+      REF: ${{ github.ref }}
+      REF_TYPE: ${{ github.ref_type }}
+      REF_NAME: ${{ github.ref_name }}
+      SHA: ${{ github.sha }}
+      HEAD_REF: ${{ github.head_ref }}
+      BASE_REF: ${{ github.base_ref }}
+      ACTION: ${{ github.event.action }}
+      PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+    steps:
+      - name: Dump the event
+        run: |
+          echo "REPORT event=$EVENT action=$ACTION ref=$REF ref_type=$REF_TYPE ref_name=$REF_NAME"
+          echo "REPORT sha=$SHA pr_head_sha=$PR_HEAD_SHA head_ref=$HEAD_REF base_ref=$BASE_REF"

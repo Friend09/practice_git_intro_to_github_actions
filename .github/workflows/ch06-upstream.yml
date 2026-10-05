@@ -1,0 +1,13 @@
+name: ch06 upstream
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  work:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "upstream finished its work"
