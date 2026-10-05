@@ -44,6 +44,8 @@ jobs:
           echo "REPORT or_returns=${{ '' || 'default' }}"
           echo "REPORT not_string=${{ !'x' }}"
       - name: Functions
+        env:
+          ARR_JSON: ${{ toJSON(fromJSON('[1,2]')) }}
         run: |
           echo "REPORT contains_ci=${{ contains('Hello World', 'WORLD') }}"
           echo "REPORT startswith=${{ startsWith('refs/heads/main', 'refs/heads/') }}"
@@ -51,7 +53,7 @@ jobs:
           echo "REPORT format=${{ format('{0}-{1}-{0}', 'a', 'b') }}"
           echo "REPORT format_braces=${{ format('{{literal}} {0}', 'x') }}"
           echo "REPORT join=${{ join(fromJSON('["x","y","z"]'), '+') }}"
-          echo "REPORT tojson_arr=${{ toJSON(fromJSON('[1,2]')) }}"
+          echo "REPORT tojson_arr=$(echo "$ARR_JSON" | jq -c .)"
           echo "REPORT fromjson_num=${{ fromJSON('3') }}"
           echo "REPORT contains_array=${{ contains(fromJSON('["a","b"]'), 'b') }}"
       - name: Contexts
@@ -98,9 +100,11 @@ jobs:
             extra: only-on-312
     steps:
       - name: Matrix context
+        env:
+          MATRIX_JSON: ${{ toJSON(matrix) }}
         run: |
           echo "REPORT matrix_py=${{ matrix.py }} extra=[${{ matrix.extra }}]"
-          echo "REPORT matrix_json=${{ toJSON(matrix) }}"
+          echo "REPORT matrix_json=$(echo "$MATRIX_JSON" | jq -c .)"
       - uses: actions/checkout@v7
       - name: hashFiles
-        run: echo "REPORT hash_len=${{ format('{0}', hashFiles('sandbox/tally/tally/add.py')) }}"
+        run: echo "REPORT hash=${{ hashFiles('sandbox/tally/tally/add.py') }}"
