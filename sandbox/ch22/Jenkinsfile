@@ -1,0 +1,23 @@
+// Tally's pipeline as it might exist on Jenkins (Declarative Pipeline).
+// Not executed in this course: it is the *source* of the migration in Chapter 22.
+pipeline {
+  agent { docker { image 'python:3.12-slim' } }
+  environment { TALLY_COLOR = 'blue' }
+  options { timeout(time: 10, unit: 'MINUTES') }
+  stages {
+    stage('Lint') {
+      steps { sh 'cd sandbox/tally && pip install -r requirements-dev.txt && ruff check .' }
+    }
+    stage('Test') {
+      steps { sh 'cd sandbox/tally && pip install -r requirements-dev.txt && python -m pytest' }
+    }
+    stage('Deploy') {
+      when { branch 'main' }
+      steps { sh 'echo deploying tally' }
+    }
+  }
+  post {
+    always  { archiveArtifacts artifacts: 'report.txt', allowEmptyArchive: true }
+    failure { echo 'pipeline failed' }
+  }
+}

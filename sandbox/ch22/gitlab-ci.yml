@@ -1,0 +1,36 @@
+# Tally's pipeline as it might exist on GitLab CI/CD.
+# Not executed in this course: it is the *source* of the migration in Chapter 22.
+# (Named without the leading dot so it is visible in the repo tree.)
+stages: [lint, test, deploy]
+
+default:
+  image: python:3.12-slim
+
+variables:
+  TALLY_COLOR: blue
+
+lint:
+  stage: lint
+  tags: [linux]
+  script:
+    - cd sandbox/tally && pip install -r requirements-dev.txt && ruff check .
+
+test:
+  stage: test
+  tags: [linux]
+  script:
+    - cd sandbox/tally && pip install -r requirements-dev.txt && python -m pytest
+  cache:
+    paths:
+      - .cache/pip
+  artifacts:
+    when: always
+    paths:
+      - report.txt
+
+deploy:
+  stage: deploy
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+  script:
+    - echo deploying tally

@@ -1,0 +1,65 @@
+name: ch22 translated pipeline
+
+on:
+  workflow_dispatch:
+    inputs:
+      fail:
+        description: 'Make the test stage fail (to show the post-always equivalent)'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+env:
+  TALLY_COLOR: blue
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    container: python:3.12-slim
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: sandbox/tally
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - run: python -m pip install -r requirements-dev.txt && ruff check .
+      - run: echo "REPORT stage=lint color=$TALLY_COLOR"
+
+  test:
+    needs: [lint]
+    runs-on: ubuntu-latest
+    container: python:3.12-slim
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: sandbox/tally
+    env:
+      FORCE_FAIL: ${{ inputs.fail }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - run: python -m pip install -r requirements-dev.txt && python -m pytest -q
+      - run: |
+          echo "REPORT stage=test force_fail=$FORCE_FAIL"
+          if [ "$FORCE_FAIL" = "true" ]; then exit 1; fi
+
+  deploy:
+    needs: [test]
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "REPORT stage=deploy ran=yes"
+
+  post:
+    needs: [lint, test, deploy]
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    env:
+      LINT: ${{ needs.lint.result }}
+      TEST: ${{ needs.test.result }}
+      DEPLOY: ${{ needs.deploy.result }}
+    steps:
+      - run: echo "REPORT post=always lint=$LINT test=$TEST deploy=$DEPLOY"
+      - if: ${{ failure() }}
+        run: echo "REPORT post=failure ran=yes"
