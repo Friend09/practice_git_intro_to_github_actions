@@ -1,0 +1,14 @@
+name: ch05 no matching runner (cancel me)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  stuck:
+    runs-on: [self-hosted, tally-gpu]
+    timeout-minutes: 5
+    steps:
+      - run: echo "this never prints: no runner has the label tally-gpu"
