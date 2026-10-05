@@ -1,0 +1,17 @@
+{
+  "run_id": 37318827012,
+  "conclusion": "cancelled",
+  "displayTitle": "ch10 timeouts",
+  "event": "workflow_dispatch",
+  "headSha": "86514bbd523bb3567ec9c687347d6c2a455be0c8",
+  "reports": {
+    "job_timeout": {
+      "job_timeout_started": "13:42:09"
+    },
+    "step_timeout": {
+      "step_timeout_started": "13:42:08",
+      "slow_outcome": "failure",
+      "next_step_ran": "yes"
+    }
+  }
+}

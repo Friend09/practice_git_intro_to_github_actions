@@ -1,0 +1,50 @@
+{
+  "verified": "2026-10-05",
+  "annotation": "Job outputs exceed 1,048,576 bytes",
+  "limit_bytes": 1048576,
+  "implied_char_limit_if_2_bytes_per_char": 524288,
+  "probes": [
+    {
+      "job": "p400k",
+      "chars": 400000,
+      "job_seconds": 128,
+      "result": "success",
+      "run_id": 37317645339,
+      "quadratic_prediction_s": 128
+    },
+    {
+      "job": "p520k",
+      "chars": 520000,
+      "job_seconds": 215,
+      "result": "success",
+      "run_id": 37320026502,
+      "quadratic_prediction_s": 216
+    },
+    {
+      "job": "p530k",
+      "chars": 530000,
+      "job_seconds": 226,
+      "result": "failure",
+      "run_id": 37320026502,
+      "quadratic_prediction_s": 225
+    },
+    {
+      "job": "p1m",
+      "chars": 1000000,
+      "job_seconds": 786,
+      "result": "failure",
+      "run_id": 37317645339,
+      "quadratic_prediction_s": 800
+    },
+    {
+      "job": "p1_1m",
+      "chars": 1100000,
+      "job_seconds": 781,
+      "result": "failure",
+      "run_id": 37317645339,
+      "quadratic_prediction_s": 968
+    }
+  ],
+  "baseline_seconds_at_400k": 128,
+  "note": "job time ~ quadratic in output size until the ~13 min mark; failing 1M+ jobs ended near 783 s"
+}

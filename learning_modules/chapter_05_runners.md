@@ -109,7 +109,7 @@ Compare with GitHub's published specification (verified 2026-10):
 
 - Our measurement matches the docs for a **public** repo. The same label gives **half** the CPU and memory on a **private** repo. A build that takes 4 minutes on a public repo can take noticeably longer when you move it private. We measured public only, so the private column is the docs' claim, not ours.
 - `env=github-hosted` comes from the `RUNNER_ENVIRONMENT` variable. A self-hosted runner reports `self-hosted` here; scripts can branch on it.
-- `ubuntu-latest` and `ubuntu-22.04` report the same CPU and memory (15,989 vs 15,988 MB) but are different images: per the docs `ubuntu-latest` currently maps to Ubuntu 24.04, and the alias is one GitHub moves over time (Section 6).
+- `ubuntu-latest` and `ubuntu-22.04` report the same CPU and memory (15,989 vs 15,988 MB) but are different images: per the docs `ubuntu-latest` currently maps to Ubuntu 24.04, and the alias is one GitHub moves over time (Section 6). We caught it moving: the runner itself later annotated our Chapter 10 runs with `The ubuntu-latest label will migrate to Ubuntu 26 beginning October 19, 2026.` (see `fixtures/exec_ch10_all.json`), so a workflow using `ubuntu-latest` can change operating system with no edit to the file.
 
 > 📝 **Full implementation:** See [Appendix A.1](#a1-compare-measured-runners-to-the-docs-and-price-the-run)
 

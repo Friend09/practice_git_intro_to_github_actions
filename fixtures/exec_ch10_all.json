@@ -1,0 +1,605 @@
+{
+  "verified": "2026-10-05",
+  "matrix": {
+    "definition": {
+      "os": [
+        "ubuntu-latest",
+        "ubuntu-22.04"
+      ],
+      "py": [
+        "3.11",
+        "3.12",
+        "3.13"
+      ],
+      "exclude": [
+        {
+          "os": "ubuntu-22.04",
+          "py": "3.11"
+        }
+      ],
+      "include": [
+        {
+          "os": "ubuntu-latest",
+          "py": "3.14",
+          "experimental": true
+        }
+      ],
+      "max_parallel": 2
+    },
+    "fail_fast_true": {
+      "run_id": 37319094292,
+      "run": {
+        "conclusion": "failure",
+        "createdAt": "2026-10-05T13:44:07Z",
+        "event": "workflow_dispatch",
+        "updatedAt": "2026-10-05T13:44:49Z"
+      },
+      "jobs": [
+        {
+          "completed_at": "2026-10-05T13:44:39Z",
+          "conclusion": "cancelled",
+          "name": "leg (ubuntu-22.04, 3.13)",
+          "ran": false,
+          "started_at": "2026-10-05T13:44:08Z",
+          "steps": []
+        },
+        {
+          "completed_at": "2026-10-05T13:44:29Z",
+          "conclusion": "success",
+          "name": "leg (ubuntu-latest, 3.12)",
+          "ran": true,
+          "started_at": "2026-10-05T13:44:11Z",
+          "steps": [
+            {
+              "conclusion": "success",
+              "name": "Set up job"
+            },
+            {
+              "conclusion": "success",
+              "name": "Work"
+            },
+            {
+              "conclusion": "success",
+              "name": "Complete job"
+            }
+          ]
+        },
+        {
+          "completed_at": "2026-10-05T13:44:48Z",
+          "conclusion": "cancelled",
+          "name": "leg (ubuntu-latest, 3.13)",
+          "ran": true,
+          "started_at": "2026-10-05T13:44:31Z",
+          "steps": [
+            {
+              "conclusion": "success",
+              "name": "Set up job"
+            },
+            {
+              "conclusion": "success",
+              "name": "Work"
+            },
+            {
+              "conclusion": "success",
+              "name": "Complete job"
+            }
+          ]
+        },
+        {
+          "completed_at": "2026-10-05T13:44:39Z",
+          "conclusion": "failure",
+          "name": "leg (ubuntu-22.04, 3.12)",
+          "ran": true,
+          "started_at": "2026-10-05T13:44:33Z",
+          "steps": [
+            {
+              "conclusion": "success",
+              "name": "Set up job"
+            },
+            {
+              "conclusion": "failure",
+              "name": "Work"
+            },
+            {
+              "conclusion": "success",
+              "name": "Complete job"
+            }
+          ]
+        },
+        {
+          "completed_at": "2026-10-05T13:44:40Z",
+          "conclusion": "cancelled",
+          "name": "leg (ubuntu-latest, 3.14)",
+          "ran": false,
+          "started_at": "2026-10-05T13:44:09Z",
+          "steps": []
+        },
+        {
+          "completed_at": "2026-10-05T13:44:30Z",
+          "conclusion": "success",
+          "name": "leg (ubuntu-latest, 3.11)",
+          "ran": true,
+          "started_at": "2026-10-05T13:44:12Z",
+          "steps": [
+            {
+              "conclusion": "success",
+              "name": "Set up job"
+            },
+            {
+              "conclusion": "success",
+              "name": "Work"
+            },
+            {
+              "conclusion": "success",
+              "name": "Complete job"
+            }
+          ]
+        }
+      ]
+    },
+    "fail_fast_false": {
+      "run_id": 37319194753,
+      "run": {
+        "conclusion": "failure",
+        "createdAt": "2026-10-05T13:44:54Z",
+        "event": "workflow_dispatch",
+        "updatedAt": "2026-10-05T13:45:57Z"
+      },
+      "jobs": [
+        {
+          "completed_at": "2026-10-05T13:45:25Z",
+          "conclusion": "failure",
+          "name": "leg (ubuntu-22.04, 3.12)",
+          "ran": true,
+          "started_at": "2026-10-05T13:45:19Z",
+          "steps": [
+            {
+              "conclusion": "success",
+              "name": "Set up job"
+            },
+            {
+              "conclusion": "failure",
+              "name": "Work"
+            },
+            {
+              "conclusion": "success",
+              "name": "Complete job"
+            }
+          ]
+        },
+        {
+          "completed_at": "2026-10-05T13:45:16Z",
+          "conclusion": "success",
+          "name": "leg (ubuntu-latest, 3.12)",
+          "ran": true,
+          "started_at": "2026-10-05T13:44:58Z",
+          "steps": [
+            {
+              "conclusion": "success",
+              "name": "Set up job"
+            },
+            {
+              "conclusion": "success",
+              "name": "Work"
+            },
+            {
+              "conclusion": "success",
+              "name": "Complete job"
+            }
+          ]
+        },
+        {
+          "completed_at": "2026-10-05T13:45:16Z",
+          "conclusion": "success",
+          "name": "leg (ubuntu-latest, 3.11)",
+          "ran": true,
+          "started_at": "2026-10-05T13:44:58Z",
+          "steps": [
+            {
+              "conclusion": "success",
+              "name": "Set up job"
+            },
+            {
+              "conclusion": "success",
+              "name": "Work"
+            },
+            {
+              "conclusion": "success",
+              "name": "Complete job"
+            }
+          ]
+        },
+        {
+          "completed_at": "2026-10-05T13:45:56Z",
+          "conclusion": "success",
+          "name": "leg (ubuntu-latest, 3.14)",
+          "ran": true,
+          "started_at": "2026-10-05T13:45:39Z",
+          "steps": [
+            {
+              "conclusion": "success",
+              "name": "Set up job"
+            },
+            {
+              "conclusion": "success",
+              "name": "Work"
+            },
+            {
+              "conclusion": "success",
+              "name": "Complete job"
+            }
+          ]
+        },
+        {
+          "completed_at": "2026-10-05T13:45:36Z",
+          "conclusion": "success",
+          "name": "leg (ubuntu-latest, 3.13)",
+          "ran": true,
+          "started_at": "2026-10-05T13:45:18Z",
+          "steps": [
+            {
+              "conclusion": "success",
+              "name": "Set up job"
+            },
+            {
+              "conclusion": "success",
+              "name": "Work"
+            },
+            {
+              "conclusion": "success",
+              "name": "Complete job"
+            }
+          ]
+        },
+        {
+          "completed_at": "2026-10-05T13:45:45Z",
+          "conclusion": "success",
+          "name": "leg (ubuntu-22.04, 3.13)",
+          "ran": true,
+          "started_at": "2026-10-05T13:45:27Z",
+          "steps": [
+            {
+              "conclusion": "success",
+              "name": "Set up job"
+            },
+            {
+              "conclusion": "success",
+              "name": "Work"
+            },
+            {
+              "conclusion": "success",
+              "name": "Complete job"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "concurrency": {
+    "cancel_false": {
+      "runs": [
+        {
+          "tag": "x1",
+          "run_id": 37319409690,
+          "run": {
+            "conclusion": "success",
+            "createdAt": "2026-10-05T13:46:30Z",
+            "event": "workflow_dispatch",
+            "updatedAt": "2026-10-05T13:47:19Z"
+          },
+          "jobs": [
+            {
+              "completed_at": "2026-10-05T13:47:18Z",
+              "conclusion": "success",
+              "name": "slow",
+              "ran": true,
+              "started_at": "2026-10-05T13:46:35Z",
+              "steps": [
+                {
+                  "conclusion": "success",
+                  "name": "Set up job"
+                },
+                {
+                  "conclusion": "success",
+                  "name": "Run echo \"REPORT tag=$TAG started=$(date -u +%H:%M:%S)\""
+                },
+                {
+                  "conclusion": "success",
+                  "name": "Complete job"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "tag": "x2",
+          "run_id": 37319423478,
+          "run": {
+            "conclusion": "cancelled",
+            "createdAt": "2026-10-05T13:46:37Z",
+            "event": "workflow_dispatch",
+            "updatedAt": "2026-10-05T13:46:47Z"
+          },
+          "jobs": []
+        },
+        {
+          "tag": "x3",
+          "run_id": 37319437491,
+          "run": {
+            "conclusion": "success",
+            "createdAt": "2026-10-05T13:46:44Z",
+            "event": "workflow_dispatch",
+            "updatedAt": "2026-10-05T13:48:05Z"
+          },
+          "jobs": [
+            {
+              "completed_at": "2026-10-05T13:48:04Z",
+              "conclusion": "success",
+              "name": "slow",
+              "ran": true,
+              "started_at": "2026-10-05T13:47:22Z",
+              "steps": [
+                {
+                  "conclusion": "success",
+                  "name": "Set up job"
+                },
+                {
+                  "conclusion": "success",
+                  "name": "Run echo \"REPORT tag=$TAG started=$(date -u +%H:%M:%S)\""
+                },
+                {
+                  "conclusion": "success",
+                  "name": "Complete job"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "cancel_true": {
+      "runs": [
+        {
+          "tag": "y1",
+          "run_id": 37319632048,
+          "run": {
+            "conclusion": "cancelled",
+            "createdAt": "2026-10-05T13:48:16Z",
+            "event": "workflow_dispatch",
+            "updatedAt": "2026-10-05T13:49:05Z"
+          },
+          "jobs": [
+            {
+              "completed_at": "2026-10-05T13:49:05Z",
+              "conclusion": "cancelled",
+              "name": "slow",
+              "ran": true,
+              "started_at": "2026-10-05T13:48:21Z",
+              "steps": [
+                {
+                  "conclusion": "success",
+                  "name": "Set up job"
+                },
+                {
+                  "conclusion": "success",
+                  "name": "Run echo \"REPORT tag=$TAG started=$(date -u +%H:%M:%S)\""
+                },
+                {
+                  "conclusion": "success",
+                  "name": "Complete job"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "tag": "y2",
+          "run_id": 37319663031,
+          "run": {
+            "conclusion": "cancelled",
+            "createdAt": "2026-10-05T13:48:30Z",
+            "event": "workflow_dispatch",
+            "updatedAt": "2026-10-05T13:48:46Z"
+          },
+          "jobs": []
+        },
+        {
+          "tag": "y3",
+          "run_id": 37319694303,
+          "run": {
+            "conclusion": "success",
+            "createdAt": "2026-10-05T13:48:44Z",
+            "event": "workflow_dispatch",
+            "updatedAt": "2026-10-05T13:49:52Z"
+          },
+          "jobs": [
+            {
+              "completed_at": "2026-10-05T13:49:51Z",
+              "conclusion": "success",
+              "name": "slow",
+              "ran": true,
+              "started_at": "2026-10-05T13:49:09Z",
+              "steps": [
+                {
+                  "conclusion": "success",
+                  "name": "Set up job"
+                },
+                {
+                  "conclusion": "success",
+                  "name": "Run echo \"REPORT tag=$TAG started=$(date -u +%H:%M:%S)\""
+                },
+                {
+                  "conclusion": "success",
+                  "name": "Complete job"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "y1_annotation": "Canceling since a higher priority waiting request for ch10-demo exists"
+  },
+  "timeouts": {
+    "run_id": 37318827012,
+    "jobs": [
+      {
+        "completed_at": "2026-10-05T13:43:38Z",
+        "conclusion": "cancelled",
+        "name": "job_timeout",
+        "ran": true,
+        "started_at": "2026-10-05T13:42:08Z",
+        "steps": [
+          {
+            "conclusion": "success",
+            "name": "Set up job"
+          },
+          {
+            "conclusion": "cancelled",
+            "name": "Run echo \"REPORT job_timeout_started=$(date -u +%H:%M:%S)\""
+          },
+          {
+            "conclusion": "success",
+            "name": "Complete job"
+          }
+        ]
+      },
+      {
+        "completed_at": "2026-10-05T13:43:22Z",
+        "conclusion": "success",
+        "name": "step_timeout",
+        "ran": true,
+        "started_at": "2026-10-05T13:42:07Z",
+        "steps": [
+          {
+            "conclusion": "success",
+            "name": "Set up job"
+          },
+          {
+            "conclusion": "success",
+            "name": "Slow step with its own timeout"
+          },
+          {
+            "conclusion": "success",
+            "name": "Next step still runs"
+          },
+          {
+            "conclusion": "success",
+            "name": "Complete job"
+          }
+        ]
+      }
+    ],
+    "annotations": [
+      "The job has exceeded the maximum execution time of 1m0s",
+      "The operation was canceled."
+    ],
+    "step_times": {
+      "job_timeout_run_step": {
+        "started": "13:42:08",
+        "completed": "13:43:36",
+        "conclusion": "cancelled",
+        "limit_seconds": 60
+      },
+      "step_timeout_slow_step": {
+        "started": "13:42:08",
+        "completed": "13:43:21",
+        "conclusion": "success (continue-on-error; outcome failure)",
+        "limit_seconds": 60
+      }
+    }
+  },
+  "needs": {
+    "run_id": 37318821322,
+    "jobs": [
+      {
+        "completed_at": "2026-10-05T13:42:06Z",
+        "conclusion": "failure",
+        "name": "a",
+        "ran": true,
+        "started_at": "2026-10-05T13:42:04Z",
+        "steps": [
+          {
+            "conclusion": "success",
+            "name": "Set up job"
+          },
+          {
+            "conclusion": "failure",
+            "name": "Run exit 1"
+          },
+          {
+            "conclusion": "success",
+            "name": "Complete job"
+          }
+        ]
+      },
+      {
+        "completed_at": "2026-10-05T13:42:07Z",
+        "conclusion": "skipped",
+        "name": "b",
+        "ran": false,
+        "started_at": "2026-10-05T13:42:07Z",
+        "steps": []
+      },
+      {
+        "completed_at": "2026-10-05T13:42:07Z",
+        "conclusion": "skipped",
+        "name": "report_default",
+        "ran": false,
+        "started_at": "2026-10-05T13:42:07Z",
+        "steps": []
+      },
+      {
+        "completed_at": "2026-10-05T13:42:13Z",
+        "conclusion": "success",
+        "name": "report_always",
+        "ran": true,
+        "started_at": "2026-10-05T13:42:10Z",
+        "steps": [
+          {
+            "conclusion": "success",
+            "name": "Set up job"
+          },
+          {
+            "conclusion": "success",
+            "name": "Run echo \"REPORT a=$A b=$B c=$C\""
+          },
+          {
+            "conclusion": "success",
+            "name": "Complete job"
+          }
+        ]
+      },
+      {
+        "completed_at": "2026-10-05T13:42:14Z",
+        "conclusion": "success",
+        "name": "report_on_failure",
+        "ran": true,
+        "started_at": "2026-10-05T13:42:11Z",
+        "steps": [
+          {
+            "conclusion": "success",
+            "name": "Set up job"
+          },
+          {
+            "conclusion": "success",
+            "name": "Run echo \"REPORT failure_job_ran=yes\""
+          },
+          {
+            "conclusion": "success",
+            "name": "Complete job"
+          }
+        ]
+      },
+      {
+        "completed_at": "2026-10-05T13:42:07Z",
+        "conclusion": "skipped",
+        "name": "c",
+        "ran": false,
+        "started_at": "2026-10-05T13:42:07Z",
+        "steps": []
+      }
+    ]
+  },
+  "runner_notice": "The ubuntu-latest label will migrate to Ubuntu 26 beginning October 19, 2026."
+}

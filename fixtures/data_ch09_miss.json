@@ -1,0 +1,70 @@
+{
+  "run_id": 37318380786,
+  "conclusion": "success",
+  "displayTitle": "ch09 data",
+  "event": "workflow_dispatch",
+  "headSha": "dd7446bd2854d1976a312993c474a71164f3f766",
+  "reports": {
+    "build": {
+      "strict_outcome": "failure",
+      "duplicate_outcome": "failure",
+      "artifact_id_set": "yes",
+      "url_set": "yes"
+    },
+    "cache": {
+      "cache_hit": "[]",
+      "key": "ch09-a-6e19a1b832dee221e5d8422ff80fdf19daa6e8ebd26fc4b89ab2691ee6467b7c",
+      "size_bytes": "20000000"
+    },
+    "consume": {
+      "version": "0.1.1",
+      "notes_lines": "2",
+      "notes_first": "line one",
+      "files": "got/payload.bin,got/tally.txt,",
+      "digest_match": "yes",
+      "no_checkout_here": "absent"
+    }
+  },
+  "cache_job_steps": [
+    {
+      "name": "Set up job",
+      "conclusion": "success",
+      "seconds": 1
+    },
+    {
+      "name": "Run actions/checkout@v7",
+      "conclusion": "success",
+      "seconds": 1
+    },
+    {
+      "name": "Restore cache",
+      "conclusion": "success",
+      "seconds": 0
+    },
+    {
+      "name": "Install dependencies (slow on a miss)",
+      "conclusion": "success",
+      "seconds": 13
+    },
+    {
+      "name": "Report",
+      "conclusion": "success",
+      "seconds": 0
+    },
+    {
+      "name": "Post Restore cache",
+      "conclusion": "success",
+      "seconds": 2
+    },
+    {
+      "name": "Post Run actions/checkout@v7",
+      "conclusion": "success",
+      "seconds": 0
+    },
+    {
+      "name": "Complete job",
+      "conclusion": "success",
+      "seconds": 0
+    }
+  ]
+}

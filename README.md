@@ -54,8 +54,8 @@ Optional deep-dives (Ch 21-22) can be skipped on a first pass.
 | [x] | 06 | [Events and Triggers in Depth](learning_modules/chapter_06_events_and_triggers.md) | Ch 4 | Core |
 | [x] | 07 | [Contexts, Expressions and Conditionals](learning_modules/chapter_07_contexts_expressions.md) | Ch 8 | Core |
 | [x] | 08 | [Variables, Secrets, Configuration and Environments](learning_modules/chapter_08_variables_secrets_environments.md) | Ch 6 | Core |
-| [ ] | 09 | [Data Between Steps and Jobs: Outputs, Artifacts, Caching](learning_modules/chapter_09_data_outputs_artifacts_caching.md) | Ch 7 | Core |
-| [ ] | 10 | [Execution Control: needs, Matrix, Concurrency, Timeouts](learning_modules/chapter_10_execution_control.md) | Ch 8 | Core |
+| [x] | 09 | [Data Between Steps and Jobs: Outputs, Artifacts, Caching](learning_modules/chapter_09_data_outputs_artifacts_caching.md) | Ch 7 | Core |
+| [x] | 10 | [Execution Control: needs, Matrix, Concurrency, Timeouts](learning_modules/chapter_10_execution_control.md) | Ch 8 | Core |
 
 ### Phase 3: Real Pipelines
 

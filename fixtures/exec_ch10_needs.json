@@ -1,0 +1,17 @@
+{
+  "run_id": 37318821322,
+  "conclusion": "failure",
+  "displayTitle": "ch10 needs",
+  "event": "workflow_dispatch",
+  "headSha": "86514bbd523bb3567ec9c687347d6c2a455be0c8",
+  "reports": {
+    "report_always": {
+      "a": "failure",
+      "b": "skipped",
+      "c": "skipped"
+    },
+    "report_on_failure": {
+      "failure_job_ran": "yes"
+    }
+  }
+}

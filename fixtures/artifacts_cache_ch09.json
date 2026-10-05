@@ -1,0 +1,56 @@
+{
+  "verified": "2026-10-05",
+  "artifact": {
+    "run_id": 37318380786,
+    "name": "tally-dist",
+    "size_in_bytes": 277,
+    "raw_bytes": 2048,
+    "created_at": "2026-10-05T13:38:36Z",
+    "expires_at": "2026-10-06T13:38:36Z",
+    "retention_days_requested": 1
+  },
+  "artifact_events": {
+    "empty_default": {
+      "step_conclusion": "success",
+      "message": "No files were found with the provided path: nothing-here/*.xyz. No artifacts will be uploaded.",
+      "level": "warning"
+    },
+    "empty_strict": {
+      "step_outcome": "failure",
+      "level": "error",
+      "message": "No files were found with the provided path: nothing-here/*.xyz. No artifacts will be uploaded."
+    },
+    "duplicate_name": {
+      "step_outcome": "failure",
+      "level": "error",
+      "message": "Failed to CreateArtifact: Received non-retryable error: Failed request: (409) Conflict: an artifact with this name already exists on the workflow run"
+    }
+  },
+  "caches": [
+    {
+      "key": "ch09-a-6e19a1b8...",
+      "ref": "refs/heads/main",
+      "size_in_bytes": 20003186,
+      "created_at": "2026-10-05T13:38:53Z"
+    },
+    {
+      "key": "ch09-b-6e19a1b8...",
+      "ref": "refs/heads/main",
+      "size_in_bytes": 20003192,
+      "created_at": "2026-10-05T13:39:57Z"
+    }
+  ],
+  "cache_usage_after": {
+    "active_caches_count": 3,
+    "active_caches_size_in_bytes": 82148885
+  },
+  "action_versions": {
+    "actions/upload-artifact": "v7 (node24)",
+    "actions/download-artifact": "v8 (node24)",
+    "actions/cache": "v6 (node24)"
+  },
+  "cache_listing_after": {
+    "entries": 4,
+    "note": "two from ch09-data, two from setup-uv (ci.yml); the usage endpoint lagged and reported 3 entries / 82148885 bytes"
+  }
+}
