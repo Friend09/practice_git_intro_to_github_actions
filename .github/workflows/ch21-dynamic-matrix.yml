@@ -36,6 +36,7 @@ jobs:
 
   run:
     needs: [plan]
+    if: ${{ fromJSON(needs.plan.outputs.count) > 0 }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
