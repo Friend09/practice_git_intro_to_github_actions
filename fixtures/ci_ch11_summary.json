@@ -1,0 +1,135 @@
+{
+  "verified": "2026-10-05",
+  "runs": {
+    "red_gate": {
+      "run_id": 37321016076,
+      "conclusion": "failure",
+      "coverage": {
+        "statements": 17,
+        "missed": 8,
+        "percent": 52.94,
+        "gate": 80
+      },
+      "message": "FAIL Required test coverage of 80% not reached. Total coverage: 52.94%",
+      "test_legs": "all four failed at the pytest step",
+      "pip_cache_saved_by": [
+        "lint"
+      ],
+      "note": "test legs saved no pip cache because the job failed"
+    },
+    "red_lint_i001": {
+      "run_id": 37321165485,
+      "conclusion": "failure",
+      "lint": "failure",
+      "tests": "success",
+      "coverage": 100,
+      "annotation": {
+        "path": "sandbox/tally/tests/test_stats.py",
+        "line": 3,
+        "title": "ruff (I001)"
+      },
+      "cause": "ruff discovered the repo-root pyproject.toml (isort rules selected) from the sandbox directory"
+    },
+    "defaults_bug": {
+      "run_id": 37321351215,
+      "conclusion": "failure",
+      "jobs_success": [
+        "lint",
+        "test (py3.11)",
+        "test (py3.12)",
+        "test (py3.13)",
+        "test (py3.14)"
+      ],
+      "gate_job": "failure"
+    },
+    "green": {
+      "run_id": 37321500402,
+      "conclusion": "success",
+      "jobs": [
+        "lint",
+        "test (py3.11)",
+        "test (py3.12)",
+        "test (py3.13)",
+        "test (py3.14)",
+        "ci-ok (required check)"
+      ]
+    },
+    "bad_lint": {
+      "run_id": 37321582147,
+      "conclusion": "failure",
+      "lint": "failure",
+      "tests": "success",
+      "ci_ok_report": {
+        "lint": "failure",
+        "test": "success"
+      },
+      "annotations": [
+        {
+          "path": "sandbox/tally/tally/add.py",
+          "line": 7,
+          "title": "ruff (F401)"
+        },
+        {
+          "path": "sandbox/tally/tally/add.py",
+          "line": 7,
+          "title": "ruff (E402)"
+        }
+      ]
+    }
+  },
+  "pythons": {
+    "3.11": "3.11.16",
+    "3.12": "3.12.14",
+    "3.13": "3.13.15",
+    "3.14": "3.14.7"
+  },
+  "coverage_after_fix": 100,
+  "pip_cache_key_example": "setup-python-Linux-x64-24.04-Ubuntu-python-3.12.14-pip-08e32bcf59ada40dd5876e64938bc6a2398938dee0dc2131c86c33ffc0a43c66",
+  "cache_outcomes": {
+    "37321016076": {
+      "lint": "saved"
+    },
+    "37321165485": {
+      "lint": "hit",
+      "test (py3.12)": "hit",
+      "test (py3.11)": "saved",
+      "test (py3.13)": "saved",
+      "test (py3.14)": "saved"
+    },
+    "37321351215": {
+      "lint": "hit",
+      "test (py3.11)": "hit",
+      "test (py3.12)": "hit",
+      "test (py3.13)": "hit",
+      "test (py3.14)": "hit"
+    }
+  },
+  "install_seconds": {
+    "cold": {
+      "3.11": 4,
+      "3.12": 4,
+      "3.13": 3,
+      "3.14": 4
+    },
+    "warm": {
+      "3.11": 3,
+      "3.12": 4,
+      "3.13": 3,
+      "3.14": 4
+    }
+  },
+  "job_seconds": {
+    "cold": {
+      "3.11": 9,
+      "3.12": 12,
+      "3.13": 9,
+      "3.14": 14
+    },
+    "warm": {
+      "3.11": 11,
+      "3.12": 14,
+      "3.13": 13,
+      "3.14": 17
+    }
+  }
+}

@@ -64,3 +64,29 @@ def execution_waves(graph: dict[str, list[str]]) -> list[list[str]]:
         for job in ready:
             del remaining[job]
     return waves
+
+
+def jobs_missing_checkout_with_workflow_workdir(workflow: dict[str, Any]) -> list[str]:
+    """Flag jobs hit by a workflow-level ``working-directory`` they cannot satisfy.
+
+    A workflow-level ``defaults.run.working-directory`` applies to every job. A job with
+    no ``actions/checkout`` step has an empty workspace, so the directory does not exist
+    and the runner fails with "No such file or directory" before running any command.
+    A job-level ``defaults.run.working-directory`` overrides it and is not flagged.
+    """
+    top = workflow.get("defaults", {}).get("run", {}).get("working-directory")
+    if not top or top in (".", "./"):
+        return []
+    bad = []
+    for job_id, job in workflow.get("jobs", {}).items():
+        job_dir = job.get("defaults", {}).get("run", {}).get("working-directory")
+        if job_dir:
+            continue
+        steps = job.get("steps", [])
+        has_run = any("run" in s for s in steps)
+        has_checkout = any(
+            str(s.get("uses", "")).startswith("actions/checkout") for s in steps
+        )
+        if has_run and not has_checkout:
+            bad.append(job_id)
+    return bad

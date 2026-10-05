@@ -1,0 +1,33 @@
+{
+  "run_id": 37321582147,
+  "conclusion": "failure",
+  "displayTitle": "ch11 python ci",
+  "event": "workflow_dispatch",
+  "headSha": "278e1ba2cff8cd5b5810898e5e6556d5665762de",
+  "reports": {
+    "test (py3.11)": {
+      "python": "Python 3.11.16",
+      "coverage_total": "100",
+      "gate": "80"
+    },
+    "test (py3.13)": {
+      "python": "Python 3.13.15",
+      "coverage_total": "100",
+      "gate": "80"
+    },
+    "test (py3.14)": {
+      "python": "Python 3.14.7",
+      "coverage_total": "100",
+      "gate": "80"
+    },
+    "test (py3.12)": {
+      "python": "Python 3.12.14",
+      "coverage_total": "100",
+      "gate": "80"
+    },
+    "ci-ok (required check)": {
+      "lint": "failure",
+      "test": "success"
+    }
+  }
+}
