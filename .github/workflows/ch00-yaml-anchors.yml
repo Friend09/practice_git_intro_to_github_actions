@@ -1,0 +1,17 @@
+name: ch00 YAML anchors probe
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    env: &shared
+      GREETING: hello from an anchor
+    steps:
+      - name: Print the anchored value
+        env: *shared
+        run: echo "$GREETING"
