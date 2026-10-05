@@ -1,0 +1,27 @@
+name: ch08 environments
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  staging:
+    runs-on: ubuntu-latest
+    environment: staging
+    env:
+      TALLY_COLOR: ${{ vars.TALLY_COLOR }}
+      DEMO_SECRET: ${{ secrets.DEMO_SECRET }}
+      STAGING_ONLY: ${{ secrets.STAGING_ONLY }}
+    steps:
+      - run: |
+          echo "REPORT staging_color=$TALLY_COLOR"
+          echo "REPORT staging_sees_repo_secret_len=${#DEMO_SECRET} staging_only_len=${#STAGING_ONLY}"
+
+  production:
+    needs: [staging]
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - run: echo "REPORT production_deployed=yes"
