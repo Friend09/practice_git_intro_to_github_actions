@@ -1,0 +1,22 @@
+name: ch21 fromJSON empty-string probe
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  evaluate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Evaluate fromJSON on an empty string (an unset variable)
+        env:
+          GT: ${{ fromJSON(vars.DOES_NOT_EXIST) > 0 }}
+          IS_NULL: ${{ fromJSON(vars.DOES_NOT_EXIST) == null }}
+        run: echo "REPORT fromjson_empty gt_zero=[$GT] is_null=[$IS_NULL]"
+  guarded_by_empty_count:
+    runs-on: ubuntu-latest
+    if: ${{ fromJSON(vars.DOES_NOT_EXIST) > 0 }}
+    steps:
+      - run: echo "REPORT guarded_job=ran"
