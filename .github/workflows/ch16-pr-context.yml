@@ -1,0 +1,37 @@
+name: ch16 pr context
+
+on:
+  pull_request:
+    branches: [main]
+  pull_request_target:
+    branches: [main]
+
+permissions:
+  contents: read
+
+env:
+  WORKFLOW_VERSION: base-version
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Report what this event sees
+        env:
+          EVENT: ${{ github.event_name }}
+          SHA: ${{ github.sha }}
+          REF: ${{ github.ref }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          echo "REPORT event=$EVENT workflow_version=$WORKFLOW_VERSION marker=$(cat sandbox/ch16/marker.txt) github_sha=${SHA:0:7} head_sha=${HEAD_SHA:0:7} ref=$REF"
+
+  checkout_head_under_target:
+    if: ${{ github.event_name == 'pull_request_target' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - name: Read attacker-controlled content in the privileged context
+        run: echo "REPORT head_marker_under_target=$(cat sandbox/ch16/marker.txt)"
