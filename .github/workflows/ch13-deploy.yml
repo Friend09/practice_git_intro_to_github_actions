@@ -1,0 +1,129 @@
+name: ch13 deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      production:
+        description: 'Also deploy to production (needs approval)'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+env:
+  ISSUER: https://token.actions.githubusercontent.com
+
+jobs:
+  deploy_staging:
+    runs-on: ubuntu-latest
+    environment:
+      name: staging
+      url: https://tally.example.invalid/staging
+    steps:
+      - run: echo "REPORT deployed_to=staging ref=$GITHUB_REF sha=${GITHUB_SHA:0:7}"
+
+  deploy_production:
+    if: ${{ inputs.production }}
+    needs: [deploy_staging]
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://tally.example.invalid
+    steps:
+      - run: echo "REPORT deployed_to=production ref=$GITHUB_REF sha=${GITHUB_SHA:0:7}"
+
+  oidc_with_environment:
+    runs-on: ubuntu-latest
+    environment: staging
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      AUD: sts.amazonaws.com
+      JOB_LABEL: with_environment
+    steps:
+      - name: Inspect and verify the OIDC token
+        run: |
+          python3 -m pip install --quiet "pyjwt[crypto]"
+          python3 - <<'PY'
+          import json, os, urllib.request
+          import jwt
+
+          aud, label = os.environ["AUD"], os.environ["JOB_LABEL"]
+          url = os.environ["ACTIONS_ID_TOKEN_REQUEST_URL"] + "&audience=" + aud
+          req = urllib.request.Request(
+              url, headers={"Authorization": "bearer " + os.environ["ACTIONS_ID_TOKEN_REQUEST_TOKEN"]}
+          )
+          token = json.load(urllib.request.urlopen(req))["value"]
+          header = jwt.get_unverified_header(token)
+          key = jwt.PyJWKClient(os.environ["ISSUER"] + "/.well-known/jwks").get_signing_key_from_jwt(token).key
+          claims = jwt.decode(token, key, algorithms=["RS256"], audience=aud, issuer=os.environ["ISSUER"])
+          print(f"REPORT {label}_signature=valid alg={header['alg']}")
+          for name in ("iss", "sub", "aud", "ref", "ref_type", "sha", "repository", "repository_owner",
+                       "environment", "event_name", "runner_environment", "job_workflow_ref"):
+              print(f"REPORT {label}_{name}={claims.get(name)}")
+          print(f"REPORT {label}_lifetime_seconds={claims['exp'] - claims['iat']}")
+          print(f"REPORT {label}_claim_names={','.join(sorted(claims))}")
+          try:
+              jwt.decode(token, key, algorithms=["RS256"], audience="sts.wrong.example", issuer=os.environ["ISSUER"])
+          except jwt.InvalidAudienceError:
+              print(f"REPORT {label}_wrong_audience=rejected")
+          tampered = token[:-4] + ("AAAA" if token[-4:] != "AAAA" else "BBBB")
+          try:
+              jwt.decode(tampered, key, algorithms=["RS256"], audience=aud, issuer=os.environ["ISSUER"])
+          except jwt.InvalidSignatureError:
+              print(f"REPORT {label}_tampered_signature=rejected")
+          PY
+
+  oidc_without_environment:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      AUD: sts.amazonaws.com
+      JOB_LABEL: without_environment
+    steps:
+      - name: Inspect the OIDC token
+        run: |
+          python3 -m pip install --quiet "pyjwt[crypto]"
+          python3 - <<'PY'
+          import json, os, urllib.request
+          import jwt
+
+          aud, label = os.environ["AUD"], os.environ["JOB_LABEL"]
+          url = os.environ["ACTIONS_ID_TOKEN_REQUEST_URL"] + "&audience=" + aud
+          req = urllib.request.Request(
+              url, headers={"Authorization": "bearer " + os.environ["ACTIONS_ID_TOKEN_REQUEST_TOKEN"]}
+          )
+          token = json.load(urllib.request.urlopen(req))["value"]
+          key = jwt.PyJWKClient(os.environ["ISSUER"] + "/.well-known/jwks").get_signing_key_from_jwt(token).key
+          claims = jwt.decode(token, key, algorithms=["RS256"], audience=aud, issuer=os.environ["ISSUER"])
+          for name in ("sub", "ref", "environment", "job_workflow_ref"):
+              print(f"REPORT {label}_{name}={claims.get(name)}")
+          PY
+
+  oidc_without_permission:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Is a token available?
+        run: |
+          echo "REPORT no_permission_request_url=${ACTIONS_ID_TOKEN_REQUEST_URL:-absent}"
+          echo "REPORT no_permission_request_token=${ACTIONS_ID_TOKEN_REQUEST_TOKEN:+present}"
+
+  deploy_cloud_guarded:
+    if: ${{ vars.GHA_ENABLE_AWS_OIDC == 'true' }}
+    runs-on: ubuntu-latest
+    environment: production
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: us-east-1
+      - run: aws sts get-caller-identity
