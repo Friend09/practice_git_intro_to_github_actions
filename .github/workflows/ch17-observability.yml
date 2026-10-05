@@ -58,3 +58,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: echo "REPORT stable_attempt=$GITHUB_RUN_ATTEMPT"
+
+  annotation_scope:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Step one emits 8 errors
+        run: for i in $(seq 1 8); do echo "::error title=step1-error-$i::from step one, number $i"; done
+      - name: Step two emits 8 errors
+        run: for i in $(seq 1 8); do echo "::error title=step2-error-$i::from step two, number $i"; done
