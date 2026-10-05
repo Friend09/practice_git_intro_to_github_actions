@@ -1,0 +1,33 @@
+name: ch18 uv benefit
+
+on:
+  workflow_dispatch:
+    inputs:
+      enable_cache:
+        description: 'Enable the uv cache'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  install:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Set up uv
+        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          enable-cache: ${{ inputs.enable_cache }}
+          cache-dependency-glob: sandbox/ch18/requirements.txt
+      - name: Install the same heavy dependency set with uv
+        env:
+          USE_CACHE: ${{ inputs.enable_cache }}
+        run: |
+          start=$(date +%s)
+          uv venv --quiet .venv
+          uv pip install --quiet --python .venv/bin/python -r sandbox/ch18/requirements.txt
+          end=$(date +%s)
+          echo "REPORT uv_install_seconds=$((end-start)) cache_input=$USE_CACHE"
