@@ -8,6 +8,8 @@ from intro_gha import WORKFLOWS_DIR
 from intro_gha.workflow import load_workflow, triggers
 
 FILES = sorted(WORKFLOWS_DIR.glob("*.yml"))
+# Deliberately has no permissions block, to demonstrate the repository default (Ch 15).
+NO_PERMISSIONS_OK = {"ch15-default-permissions.yml"}
 
 
 @pytest.mark.parametrize("path", FILES, ids=lambda p: p.name)
@@ -15,7 +17,8 @@ def test_workflow_is_well_formed(path) -> None:
     """Parses, has a trigger, explicit permissions, and every job runs somewhere."""
     wf = load_workflow(path)
     assert triggers(wf), "no triggers"
-    assert "permissions" in wf, "missing top-level permissions"
+    if path.name not in NO_PERMISSIONS_OK:
+        assert "permissions" in wf, "missing top-level permissions"
     for job_id, job in wf["jobs"].items():
         assert "runs-on" in job or "uses" in job, f"{job_id} has no runs-on/uses"
 

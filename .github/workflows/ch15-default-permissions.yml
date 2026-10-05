@@ -1,0 +1,29 @@
+name: ch15 default permissions
+
+on:
+  workflow_dispatch:
+
+jobs:
+  default:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      JOB: default
+    steps:
+      - name: Probe with the repository default permissions
+        run: |
+          call() {
+            label=$1; shift
+            resp=$(gh api -i "$@" 2>&1) || true
+            status=$(printf '%s\n' "$resp" | head -1 | awk '{print $2}')
+            need=$(printf '%s\n' "$resp" | grep -i '^x-accepted-github-permissions:' | head -1 | cut -d' ' -f2- | tr -d '\r ')
+            msg=$(printf '%s\n' "$resp" | grep -o '"message":"[^"]*"' | head -1 | cut -d'"' -f4 | tr ' ' '_')
+            echo "REPORT ${label}_status=$status ${label}_needs=[${need}] ${label}_msg=[${msg}]"
+          }
+          echo "REPORT token_prefix=${GH_TOKEN:0:4} token_length=${#GH_TOKEN}"
+          call tag -X POST "repos/$GITHUB_REPOSITORY/git/refs" -f "ref=refs/tags/ch15-probe-$GITHUB_RUN_ID-$JOB" -f "sha=$GITHUB_SHA"
+          gh api -X DELETE "repos/$GITHUB_REPOSITORY/git/refs/tags/ch15-probe-$GITHUB_RUN_ID-$JOB" >/dev/null 2>&1 || true
+          call label -X POST "repos/$GITHUB_REPOSITORY/labels" -f "name=ch15-probe-$GITHUB_RUN_ID-$JOB" -f color=ededed
+          gh api -X DELETE "repos/$GITHUB_REPOSITORY/labels/ch15-probe-$GITHUB_RUN_ID-$JOB" >/dev/null 2>&1 || true
+          call secrets "repos/$GITHUB_REPOSITORY/actions/secrets"
+          echo "REPORT core_rate_limit=$(gh api rate_limit -q .resources.core.limit)"
