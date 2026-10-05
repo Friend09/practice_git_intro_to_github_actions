@@ -20,5 +20,8 @@ def median(xs: list[float]) -> float:
 
 
 def clamp(x: float, lo: float, hi: float) -> float:
-    """Limit x to the closed interval [lo, hi]."""
+    """Limit x to the closed interval [lo, hi].
+
+    Returns lo if x < lo, hi if x > hi, otherwise x.
+    """
     return max(lo, min(hi, x))
