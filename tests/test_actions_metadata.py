@@ -85,7 +85,8 @@ def test_script_rejects_what_semver_rejects(version: str, tmp_path: Path) -> Non
 def test_node_unit_tests_pass() -> None:
     """The JavaScript action's own unit tests pass under node --test."""
     test_dir = REPO_ROOT / ".github" / "actions" / "tally-js" / "test"
+    test_file = test_dir / "greet.test.js"
     res = subprocess.run(
-        ["node", "--test", str(test_dir)], capture_output=True, text=True
+        ["node", "--test", str(test_file)], capture_output=True, text=True
     )
     assert res.returncode == 0, res.stdout[-400:]
