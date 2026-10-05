@@ -1,0 +1,48 @@
+name: ch21 dynamic matrix
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'What the plan job emits'
+        type: choice
+        options: [valid, invalid, empty]
+        default: valid
+
+permissions:
+  contents: read
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.m.outputs.matrix }}
+      count: ${{ steps.m.outputs.count }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Compute the matrix from a file
+        id: m
+        env:
+          MODE: ${{ inputs.mode }}
+        run: |
+          case "$MODE" in
+            valid)   matrix=$(jq -c '{include: .}' sandbox/ch21/targets.json) ;;
+            invalid) matrix='this is not json' ;;
+            empty)   matrix='{"include":[]}' ;;
+          esac
+          echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
+          echo "count=$(printf '%s' "$matrix" | jq 'try (.include|length) catch -1')" >> "$GITHUB_OUTPUT"
+          echo "REPORT plan mode=$MODE matrix=$matrix"
+
+  run:
+    needs: [plan]
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.plan.outputs.matrix) }}
+    steps:
+      - name: Work on one leg
+        env:
+          NAME: ${{ matrix.name }}
+          PY: ${{ matrix.python }}
+        run: echo "REPORT leg name=$NAME python=$PY"

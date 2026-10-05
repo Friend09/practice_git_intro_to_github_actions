@@ -1,0 +1,5 @@
+[
+  {"name": "alpha", "python": "3.11"},
+  {"name": "beta", "python": "3.12"},
+  {"name": "gamma", "python": "3.13"}
+]
