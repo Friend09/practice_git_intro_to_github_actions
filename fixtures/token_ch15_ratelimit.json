@@ -1,0 +1,17 @@
+{
+  "run_id": 37325596047,
+  "conclusion": "success",
+  "displayTitle": "ch15 rate limit",
+  "event": "workflow_dispatch",
+  "headSha": "c70913b27938d87a5ccb554a457c364082907f54",
+  "reports": {
+    "hammer": {
+      "before": "[x-ratelimit-limit: 5000 x-ratelimit-remaining: 4921 x-ratelimit-resource: core ]",
+      "calls": "1150",
+      "ok": "1150",
+      "bad": "0",
+      "first_bad": "none",
+      "after": "[x-ratelimit-limit: 5000 x-ratelimit-remaining: 3852 x-ratelimit-resource: core ]"
+    }
+  }
+}

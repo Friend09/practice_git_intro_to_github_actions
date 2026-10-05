@@ -38,14 +38,14 @@ jobs:
         run: |
           . /etc/os-release
           echo "REPORT container_os=$PRETTY_NAME python=$(python -V) git=$(command -v git || echo none)"
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - name: Files after checkout
         run: echo "REPORT files_after_checkout=$(find . -mindepth 1 -maxdepth 1 | wc -l) has_pyproject=$([ -f pyproject.toml ] && echo yes || echo no)"
 
   uppercase_tag:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - name: Build with an uppercase owner (expected to fail)
         id: bad
         continue-on-error: true
@@ -62,7 +62,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - name: Push without packages write (expected to fail)
         id: denied
         continue-on-error: true
@@ -87,7 +87,7 @@ jobs:
     outputs:
       digest: ${{ steps.push.outputs.digest }}
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - name: Build and push to GHCR
         id: push
         working-directory: sandbox/tally

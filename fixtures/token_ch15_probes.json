@@ -1,0 +1,93 @@
+{
+  "run_id": 37325286661,
+  "conclusion": "success",
+  "displayTitle": "ch15 token probes",
+  "event": "workflow_dispatch",
+  "headSha": "c15cd42714c662c9ac783c3a47170f0e9b3d3d28",
+  "reports": {
+    "both_write": {
+      "token_prefix": "ghs_",
+      "token_length": "377",
+      "tag_status": "201",
+      "tag_needs": "[contents=write;contents=write,workflows=write]",
+      "tag_msg": "[]",
+      "label_status": "201",
+      "label_needs": "[issues=write;pull_requests=write]",
+      "label_msg": "[]",
+      "secrets_status": "403",
+      "secrets_needs": "[secrets=read]",
+      "secrets_msg": "[Resource_not_accessible_by_integration]",
+      "core_rate_limit": "5000"
+    },
+    "issues_write": {
+      "token_prefix": "ghs_",
+      "token_length": "377",
+      "tag_status": "403",
+      "tag_needs": "[contents=write;contents=write,workflows=write]",
+      "tag_msg": "[Resource_not_accessible_by_integration]",
+      "label_status": "201",
+      "label_needs": "[issues=write;pull_requests=write]",
+      "label_msg": "[]",
+      "secrets_status": "403",
+      "secrets_needs": "[secrets=read]",
+      "secrets_msg": "[Resource_not_accessible_by_integration]",
+      "core_rate_limit": "5000"
+    },
+    "none": {
+      "token_prefix": "ghs_",
+      "token_length": "377",
+      "tag_status": "403",
+      "tag_needs": "[contents=write;contents=write,workflows=write]",
+      "tag_msg": "[Resource_not_accessible_by_integration]",
+      "label_status": "403",
+      "label_needs": "[issues=write;pull_requests=write]",
+      "label_msg": "[Resource_not_accessible_by_integration]",
+      "secrets_status": "403",
+      "secrets_needs": "[secrets=read]",
+      "secrets_msg": "[Resource_not_accessible_by_integration]",
+      "core_rate_limit": "5000"
+    },
+    "contents_write": {
+      "token_prefix": "ghs_",
+      "token_length": "377",
+      "tag_status": "201",
+      "tag_needs": "[contents=write;contents=write,workflows=write]",
+      "tag_msg": "[]",
+      "label_status": "403",
+      "label_needs": "[issues=write;pull_requests=write]",
+      "label_msg": "[Resource_not_accessible_by_integration]",
+      "secrets_status": "403",
+      "secrets_needs": "[secrets=read]",
+      "secrets_msg": "[Resource_not_accessible_by_integration]",
+      "core_rate_limit": "5000"
+    },
+    "write_all": {
+      "token_prefix": "ghs_",
+      "token_length": "377",
+      "tag_status": "201",
+      "tag_needs": "[contents=write;contents=write,workflows=write]",
+      "tag_msg": "[]",
+      "label_status": "201",
+      "label_needs": "[issues=write;pull_requests=write]",
+      "label_msg": "[]",
+      "secrets_status": "403",
+      "secrets_needs": "[secrets=read]",
+      "secrets_msg": "[Resource_not_accessible_by_integration]",
+      "core_rate_limit": "5000"
+    },
+    "contents_read": {
+      "token_prefix": "ghs_",
+      "token_length": "377",
+      "tag_status": "403",
+      "tag_needs": "[contents=write;contents=write,workflows=write]",
+      "tag_msg": "[Resource_not_accessible_by_integration]",
+      "label_status": "403",
+      "label_needs": "[issues=write;pull_requests=write]",
+      "label_msg": "[Resource_not_accessible_by_integration]",
+      "secrets_status": "403",
+      "secrets_needs": "[secrets=read]",
+      "secrets_msg": "[Resource_not_accessible_by_integration]",
+      "core_rate_limit": "5000"
+    }
+  }
+}

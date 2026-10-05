@@ -37,20 +37,20 @@ jobs:
           echo "digest=$(cat dist/* | sha256sum | cut -c1-16)" >> "$GITHUB_OUTPUT"
       - name: Upload the artifact
         id: up
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: tally-dist
           path: dist/
           retention-days: 1
       - name: Upload with no matching files (default is a warning)
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: empty
           path: nothing-here/*.xyz
       - name: Upload with no matching files, if-no-files-found error
         id: strict
         continue-on-error: true
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: empty-strict
           path: nothing-here/*.xyz
@@ -58,7 +58,7 @@ jobs:
       - name: Upload the same artifact name again
         id: dup
         continue-on-error: true
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: tally-dist
           path: dist/
@@ -80,7 +80,7 @@ jobs:
       NOTES: ${{ needs.build.outputs.notes }}
       DIGEST: ${{ needs.build.outputs.digest }}
     steps:
-      - uses: actions/download-artifact@v8
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
           name: tally-dist
           path: got/
@@ -95,10 +95,10 @@ jobs:
   cache:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - name: Restore cache
         id: cache
-        uses: actions/cache@v6
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: ~/.cache/ch09-deps
           key: ch09-${{ inputs.salt }}-${{ hashFiles('pyproject.toml') }}

@@ -46,3 +46,17 @@ def test_workdir_trap_is_detected() -> None:
     assert jobs_missing_checkout_with_workflow_workdir(buggy) == ["ci-ok"]
     buggy["jobs"]["ci-ok"]["defaults"] = {"run": {"working-directory": "."}}
     assert jobs_missing_checkout_with_workflow_workdir(buggy) == []
+
+
+PIN_EXEMPT = {"ch04-uses-forms.yml", "ch04-bad-ref.yml"}  # they teach unpinned forms
+
+
+def test_remote_actions_are_sha_pinned() -> None:
+    """From Chapter 16 on, every remote action in this repo is pinned to a full SHA."""
+    from intro_gha.pinning import unpinned
+
+    for path in FILES:
+        if path.name in PIN_EXEMPT:
+            continue
+        loose = unpinned(load_workflow(path))
+        assert not loose, (path.name, loose)
