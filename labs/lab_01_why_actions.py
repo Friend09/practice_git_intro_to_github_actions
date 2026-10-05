@@ -35,7 +35,8 @@ def main() -> None:
     assert monthly_overage_mills(SPLIT, 200, "free") == 0
     assert monthly_overage_mills(SPLIT, 1000, "free") == 6000
     assert monthly_overage_mills(MERGED, 1000, "free") == 0
-    print("1000 pushes, split:", mills_to_dollars(monthly_overage_mills(SPLIT, 1000, "free")))
+    split_bill = monthly_overage_mills(SPLIT, 1000, "free")
+    print("1000 pushes, split:", mills_to_dollars(split_bill))
     assert job_cost_mills(61, "macos") == 124
     assert job_cost_mills(61, "linux") == 12
     assert run_cost_mills([(45, "linux"), (45, "windows"), (45, "macos")]) == 78

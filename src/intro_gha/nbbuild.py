@@ -22,12 +22,18 @@ GHA_REPO = os.environ.get("GHA_REPO", "Friend09/practice_git_intro_to_github_act
 print("mode:", GHA_MODE, "| repo:", GHA_REPO)'''
 
 
-def _cell(kind: str, src: str, empty: bool) -> dict:
+def _cell(kind: str, src: str, empty: bool, idx: int) -> dict:
     """Return one nbformat-4 cell; code cells are blanked when ``empty``."""
     if kind == "md":
-        return {"cell_type": "markdown", "metadata": {}, "source": src.splitlines(True)}
+        return {
+            "cell_type": "markdown",
+            "id": f"c{idx:03d}",
+            "metadata": {},
+            "source": src.splitlines(True),
+        }
     return {
         "cell_type": "code",
+        "id": f"c{idx:03d}",
         "metadata": {},
         "execution_count": None,
         "outputs": [],
@@ -50,7 +56,7 @@ def write_pair(num: int, cells: list[Cell], objectives: list[str]) -> None:
     allcells = head + cells + tail
     for name, empty in ((f"lab_{stem}", False), (f"practice_{num:02d}", True)):
         nb = {
-            "cells": [_cell(k, s, empty) for k, s in allcells],
+            "cells": [_cell(k, s, empty, i) for i, (k, s) in enumerate(allcells)],
             "metadata": {
                 "kernelspec": {
                     "display_name": "Python 3",

@@ -1,0 +1,26 @@
+{
+  "conclusion": "success",
+  "event": "workflow_dispatch",
+  "head_sha": "4dafa17c04c85fffb056191c38846d931ea566de",
+  "jobs": [
+    {
+      "completed_at": "2026-10-05T12:39:32Z",
+      "conclusion": "success",
+      "name": "test",
+      "started_at": "2026-10-05T12:39:28Z"
+    },
+    {
+      "completed_at": "2026-10-05T12:39:29Z",
+      "conclusion": "success",
+      "name": "lint",
+      "started_at": "2026-10-05T12:39:27Z"
+    },
+    {
+      "completed_at": "2026-10-05T12:39:37Z",
+      "conclusion": "success",
+      "name": "build",
+      "started_at": "2026-10-05T12:39:34Z"
+    }
+  ],
+  "run_id": 37311041878
+}
