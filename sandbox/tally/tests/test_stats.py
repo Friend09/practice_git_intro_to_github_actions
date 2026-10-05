@@ -1,7 +1,6 @@
 """Tests for tally.stats."""
 
 import pytest
-
 from tally.stats import clamp, mean, median
 
 
