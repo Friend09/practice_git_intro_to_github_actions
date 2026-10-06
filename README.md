@@ -117,3 +117,5 @@ fixtures/           event and run payloads
 
 Reference book: Laster, *Learning GitHub Actions* (O'Reilly). Behavioral claims are checked
 against GitHub Docs and dated in each chapter's resources section.
+
+<!-- demo C: README-only change -->
