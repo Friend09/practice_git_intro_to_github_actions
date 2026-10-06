@@ -1,0 +1,13 @@
+{
+  "repo": "Friend09/practice_git_intro_to_github_actions",
+  "workflow_file": "ch03-tally-ci.yml",
+  "observed": "2026-10-05",
+  "note": "Latest ch03 runs: push on main green (37337700070); the only workflow_dispatch run (37311583393, fail=true) is red.",
+  "badges": [
+    {"query": "", "title": "ch03 tally ci - passing"},
+    {"query": "?branch=main", "title": "ch03 tally ci - passing"},
+    {"query": "?event=push", "title": "ch03 tally ci - passing"},
+    {"query": "?event=workflow_dispatch", "title": "ch03 tally ci - failing"},
+    {"query": "?branch=nonexistent", "title": "ch03 tally ci - no status"}
+  ]
+}

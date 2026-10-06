@@ -213,6 +213,24 @@ Run **37311496555**, triggered by a push. State dump from the fixture:
 
 The overall result is a **green check**. On a private repo this 14-second run bills one minute (Chapter 01).
 
+### Status Badges
+
+Laster (Ch 4) shows a **status badge**: a small SVG you paste into a README that reports the workflow's latest result. The URL is `https://github.com/OWNER/REPO/actions/workflows/FILE/badge.svg`; `intro_gha.badge.badge_url` builds it, and this repository's README carries one for `ci.yml`. We fetched the badge for `ch03-tally-ci.yml` with different query filters on 2026-10-05 and read the `<title>` of each SVG (`fixtures/badge_ch03.json`):
+
+| Query | Latest matching run | Badge says |
+| --- | --- | --- |
+| *(none)* | `push` on `main`, green (37337700070) | **passing** |
+| `?branch=main` | same | **passing** |
+| `?event=push` | same | **passing** |
+| `?event=workflow_dispatch` | the `fail=true` run 37311583393 | **failing** |
+| `?branch=nonexistent` | none | **no status** |
+
+**What to notice:**
+
+- The red run of Section 9 is invisible in the plain badge: the badge shows the **latest** run matching the filters, and later green pushes replaced it. Only `?event=workflow_dispatch` still finds the red one.
+- A branch with no runs does not fail; it renders `no status`. A typo in `?branch=` looks like a missing workflow, not a red one.
+- The badge image is also a link: wrapped in Markdown it opens the workflow's run list. Docs: [Adding a workflow status badge](https://docs.github.com/en/actions/how-tos/monitor-workflows/add-a-status-badge) (verified 2026-10).
+
 ## 9. Reading a Red Run
 
 Run **37311583393**, triggered with `gh workflow run ch03-tally-ci.yml -f fail=true`:
@@ -336,7 +354,8 @@ All verified 2026-10.
 - GitHub Docs: Actions limits - https://docs.github.com/en/actions/reference/limits
 - actions/checkout - https://github.com/actions/checkout
 - actions/setup-python - https://github.com/actions/setup-python
-- Live evidence: runs 37311496555 (green) and 37311583393 (red) in this repo
+- GitHub Docs: Adding a workflow status badge - https://docs.github.com/en/actions/how-tos/monitor-workflows/add-a-status-badge
+- Live evidence: runs 37311496555 (green) and 37311583393 (red) in this repo; badge titles in `fixtures/badge_ch03.json`
 - Laster, *Learning GitHub Actions* (O'Reilly), Chapter 4
 
 ## 20. Appendix A: Code Index

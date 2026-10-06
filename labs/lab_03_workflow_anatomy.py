@@ -8,6 +8,7 @@ from __future__ import annotations
 import json
 
 from intro_gha import FIXTURES_DIR, WORKFLOWS_DIR
+from intro_gha.badge import badge_status, badge_url
 from intro_gha.cost import run_cost_mills
 from intro_gha.triggers import paths_trigger
 from intro_gha.workflow import load_workflow, triggers
@@ -39,6 +40,12 @@ def main() -> None:
     assert red["Break add() on purpose"] == "success"
     assert green["Run tests"] == "success" and red["Run tests"] == "failure"
     assert run_cost_mills([(14, "linux")]) == run_cost_mills([(16, "linux")]) == 6
+    badges = json.loads((FIXTURES_DIR / "badge_ch03.json").read_text())
+    statuses = {b["query"]: badge_status(f"<title>{b['title']}</title>") for b in badges["badges"]}
+    assert statuses["?event=workflow_dispatch"] == "failing" and statuses[""] == "passing"
+    assert badge_url(badges["repo"], badges["workflow_file"], event="workflow_dispatch").endswith(
+        "ch03-tally-ci.yml/badge.svg?event=workflow_dispatch"
+    )
     print("green:", green["Run tests"], "| red:", red["Run tests"], "| 6 mills each")
 
 

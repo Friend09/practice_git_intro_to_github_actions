@@ -12,6 +12,8 @@ from intro_gha.chapters import CHAPTERS, PHASES, chapter_stem  # noqa: E402
 
 INTRO = """# Intro to GitHub Actions
 
+[![CI](https://github.com/Friend09/practice_git_intro_to_github_actions/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Friend09/practice_git_intro_to_github_actions/actions/workflows/ci.yml)
+
 A hands-on, reading-first curriculum that takes you from "what is a workflow file?" to a full
 CI -> release -> deploy pipeline. Every chapter is built around one tiny running example,
 **Tally** (a small Python repo), and the repo you are reading is also the live lab: its
