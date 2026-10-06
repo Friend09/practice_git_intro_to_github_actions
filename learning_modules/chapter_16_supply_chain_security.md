@@ -154,6 +154,30 @@ because all actions must be pinned to a full-length commit SHA.
 - The policy checks for a **40-hex SHA**, not for "is a commit": the tag-object reference passed. That is why Section 4's `--verify` is still worth running.
 - We turned the policy **back off** afterwards so Chapter 04's deliberately unpinned demos still work; in a real repository, leave it on.
 
+### Rulesets, Required Checks and CODEOWNERS
+
+A repository **ruleset** is the platform's answer to "who may change this ref, and what must pass first". Laster (Ch 9) covers protected branches, protected tags and `CODEOWNERS` as separate settings; today rulesets cover branch and tag rules in one place (docs verified 2026-10: [About rulesets](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/about-rulesets)). We tested one on throwaway refs so `main` stayed open: a **branch ruleset** on `demo/ch16-base` (`bypass_actors: []`, so it binds the admin too) with two rules, `pull_request` and `required_status_checks` naming `ci-ok (required check)`, the job from Chapter 11. Four pull requests then went into that branch (`fixtures/rulesets_ch16.json`):
+
+| Case | `ci-ok` on the head | `mergeable_state` | Why |
+| --- | --- | --- | --- |
+| Direct `git push` to the branch | n/a | **rejected** (`GH013`) | `Changes must be made through a pull request.` and `Required status check "ci-ok (required check)" is expected.` |
+| PR #9: harmless file under `sandbox/` | success | **clean** | the check passed |
+| PR #10: `add()` returns `a - b` | **failure** | **blocked** | the check ran and failed |
+| PR #11: README-only change | **none ran** | **blocked** | the workflow's `paths: sandbox/**` filter skipped it, so the required check never reported |
+| PR #9 again, ruleset now requires `ci-ok` (the pre-rename name) | success | **blocked** | nothing reports a check named `ci-ok` |
+
+**What to notice:**
+
+- A required check is matched by **name**, not by "CI passed". PR #11 and the renamed-check row are both fully green or untouched, yet blocked, because the named check never arrives. This is the answer to Chapter 22 Exercise 4: rename `test` to `unit` and a rule that requires `test` waits forever.
+- A path-filtered workflow plus a required check is a trap: any PR that touches none of the filtered paths cannot merge. Either drop the filter on the workflow that supplies the required check, or accept that docs-only PRs need an admin bypass.
+- `mergeable` said `MERGEABLE` for the red PR #10: that field is about merge **conflicts**. Read `mergeStateStatus` / `mergeable_state` for the rules.
+- Each push to a PR branch ran the workflow twice (`push` and `pull_request`), and both reported `ci-ok`; the rule needed one success per name.
+- **Tags:** a second ruleset on `refs/tags/demo-v*` with rules `deletion` and `update` refused both `git push --delete` (`Cannot delete this tag`) and a forced move (`Cannot update this protected ref.`). This replaces the book's "protected tags".
+
+**CODEOWNERS.** `.github/CODEOWNERS` in this repository owns `/.github/workflows/` (docs: [About code owners](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners)); `GET /repos/OWNER/REPO/codeowners/errors` returned `[]`, so the file is valid. The file alone enforces nothing: we raised the ruleset's `pull_request` rule to one approval with `require_code_owner_review: true`, then opened PR #12 touching a workflow file. All checks were green and it stayed **`REVIEW_REQUIRED` / blocked**. We could not show the owner being auto-requested: the owner was also the PR's author and `reviewRequests` stayed 0, and a solo maintainer cannot approve their own PR, so this rule suits a team, not a one-person repository. We also did **not** try to merge any of the PRs, and we did not test the organization-level *required workflows* the book describes (Chapter 20).
+
+We deleted both rulesets, the tag, the four PRs' branches and the base branch afterwards (`GET /repos/OWNER/REPO/rulesets` returned `[]`).
+
 ## 6. Allow Lists
 
 `allowed_actions` can be `all` (our setting) or `selected` with finer rules (the API also has a local-only mode, which we did not test). We switched this repo to **`selected`, GitHub-owned actions only** (`github_owned_allowed: true`, `verified_allowed: false`, no patterns) and ran a workflow with two jobs: `github_owned` (`actions/checkout`) and `third_party` (`astral-sh/setup-uv`).
@@ -361,6 +385,9 @@ All verified 2026-10.
 - SLSA build provenance specification - https://slsa.dev/spec/v1.0/provenance
 - GitHub Docs: Keeping your actions up to date with Dependabot - https://docs.github.com/en/code-security/dependabot/working-with-dependabot/keeping-your-actions-up-to-date-with-dependabot
 - Live evidence: runs 37327302627, 37327434888, 37327726357, 37327727095, 37327868250, 37327919016, 37328032337, 37328071702, 37328228420 and Dependabot PR #3 in this repo
+- GitHub Docs: About rulesets - https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/about-rulesets
+- GitHub Docs: About code owners - https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+- Live evidence for the rulesets subsection: PRs #9-#12 (closed, branches deleted) and `fixtures/rulesets_ch16.json`
 - Laster, *Learning GitHub Actions* (O'Reilly), Chapter 9
 
 ## 20. Appendix A: Code Index

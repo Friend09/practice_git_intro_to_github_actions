@@ -69,6 +69,15 @@ def main() -> None:
     assert at["verify_in_workflow"] == "ok" and at["tampered"].startswith("rejected")
     assert at["wheel_digest"] != at["tampered_digest"]
     assert at["signer"].endswith("ch16-attest.yml@refs/heads/main")
+    rs = json.loads((FIXTURES_DIR / "rulesets_ch16.json").read_text())
+    prs = rs["prs"]
+    assert prs["9"]["mergeable_state"] == "clean"
+    assert prs["10"]["ci_ok"] == ["failure", "failure"]
+    assert prs["11"]["ci_ok"] == [] and prs["11"]["mergeable_state"] == "blocked"
+    assert rs["rename_variant"]["pr9_mergeable_state"] == "blocked"
+    assert set(rs["tag_ruleset"]["rules"]) == {"deletion", "update"}
+    codeowners = (WORKFLOWS_DIR.parent / "CODEOWNERS").read_text()
+    assert "/.github/workflows/" in codeowners
     print("pins, injection, PR triggers, both policies and attestation all asserted")
 
 

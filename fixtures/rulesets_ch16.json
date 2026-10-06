@@ -1,0 +1,17 @@
+{
+  "observed": "2026-10-05",
+  "repo": "Friend09/practice_git_intro_to_github_actions",
+  "branch_ruleset": {"id": 24549869, "target": "refs/heads/demo/ch16-base", "bypass_actors": [],
+    "rules": ["pull_request", "required_status_checks"], "required_context": "ci-ok (required check)"},
+  "direct_push_rejected": ["Changes must be made through a pull request.", "Required status check \"ci-ok (required check)\" is expected."],
+  "prs": {
+    "9":  {"case": "green change under sandbox/", "mergeable_state": "clean", "ci_ok": ["success", "success"]},
+    "10": {"case": "broken add()", "mergeable_state": "blocked", "ci_ok": ["failure", "failure"]},
+    "11": {"case": "README-only (path filter)", "mergeable_state": "blocked", "ci_ok": []},
+    "12": {"case": "touches a code-owned workflow, code-owner review required", "reviewDecision": "REVIEW_REQUIRED", "mergeStateStatus": "BLOCKED", "reviewRequests": 0, "ci_ok": ["success", "success"]}
+  },
+  "rename_variant": {"required_context": "ci-ok", "pr9_mergeable_state": "blocked", "pr9_ci_ok": ["SUCCESS", "SUCCESS"]},
+  "tag_ruleset": {"id": 24550106, "target": "refs/tags/demo-v*", "rules": ["deletion", "update"],
+    "delete_rejected": "Cannot delete this tag", "move_rejected": "Cannot update this protected ref."},
+  "events_per_pr_push": ["pull_request", "push"]
+}

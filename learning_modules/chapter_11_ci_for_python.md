@@ -186,7 +186,7 @@ ci-ok:
 
 `needs.test.result` is **one value for the whole matrix**: `success` only if every leg succeeded. `if: always()` is essential: without it, a failing `lint` would make `ci-ok` **skipped** (Chapter 10), and a skipped job is commonly reported as passing to branch protection (a behavior we did not test here). Real verdict when we injected a lint error (run 37321582147): the report line read `lint=failure test=success` and `ci-ok` failed. Tests were green; the gate still said no.
 
-(Making this job a *required status check* is a branch-protection setting; we did not enable branch protection on this repo, so we did not test it.)
+(Making this job a *required status check* is a ruleset setting; Chapter 16 Section 5 tested it on throwaway branches: a red `ci-ok` blocks the merge, and so does a `ci-ok` that never reports. We still did not test a *skipped* required job.)
 
 ## 8. Lint Annotations
 

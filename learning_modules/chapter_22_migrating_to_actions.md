@@ -276,7 +276,7 @@ A team migrates a Jenkins pipeline whose `post { failure { notify } }` block pos
 1. `test_ab` has `needs: [build_a, build_b]`. Waves: `[[build_a, build_b], [test_ab]]`.
 2. A final job that `needs` the others with `if: ${{ always() }}`. Without it, the job is skipped when a dependency fails, like `deploy` was.
 3. `if: ${{ needs.test.result == 'failure' }}` (or an env-variable comparison). We saw the value `failure` in the report; we did not run this exact expression.
-4. The required check named `test` no longer exists, so it is never reported; depending on settings the requirement can block merging or stop protecting. Keep the old job id or update the rule.
+4. The required check named `test` no longer exists, so it is never reported; depending on settings the requirement can block merging or stop protecting. Keep the old job id or update the rule. Chapter 16 Section 5 measured this: with the rule naming a check nothing reports, an all-green PR stayed `blocked`.
 5. Four jobs: each rounds up to 1 minute, so 4 billed minutes = 4 x $0.006 = **$0.024**. One job: 90 seconds rounds up to 2 minutes = **$0.012**.
 
 </details>
