@@ -43,30 +43,34 @@
 
 ## Table of Contents
 
-<!-- TOC -->
-- [1. The Question](#1-the-question)
-- [2. Running Example: Tally's Pipeline Timings](#2-running-example-tallys-pipeline-timings)
-- [3. What a Self-Run CI Server Makes You Own](#3-what-a-self-run-ci-server-makes-you-own)
-- [4. What Actions Takes Off Your Hands](#4-what-actions-takes-off-your-hands)
-- [5. The Billing Arithmetic](#5-the-billing-arithmetic)
-- [6. The Monthly Picture](#6-the-monthly-picture)
-- [7. Where Hosted Runners Stop](#7-where-hosted-runners-stop)
-- [8. When Actions Is the Wrong Tool](#8-when-actions-is-the-wrong-tool)
-- [9. Self-Hosted Runner Economics](#9-self-hosted-runner-economics)
-- [10. Lock-In](#10-lock-in)
-- [11. Third-Party Dependencies](#11-third-party-dependencies)
-- [12. Why Per-Job Isolation Matters](#12-why-per-job-isolation-matters)
-- [13. Case Study: Tally Grows Up](#13-case-study-tally-grows-up)
-- [14. Comparison: Options for "Run the Tests on Every Change"](#14-comparison-options-for-run-the-tests-on-every-change)
-- [15. Practical Tips](#15-practical-tips)
-- [16. Demonstrated Failure Mode: The Rounding Penalty](#16-demonstrated-failure-mode-the-rounding-penalty)
-- [17. Key Takeaways](#17-key-takeaways)
-- [18. Exercises](#18-exercises)
-- [19. Additional Resources](#19-additional-resources)
-- [20. Appendix A: Code Index](#20-appendix-a-code-index)
-   - [A.1 The cost helpers](#a1-the-cost-helpers)
-   - [A.2 Reproduce the rounding penalty](#a2-reproduce-the-rounding-penalty)
-<!-- /TOC -->
+<!-- toc-start -->
+
+- [Chapter 01: Why Actions? Cost vs Scripts and Jenkins](#chapter-01-why-actions-cost-vs-scripts-and-jenkins)
+  - [Beginner's Guide](#beginners-guide)
+  - [What You'll Learn](#what-youll-learn)
+  - [Table of Contents](#table-of-contents)
+  - [1. The Question](#1-the-question)
+  - [2. Running Example: Tally's Pipeline Timings](#2-running-example-tallys-pipeline-timings)
+  - [3. What a Self-Run CI Server Makes You Own](#3-what-a-self-run-ci-server-makes-you-own)
+  - [4. What Actions Takes Off Your Hands](#4-what-actions-takes-off-your-hands)
+  - [5. The Billing Arithmetic](#5-the-billing-arithmetic)
+  - [6. The Monthly Picture](#6-the-monthly-picture)
+  - [7. Where Hosted Runners Stop](#7-where-hosted-runners-stop)
+  - [8. When Actions Is the Wrong Tool](#8-when-actions-is-the-wrong-tool)
+  - [9. Self-Hosted Runner Economics](#9-self-hosted-runner-economics)
+  - [10. Lock-In](#10-lock-in)
+  - [11. Third-Party Dependencies](#11-third-party-dependencies)
+  - [12. Why Per-Job Isolation Matters](#12-why-per-job-isolation-matters)
+  - [13. Case Study: Tally Grows Up](#13-case-study-tally-grows-up)
+  - [14. Comparison: Options for "Run the Tests on Every Change"](#14-comparison-options-for-run-the-tests-on-every-change)
+  - [15. Practical Tips](#15-practical-tips)
+  - [16. Demonstrated Failure Mode: The Rounding Penalty](#16-demonstrated-failure-mode-the-rounding-penalty)
+  - [17. Key Takeaways](#17-key-takeaways)
+  - [18. Exercises](#18-exercises)
+  - [19. Additional Resources](#19-additional-resources)
+  - [20. Appendix A: Code Index](#20-appendix-a-code-index)
+    - [A.1 The cost helpers](#a1-the-cost-helpers)
+    - [A.2 Reproduce the rounding penalty](#a2-reproduce-the-rounding-penalty)
 
 ---
 
@@ -78,12 +82,12 @@ Chapter 00 ended with a workflow file. Before writing more of them, ask the ques
 
 > 📌 **Running Example: Tally's CI bill.** Tally's CI has three stages. On a Linux runner they take: **lint 15 seconds, test 20 seconds, build 25 seconds**. Run as one job they take 60 seconds in total (setup time is ignored for the arithmetic). Run as three jobs they bill separately. Tally lives in a **private** repo on the **Free** plan (2,000 included minutes per month), and is pushed to **200 times a month**. We return to these numbers in Sections 5, 13 and 16.
 
-| Stage | Seconds | Billed minutes if its own job |
-| --- | --- | --- |
-| lint | 15 | 1 |
-| test | 20 | 1 |
-| build | 25 | 1 |
-| **All three, one job** | **60** | **1** |
+| Stage                  | Seconds | Billed minutes if its own job |
+| ---------------------- | ------- | ----------------------------- |
+| lint                   | 15      | 1                             |
+| test                   | 20      | 1                             |
+| build                  | 25      | 1                             |
+| **All three, one job** | **60**  | **1**                         |
 
 ## 3. What a Self-Run CI Server Makes You Own
 
@@ -95,13 +99,13 @@ webhook from Git host -> controller (UI, scheduler, plugins)
                           -> credentials store, plugin updates, OS patches, backups
 ```
 
-| You own | Typical work |
-| --- | --- |
+| You own        | Typical work                                          |
+| -------------- | ----------------------------------------------------- |
 | The controller | Upgrades, plugin compatibility, backups, availability |
-| The agents | OS patches, tool versions, disk cleanup, capacity |
-| The webhook | Network access from the Git host to your server |
-| Credentials | Rotation, least privilege, audit |
-| Capacity | Queues when 10 PRs arrive at once |
+| The agents     | OS patches, tool versions, disk cleanup, capacity     |
+| The webhook    | Network access from the Git host to your server       |
+| Credentials    | Rotation, least privilege, audit                      |
+| Capacity       | Queues when 10 PRs arrive at once                     |
 
 None of these is hard in isolation. Together they are a part-time job, and the work shows up exactly when you are busy with something else.
 
@@ -109,13 +113,13 @@ None of these is hard in isolation. Together they are a part-time job, and the w
 
 Per GitHub's documentation, a standard hosted runner is a new virtual machine started for each job and discarded after it (verified 2026-10). That one design choice removes most of Section 3:
 
-| Section 3 burden | Under Actions |
-| --- | --- |
-| Controller | GitHub runs it |
-| Agent patching and cleanup | Fresh VM per job; nothing to clean |
-| Webhook wiring | Native: events are delivered inside GitHub |
-| Credentials | Built-in `GITHUB_TOKEN`, secrets store (Chapters 08, 15) |
-| Capacity | Hosted pool; you pay per minute instead of owning machines |
+| Section 3 burden           | Under Actions                                              |
+| -------------------------- | ---------------------------------------------------------- |
+| Controller                 | GitHub runs it                                             |
+| Agent patching and cleanup | Fresh VM per job; nothing to clean                         |
+| Webhook wiring             | Native: events are delivered inside GitHub                 |
+| Credentials                | Built-in `GITHUB_TOKEN`, secrets store (Chapters 08, 15)   |
+| Capacity                   | Hosted pool; you pay per minute instead of owning machines |
 
 **State before / after:** before, "run tests on push" required a server, a webhook and a plugin. After, it requires one file, `.github/workflows/ci.yml`, versioned in the same commit as the code it tests.
 
@@ -137,12 +141,12 @@ The sum runs over every job in the run. The ceiling brackets mean "round up". Th
 
 **Substitution on Tally (three separate Linux jobs):**
 
-| Job | Seconds | Ceiling | Rate (mills) | Cost (mills) |
-| --- | --- | --- | --- | --- |
-| lint | 15 | 1 | 6 | 6 |
-| test | 20 | 1 | 6 | 6 |
-| build | 25 | 1 | 6 | 6 |
-| **Run total** | | **3 min** | | **18 mills = $0.018** |
+| Job           | Seconds | Ceiling   | Rate (mills) | Cost (mills)          |
+| ------------- | ------- | --------- | ------------ | --------------------- |
+| lint          | 15      | 1         | 6            | 6                     |
+| test          | 20      | 1         | 6            | 6                     |
+| build         | 25      | 1         | 6            | 6                     |
+| **Run total** |         | **3 min** |              | **18 mills = $0.018** |
 
 (A mill is $0.001. We use integers in code to avoid float error.)
 
@@ -161,16 +165,16 @@ The sum runs over every job in the run. The ceiling brackets mean "round up". Th
 Using Tally's 200 pushes a month:
 
 | Layout | Minutes per run | Runs | Minutes per month | vs 2,000 allowance | Overage |
-| --- | --- | --- | --- | --- | --- |
-| 3 jobs | 3 | 200 | 600 | under | $0 |
-| 1 job | 1 | 200 | 200 | under | $0 |
+| ------ | --------------- | ---- | ----------------- | ------------------ | ------- |
+| 3 jobs | 3               | 200  | 600               | under              | $0      |
+| 1 job  | 1               | 200  | 200               | under              | $0      |
 
 Now the team grows and pushes **1,000 times a month**:
 
-| Layout | Minutes per month | Overage minutes | Overage cost |
-| --- | --- | --- | --- |
-| 3 jobs | 3,000 | 1,000 | 1,000 x $0.006 = **$6.00** |
-| 1 job | 1,000 | 0 | **$0** |
+| Layout | Minutes per month | Overage minutes | Overage cost               |
+| ------ | ----------------- | --------------- | -------------------------- |
+| 3 jobs | 3,000             | 1,000           | 1,000 x $0.006 = **$6.00** |
+| 1 job  | 1,000             | 0               | **$0**                     |
 
 **What to notice:** the allowance hides the problem at small scale. At 1,000 pushes the split layout crosses the free line and starts costing money; the single-job layout is still free.
 
@@ -180,13 +184,13 @@ Per the limits page (verified 2026-10): a job may run at most **6 hours** on a h
 
 ## 8. When Actions Is the Wrong Tool
 
-| Situation | Why Actions struggles | Better fit |
-| --- | --- | --- |
-| Needs a GPU or special hardware | Standard runners are CPU VMs | Self-hosted runner on your hardware (Chapter 05) |
-| Builds must reach a private network | Hosted runners sit on GitHub's network | Self-hosted runner inside the network |
-| Data cannot leave your premises | Code is processed on GitHub infrastructure | Self-hosted runner or on-prem CI |
-| Single job over 6 hours | Hard job limit | Batch system or self-hosted |
-| Not hosted on GitHub at all | Events come from GitHub only | The CI native to your host |
+| Situation                           | Why Actions struggles                      | Better fit                                       |
+| ----------------------------------- | ------------------------------------------ | ------------------------------------------------ |
+| Needs a GPU or special hardware     | Standard runners are CPU VMs               | Self-hosted runner on your hardware (Chapter 05) |
+| Builds must reach a private network | Hosted runners sit on GitHub's network     | Self-hosted runner inside the network            |
+| Data cannot leave your premises     | Code is processed on GitHub infrastructure | Self-hosted runner or on-prem CI                 |
+| Single job over 6 hours             | Hard job limit                             | Batch system or self-hosted                      |
+| Not hosted on GitHub at all         | Events come from GitHub only               | The CI native to your host                       |
 
 Note the pattern: the fix is usually **still Actions with a self-hosted runner**, not abandoning Actions. The control plane (events, YAML, UI) stays; only the machine changes.
 
@@ -225,13 +229,13 @@ The lesson: measure billed minutes per run (`gh run view <id> --json jobs`) befo
 
 ## 14. Comparison: Options for "Run the Tests on Every Change"
 
-| Approach | Setup Effort | Control | Failure Visibility | Security Exposure | Maintenance Burden |
-| --- | --- | --- | --- | --- | --- |
-| Manual script | Minimal - one file | Strong - local | Weak - only you | Minimal - local | Low - until forgotten |
-| Pre-commit hook | Low - per clone | Moderate - skippable | Weak - local only | Minimal - local | Moderate - drifts |
-| Self-run CI server | High - server, agents, webhook | Excellent - total | Strong - own UI | High - you secure it | Very High - you patch it |
-| GitHub Actions (hosted) | Low - one YAML file | Strong - per workflow | Excellent - on the PR | Moderate - shared infra | Low - GitHub operates it |
-| Actions + self-hosted runner | Moderate - register machine | Excellent - own hardware | Excellent - on the PR | High - your machine runs PR code | High - you patch the runner |
+| Approach                     | Setup Effort                   | Control                  | Failure Visibility    | Security Exposure                | Maintenance Burden          |
+| ---------------------------- | ------------------------------ | ------------------------ | --------------------- | -------------------------------- | --------------------------- |
+| Manual script                | Minimal - one file             | Strong - local           | Weak - only you       | Minimal - local                  | Low - until forgotten       |
+| Pre-commit hook              | Low - per clone                | Moderate - skippable     | Weak - local only     | Minimal - local                  | Moderate - drifts           |
+| Self-run CI server           | High - server, agents, webhook | Excellent - total        | Strong - own UI       | High - you secure it             | Very High - you patch it    |
+| GitHub Actions (hosted)      | Low - one YAML file            | Strong - per workflow    | Excellent - on the PR | Moderate - shared infra          | Low - GitHub operates it    |
+| Actions + self-hosted runner | Moderate - register machine    | Excellent - own hardware | Excellent - on the PR | High - your machine runs PR code | High - you patch the runner |
 
 ## 15. Practical Tips
 
@@ -245,13 +249,13 @@ The lesson: measure billed minutes per run (`gh run view <id> --json jobs`) befo
 
 **Setup:** Tally's three stages as three jobs (Section 5).
 
-| Step | State |
-| --- | --- |
-| Measure compute | 15 + 20 + 25 = 60 seconds of actual work |
-| Bill as 3 jobs | 1 + 1 + 1 = **3 billed minutes** |
-| Bill as 1 job | ceil(60/60) = **1 billed minute** |
-| Monthly at 1,000 pushes | 3,000 vs 1,000 minutes |
-| Overage at $0.006 | **$6.00** vs **$0** |
+| Step                    | State                                    |
+| ----------------------- | ---------------------------------------- |
+| Measure compute         | 15 + 20 + 25 = 60 seconds of actual work |
+| Bill as 3 jobs          | 1 + 1 + 1 = **3 billed minutes**         |
+| Bill as 1 job           | ceil(60/60) = **1 billed minute**        |
+| Monthly at 1,000 pushes | 3,000 vs 1,000 minutes                   |
+| Overage at $0.006       | **$6.00** vs **$0**                      |
 
 **Symptom:** the bill rose 3x with no change in what the pipeline does. **Cause:** per-job round-up to whole minutes. **Fix:** consolidate jobs whose parallelism you don't need; otherwise accept the cost knowingly. The lab asserts every figure above.
 
@@ -295,7 +299,7 @@ All verified 2026-10.
 - GitHub Docs: GitHub-hosted runners reference - https://docs.github.com/en/actions/reference/runners/github-hosted-runners
 - GitHub Docs: Understanding GitHub Actions - https://docs.github.com/en/actions/get-started/understand-github-actions
 - GitHub Docs: About self-hosted runners - https://docs.github.com/en/actions/hosting-your-own-runners/managing-self-hosted-runners/about-self-hosted-runners
-- Laster, *Learning GitHub Actions* (O'Reilly), Chapter 1
+- Laster, _Learning GitHub Actions_ (O'Reilly), Chapter 1
 
 ## 20. Appendix A: Code Index
 

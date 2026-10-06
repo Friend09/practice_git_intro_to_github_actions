@@ -43,39 +43,43 @@
 
 ## Table of Contents
 
-<!-- TOC -->
-- [1. Three Kinds of Question](#1-three-kinds-of-question)
-- [2. Running Example: A Run Built to Be Debugged](#2-running-example-a-run-built-to-be-debugged)
-- [3. Making a Log Readable: Workflow Commands](#3-making-a-log-readable-workflow-commands)
-- [4. How Many Annotations Can You Emit?](#4-how-many-annotations-can-you-emit)
-- [5. Debug Logging](#5-debug-logging)
-- [6. Re-runs and Attempts](#6-re-runs-and-attempts)
-- [7. Reading Logs from the Terminal](#7-reading-logs-from-the-terminal)
-- [8. "Why Didn't It Run?": A Checklist](#8-why-didnt-it-run-a-checklist)
-- [9. `actionlint`: The Linter That Knows Workflows](#9-actionlint-the-linter-that-knows-workflows)
-- [10. `act`: Running Workflows Locally](#10-act-running-workflows-locally)
-- [11. A Pre-commit Gate](#11-a-pre-commit-gate)
-- [12. Monitoring Your Own History](#12-monitoring-your-own-history)
-- [13. Case Study: The Red Build Nobody Looked At](#13-case-study-the-red-build-nobody-looked-at)
-- [14. Comparison: Ways to Find the Cause](#14-comparison-ways-to-find-the-cause)
-- [15. Practical Tips](#15-practical-tips)
-- [16. Demonstrated Failure Modes](#16-demonstrated-failure-modes)
-- [17. Key Takeaways](#17-key-takeaways)
-- [18. Exercises](#18-exercises)
-- [19. Additional Resources](#19-additional-resources)
-- [20. Appendix A: Code Index](#20-appendix-a-code-index)
-   - [A.1 Metrics from the run history and the stage comparison](#a1-metrics-from-the-run-history-and-the-stage-comparison)
-<!-- /TOC -->
+<!-- toc-start -->
+
+- [Chapter 17: Monitoring, Logging and Debugging](#chapter-17-monitoring-logging-and-debugging)
+  - [Beginner's Guide](#beginners-guide)
+  - [What You'll Learn](#what-youll-learn)
+  - [Table of Contents](#table-of-contents)
+  - [1. Three Kinds of Question](#1-three-kinds-of-question)
+  - [2. Running Example: A Run Built to Be Debugged](#2-running-example-a-run-built-to-be-debugged)
+  - [3. Making a Log Readable: Workflow Commands](#3-making-a-log-readable-workflow-commands)
+  - [4. How Many Annotations Can You Emit?](#4-how-many-annotations-can-you-emit)
+  - [5. Debug Logging](#5-debug-logging)
+  - [6. Re-runs and Attempts](#6-re-runs-and-attempts)
+  - [7. Reading Logs from the Terminal](#7-reading-logs-from-the-terminal)
+  - [8. "Why Didn't It Run?": A Checklist](#8-why-didnt-it-run-a-checklist)
+  - [9. `actionlint`: The Linter That Knows Workflows](#9-actionlint-the-linter-that-knows-workflows)
+  - [10. `act`: Running Workflows Locally](#10-act-running-workflows-locally)
+  - [11. A Pre-commit Gate](#11-a-pre-commit-gate)
+  - [12. Monitoring Your Own History](#12-monitoring-your-own-history)
+  - [13. Case Study: The Red Build Nobody Looked At](#13-case-study-the-red-build-nobody-looked-at)
+  - [14. Comparison: Ways to Find the Cause](#14-comparison-ways-to-find-the-cause)
+  - [15. Practical Tips](#15-practical-tips)
+  - [16. Demonstrated Failure Modes](#16-demonstrated-failure-modes)
+  - [17. Key Takeaways](#17-key-takeaways)
+  - [18. Exercises](#18-exercises)
+  - [19. Additional Resources](#19-additional-resources)
+  - [20. Appendix A: Code Index](#20-appendix-a-code-index)
+    - [A.1 Metrics from the run history and the stage comparison](#a1-metrics-from-the-run-history-and-the-stage-comparison)
 
 ---
 
 ## 1. Three Kinds of Question
 
-| Question | Where the answer is |
-| --- | --- |
-| "Why did **this run** fail?" | the log, annotations, debug re-run |
-| "Why did **nothing run**?" | the trigger rules, workflow state, file validity |
-| "How is CI doing **overall**?" | run history and its metrics |
+| Question                       | Where the answer is                              |
+| ------------------------------ | ------------------------------------------------ |
+| "Why did **this run** fail?"   | the log, annotations, debug re-run               |
+| "Why did **nothing run**?"     | the trigger rules, workflow state, file validity |
+| "How is CI doing **overall**?" | run history and its metrics                      |
 
 We have answered the first two by hand all course; this chapter makes the methods systematic and ends with the third.
 
@@ -87,15 +91,15 @@ We have answered the first two by hand all course; this chapter makes the method
 
 A step can talk to the runner by printing special lines (docs, verified 2026-10):
 
-| Command | Effect |
-| --- | --- |
-| `::notice file=F,line=L,title=T::message` | a notice annotation (file and line optional) |
-| `::warning ...::message` | a warning annotation |
-| `::error ...::message` | an error annotation (it does **not** fail the step by itself; only the exit code does) |
-| `::group::Title` ... `::endgroup::` | a collapsible section in the log |
-| `::add-mask::value` | replace `value` with `***` from now on (Chapter 08) |
-| `::debug::message` | shown **only** when debug logging is on (Section 5) |
-| `echo "..." >> "$GITHUB_STEP_SUMMARY"` | append Markdown to the run's summary page |
+| Command                                   | Effect                                                                                 |
+| ----------------------------------------- | -------------------------------------------------------------------------------------- |
+| `::notice file=F,line=L,title=T::message` | a notice annotation (file and line optional)                                           |
+| `::warning ...::message`                  | a warning annotation                                                                   |
+| `::error ...::message`                    | an error annotation (it does **not** fail the step by itself; only the exit code does) |
+| `::group::Title` ... `::endgroup::`       | a collapsible section in the log                                                       |
+| `::add-mask::value`                       | replace `value` with `***` from now on (Chapter 08)                                    |
+| `::debug::message`                        | shown **only** when debug logging is on (Section 5)                                    |
+| `echo "..." >> "$GITHUB_STEP_SUMMARY"`    | append Markdown to the run's summary page                                              |
 
 Annotations with a `file` and `line` appear **on the code** in the pull request's Files tab, which is why the lint output in Chapter 11 (`ruff --output-format=github`) was so useful.
 
@@ -105,18 +109,18 @@ Annotations with a `file` and `line` appear **on the code** in the pull request'
 
 The docs do not give a number, so we measured. The `commands` job emitted **15 of each level** in one step. Asked via the API (`GET /check-runs/<id>/annotations`) how many exist:
 
-| Level | Emitted | Surfaced |
-| --- | --- | --- |
-| error | 15 | **10** |
-| warning | 15 | **10** |
-| notice | 15 | **11** (10 ours + 1 the platform added) |
+| Level   | Emitted | Surfaced                                |
+| ------- | ------- | --------------------------------------- |
+| error   | 15      | **10**                                  |
+| warning | 15      | **10**                                  |
+| notice  | 15      | **11** (10 ours + 1 the platform added) |
 
 The platform's own notice is the `ubuntu-latest` migration warning we met in Chapter 05 (`... will migrate to Ubuntu 26 beginning October 19, 2026`); every job carries it. So the cap is **10 per level**. Is it per step or per job? Run 37329444667 had one job with **two** steps of 8 errors each:
 
-| | Step one | Step two | Job total surfaced |
-| --- | --- | --- | --- |
-| errors emitted | 8 | 8 | 16 |
-| errors surfaced | 8 | 8 | **16** |
+|                 | Step one | Step two | Job total surfaced |
+| --------------- | -------- | -------- | ------------------ |
+| errors emitted  | 8        | 8        | 16                 |
+| errors surfaced | 8        | 8        | **16**             |
 
 16 surfaced, more than 10, so the cap is **per step**: ten errors, ten warnings and ten notices **per step**. Anything beyond is dropped from the annotations (it is still in the raw log). **Design consequence:** a linter that finds 200 problems will show 10; put the first ten that matter first, and rely on the log or the summary for the rest.
 
@@ -126,10 +130,10 @@ The platform's own notice is the `ubuntu-latest` migration warning we met in Cha
 
 Normal logs show what ran. **Debug logging** shows how the runner decided. Two ways to turn it on (docs, verified 2026-10): a repository secret or variable `ACTIONS_STEP_DEBUG` set to `true`, or **re-running with debug logging**. We used the second (`gh run rerun <id> --debug`) on run 37329174822. The same run, two attempts:
 
-| Attempt | How it started | Total log lines | `##[debug]` lines |
-| --- | --- | --- | --- |
-| 1 | the original dispatch | 187 | **0** |
-| 3 | `gh run rerun --debug` | 333 | **140** |
+| Attempt | How it started         | Total log lines | `##[debug]` lines |
+| ------- | ---------------------- | --------------- | ----------------- |
+| 1       | the original dispatch  | 187             | **0**             |
+| 3       | `gh run rerun --debug` | 333             | **140**           |
 
 Most of the 140 lines are the runner narrating itself (`Evaluating job-level environment variables`, `Evaluating job container`, ...). The valuable ones are the **expression traces**. For our conditional step, `if: ${{ github.event_name == 'workflow_dispatch' && success() }}`:
 
@@ -152,11 +156,11 @@ Most of the 140 lines are the runner narrating itself (`Evaluating job-level env
 
 Run 37329174822 was dispatched with `fail_first_attempt=true`: `flaky` failed (`::error title=Simulated flake::attempt 1 fails on purpose`, exit 1) while `commands` and `stable` succeeded. Then `gh run rerun 37329174822 --failed`:
 
-| Job | Attempt 1 | Attempt 2 | What it printed in attempt 2 |
-| --- | --- | --- | --- |
-| `flaky` | **failure** | **success** (started 15:00:09) | `flaky_attempt=2` |
-| `commands` | success (started 14:59:30) | success, **carried over** (still 14:59:30) | its attempt-1 output |
-| `stable` | success (started 14:59:30) | success, **carried over** (still 14:59:30) | **`stable_attempt=1`** |
+| Job        | Attempt 1                  | Attempt 2                                  | What it printed in attempt 2 |
+| ---------- | -------------------------- | ------------------------------------------ | ---------------------------- |
+| `flaky`    | **failure**                | **success** (started 15:00:09)             | `flaky_attempt=2`            |
+| `commands` | success (started 14:59:30) | success, **carried over** (still 14:59:30) | its attempt-1 output         |
+| `stable`   | success (started 14:59:30) | success, **carried over** (still 14:59:30) | **`stable_attempt=1`**       |
 
 **What to notice:**
 
@@ -169,15 +173,15 @@ Run 37329174822 was dispatched with `fail_first_attempt=true`: `flaky` failed (`
 
 The `gh` CLI turns the run page into scriptable commands we have used all course:
 
-| Need | Command |
-| --- | --- |
-| Which runs exist for a commit? | `gh run list --commit <sha> --json workflowName,event,conclusion` |
-| What failed, and why? | `gh run view <id> --log-failed` |
-| Everything, filtered | `gh run view <id> --log \| grep REPORT` |
-| One attempt | `gh run view <id> --attempt 2 --log` |
-| Jobs and timings | `gh api repos/OWNER/REPO/actions/runs/<id>/jobs` |
-| Annotations of a job | `gh api repos/OWNER/REPO/check-runs/<job id>/annotations` |
-| Re-run only failures / with debug | `gh run rerun <id> --failed` / `--debug` |
+| Need                              | Command                                                           |
+| --------------------------------- | ----------------------------------------------------------------- |
+| Which runs exist for a commit?    | `gh run list --commit <sha> --json workflowName,event,conclusion` |
+| What failed, and why?             | `gh run view <id> --log-failed`                                   |
+| Everything, filtered              | `gh run view <id> --log \| grep REPORT`                           |
+| One attempt                       | `gh run view <id> --attempt 2 --log`                              |
+| Jobs and timings                  | `gh api repos/OWNER/REPO/actions/runs/<id>/jobs`                  |
+| Annotations of a job              | `gh api repos/OWNER/REPO/check-runs/<job id>/annotations`         |
+| Re-run only failures / with debug | `gh run rerun <id> --failed` / `--debug`                          |
 
 Every table of numbers in this course came from these commands. The habit worth building: when a run fails, read `--log-failed` **first** and the annotations second; the first red step is the cause and later failures are usually consequences.
 
@@ -185,17 +189,17 @@ Every table of numbers in this course came from these commands. The habit worth 
 
 A workflow that never starts raises no error (Chapter 06). Work down this list; each item has a real example from this course:
 
-| # | Check | How | Real example |
-| --- | --- | --- | --- |
-| 1 | Is the workflow **disabled**? | `gh workflow list --all` | state `disabled_manually`; dispatch fails: `HTTP 422: Cannot trigger a 'workflow_dispatch' on a disabled workflow` |
-| 2 | Is the file **valid**? | `actionlint .github/workflows/*.yml` | a run with `jobs: []`, titled by its path (Chapter 05) |
-| 3 | Did it end in **`startup_failure`**? | `gh run view <id>` | an allow-list violation: zero jobs, no API message (Chapter 16) |
-| 4 | Do the **filters** match? | `intro_gha.events.would_fire` (Chapter 06) | `paths` ignored on tags; `branches`-only ignores tags |
-| 5 | Was the event made with **`GITHUB_TOKEN`**? | check who created the tag/PR | a token-created tag started 0 runs (Chapters 06, 14) |
-| 6 | Is the file on the **default branch** (dispatch/schedule)? | `gh workflow list` | docs (Chapter 06) |
-| 7 | Was a run **cancelled** by concurrency? | `gh run list --workflow <name>` | pending run replaced (Chapter 10) |
-| 8 | Is it **waiting** for approval? | `gh run view <id>` | `waiting`, unbilled (Chapters 08, 13) |
-| 9 | Did the **commit** hit a path filter? | `gh run list --commit <sha>` | a docs-only push: no run (Chapter 03) |
+| #   | Check                                                      | How                                        | Real example                                                                                                       |
+| --- | ---------------------------------------------------------- | ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------ |
+| 1   | Is the workflow **disabled**?                              | `gh workflow list --all`                   | state `disabled_manually`; dispatch fails: `HTTP 422: Cannot trigger a 'workflow_dispatch' on a disabled workflow` |
+| 2   | Is the file **valid**?                                     | `actionlint .github/workflows/*.yml`       | a run with `jobs: []`, titled by its path (Chapter 05)                                                             |
+| 3   | Did it end in **`startup_failure`**?                       | `gh run view <id>`                         | an allow-list violation: zero jobs, no API message (Chapter 16)                                                    |
+| 4   | Do the **filters** match?                                  | `intro_gha.events.would_fire` (Chapter 06) | `paths` ignored on tags; `branches`-only ignores tags                                                              |
+| 5   | Was the event made with **`GITHUB_TOKEN`**?                | check who created the tag/PR               | a token-created tag started 0 runs (Chapters 06, 14)                                                               |
+| 6   | Is the file on the **default branch** (dispatch/schedule)? | `gh workflow list`                         | docs (Chapter 06)                                                                                                  |
+| 7   | Was a run **cancelled** by concurrency?                    | `gh run list --workflow <name>`            | pending run replaced (Chapter 10)                                                                                  |
+| 8   | Is it **waiting** for approval?                            | `gh run view <id>`                         | `waiting`, unbilled (Chapters 08, 13)                                                                              |
+| 9   | Did the **commit** hit a path filter?                      | `gh run list --commit <sha>`               | a docs-only push: no run (Chapter 03)                                                                              |
 
 Most causes are 1, 2, 4 and 5. Check them in that order.
 
@@ -203,18 +207,18 @@ Most causes are 1, 2, 4 and 5. Check them in that order.
 
 `actionlint` parses the workflow, understands expressions and contexts, and runs `shellcheck` on `run:` scripts. Every finding below is something it **really reported** in this course, before the bug reached GitHub:
 
-| Chapter | `actionlint` said | What it prevented |
-| --- | --- | --- |
-| 02 | `SC2012`: use `find` instead of `ls` | a fragile file count in a script |
-| 05 | `could not parse as YAML: mapping values are not allowed in this context` | an invalid workflow (an unquoted `: `) |
-| 05 | `label "tally-gpu" is unknown` | a typo'd runner label (fixed with `.github/actionlint.yaml`) |
-| 07 | `got unexpected character '+' while lexing expression` | arithmetic that GitHub does not have |
-| 07 | `"github.event.pull_request.title" is potentially untrusted` | script injection (Chapter 16) |
-| 07 | `string should not be empty` for `if: !cancelled()` | a leading `!` that YAML reads as a tag (needs `${{ }}`) |
-| 07 | `calling function "success" is not allowed here` | a status function in `run:` |
-| 07 | `context "env" is not allowed here` (in `runs-on`) | a runner label from `env` |
-| 08 | `context "secrets" is not allowed here` (in `if`) | gating a step on a secret |
-| 10 | `could not parse as YAML` (unquoted `: ` in a `run:`) | a second broken workflow |
+| Chapter | `actionlint` said                                                         | What it prevented                                            |
+| ------- | ------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| 02      | `SC2012`: use `find` instead of `ls`                                      | a fragile file count in a script                             |
+| 05      | `could not parse as YAML: mapping values are not allowed in this context` | an invalid workflow (an unquoted `: `)                       |
+| 05      | `label "tally-gpu" is unknown`                                            | a typo'd runner label (fixed with `.github/actionlint.yaml`) |
+| 07      | `got unexpected character '+' while lexing expression`                    | arithmetic that GitHub does not have                         |
+| 07      | `"github.event.pull_request.title" is potentially untrusted`              | script injection (Chapter 16)                                |
+| 07      | `string should not be empty` for `if: !cancelled()`                       | a leading `!` that YAML reads as a tag (needs `${{ }}`)      |
+| 07      | `calling function "success" is not allowed here`                          | a status function in `run:`                                  |
+| 07      | `context "env" is not allowed here` (in `runs-on`)                        | a runner label from `env`                                    |
+| 08      | `context "secrets" is not allowed here` (in `if`)                         | gating a step on a secret                                    |
+| 10      | `could not parse as YAML` (unquoted `: ` in a `run:`)                     | a second broken workflow                                     |
 
 It is fast (milliseconds), runs in CI (`ci.yml` installs it) and in the pre-commit hook (Section 11). What it did **not** catch: `inputs.title` interpolated into a `run:` (Chapter 16), because that is a design flaw, not a syntax error.
 
@@ -257,20 +261,20 @@ Enable it with `make hooks` (`git config core.hooksPath .githooks`). Hooks are l
 
 The REST API lists every run. A snapshot of this repository (taken during this chapter) has **178 runs across 40 workflows**:
 
-| Conclusion | Runs | Share |
-| --- | --- | --- |
-| success | 146 | 82.0% |
-| failure | 25 | 14.0% |
-| cancelled | 6 | 3.4% |
-| startup_failure | 1 | 0.6% |
+| Conclusion      | Runs | Share |
+| --------------- | ---- | ----- |
+| success         | 146  | 82.0% |
+| failure         | 25   | 14.0% |
+| cancelled       | 6    | 3.4%  |
+| startup_failure | 1    | 0.6%  |
 
 `ci.yml`, the only workflow that must always be green, ran **57** times with **46** successes (80.7%). The 11 failures are the interesting part. We read each failing run's log and classified it:
 
-| Cause | Runs | Prevented by |
-| --- | --- | --- |
-| `ruff` lint error committed without running it | **8** | the pre-commit hook |
-| A chapter committed before its notebooks/labs existed | 2 | the hook (`pytest` checks structure) |
-| Invalid workflow YAML | 1 | `actionlint` in the hook |
+| Cause                                                 | Runs  | Prevented by                         |
+| ----------------------------------------------------- | ----- | ------------------------------------ |
+| `ruff` lint error committed without running it        | **8** | the pre-commit hook                  |
+| A chapter committed before its notebooks/labs existed | 2     | the hook (`pytest` checks structure) |
+| Invalid workflow YAML                                 | 1     | `actionlint` in the hook             |
 
 **What to notice:** **every one of the 11 was preventable locally in seconds.** Many failures in our other workflows were deliberate (the red-gate demo, the missing-checkout probe); the 25 non-success runs are mostly the experiments of Chapters 02 to 16 working as designed. Counting failures without classifying them would have been misleading.
 
@@ -285,14 +289,14 @@ A repository's `main` has been red for three days. Each developer assumes someon
 
 ## 14. Comparison: Ways to Find the Cause
 
-| Approach | Setup Effort | Control | Failure Visibility | Security Exposure | Maintenance Burden |
-| --- | --- | --- | --- | --- | --- |
-| Read the log | Minimal - open the run | Weak - you search by eye | Fair - raw text | Low | Low |
-| Annotations and summaries | Low - print workflow commands | Moderate - 10 per level per step | Excellent - on the code and run page | Low | Low |
-| Debug re-run | Minimal - `--debug` | Strong - engine trace | Excellent - expression expansion | Moderate - may expose more data | Low |
-| Local `actionlint` | Minimal - one binary | Strong - catches before pushing | Strong - precise messages | Minimal | Minimal |
-| Local `act` | Moderate - Docker, images | Moderate - approximates GitHub | Fair - differs from the real engine | High in host mode | Moderate |
-| API metrics over run history | Moderate - a script | Strong - trends and causes | Strong - answers "how are we doing" | Low | Moderate |
+| Approach                     | Setup Effort                  | Control                          | Failure Visibility                   | Security Exposure               | Maintenance Burden |
+| ---------------------------- | ----------------------------- | -------------------------------- | ------------------------------------ | ------------------------------- | ------------------ |
+| Read the log                 | Minimal - open the run        | Weak - you search by eye         | Fair - raw text                      | Low                             | Low                |
+| Annotations and summaries    | Low - print workflow commands | Moderate - 10 per level per step | Excellent - on the code and run page | Low                             | Low                |
+| Debug re-run                 | Minimal - `--debug`           | Strong - engine trace            | Excellent - expression expansion     | Moderate - may expose more data | Low                |
+| Local `actionlint`           | Minimal - one binary          | Strong - catches before pushing  | Strong - precise messages            | Minimal                         | Minimal            |
+| Local `act`                  | Moderate - Docker, images     | Moderate - approximates GitHub   | Fair - differs from the real engine  | High in host mode               | Moderate           |
+| API metrics over run history | Moderate - a script           | Strong - trends and causes       | Strong - answers "how are we doing"  | Low                             | Moderate           |
 
 ## 15. Practical Tips
 
@@ -358,7 +362,7 @@ All verified 2026-10.
 - actionlint - https://github.com/rhysd/actionlint
 - act - https://github.com/nektos/act
 - Live evidence: runs 37329174822 and 37329444667, plus this repository's run history (178 runs)
-- Laster, *Learning GitHub Actions* (O'Reilly), Chapter 10
+- Laster, _Learning GitHub Actions_ (O'Reilly), Chapter 10
 
 ## 20. Appendix A: Code Index
 

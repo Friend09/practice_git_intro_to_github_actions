@@ -19,10 +19,10 @@
 
 **Key concepts in plain English:**
 
-- **Reusable workflow:** a whole workflow (with its own jobs and runners) that another workflow can *call* like a function, using the trigger `workflow_call`.
+- **Reusable workflow:** a whole workflow (with its own jobs and runners) that another workflow can _call_ like a function, using the trigger `workflow_call`.
 - **Caller / called:** the workflow that makes the call, and the one being called.
 - **Input / secret / output:** the arguments, protected arguments and return values of the call.
-- **Workflow template:** a starting-point file an *organization* offers in its "new workflow" screen.
+- **Workflow template:** a starting-point file an _organization_ offers in its "new workflow" screen.
 
 **If you wrote a composite action in Chapter 19**, a reusable workflow is the next size up: an action reuses **steps** inside one job; a reusable workflow reuses **jobs**, with their own runners, permissions and matrix.
 
@@ -43,35 +43,39 @@
 
 ## Table of Contents
 
-<!-- TOC -->
-- [1. From Steps to Jobs](#1-from-steps-to-jobs)
-- [2. Running Example: One Workflow, Many Calls](#2-running-example-one-workflow-many-calls)
-- [3. Anatomy of a Reusable Workflow](#3-anatomy-of-a-reusable-workflow)
-- [4. Calling It](#4-calling-it)
-- [5. Inputs, Defaults and Required Inputs](#5-inputs-defaults-and-required-inputs)
-- [6. Outputs Come Back](#6-outputs-come-back)
-- [7. What Crosses the Boundary](#7-what-crosses-the-boundary)
-- [8. Secrets, Three Ways](#8-secrets-three-ways)
-- [9. The Permission Ceiling, and Whose Token Is It](#9-the-permission-ceiling-and-whose-token-is-it)
-- [10. Nesting, Limits and Matrices](#10-nesting-limits-and-matrices)
-- [11. Workflow Templates (Organizations Only)](#11-workflow-templates-organizations-only)
-- [12. Versioning a Reusable Workflow](#12-versioning-a-reusable-workflow)
-- [13. Case Study: Forty Copies of CI](#13-case-study-forty-copies-of-ci)
-- [14. Comparison: Ways to Share Pipeline Logic](#14-comparison-ways-to-share-pipeline-logic)
-- [15. Practical Tips](#15-practical-tips)
-- [16. Demonstrated Failure Modes](#16-demonstrated-failure-modes)
-- [17. Key Takeaways](#17-key-takeaways)
-- [18. Exercises](#18-exercises)
-- [19. Additional Resources](#19-additional-resources)
-- [20. Appendix A: Code Index](#20-appendix-a-code-index)
-   - [A.1 Read the reusable-workflow run](#a1-read-the-reusable-workflow-run)
-<!-- /TOC -->
+<!-- toc-start -->
+
+- [Chapter 20: Reusable Workflows and Workflow Templates](#chapter-20-reusable-workflows-and-workflow-templates)
+  - [Beginner's Guide](#beginners-guide)
+  - [What You'll Learn](#what-youll-learn)
+  - [Table of Contents](#table-of-contents)
+  - [1. From Steps to Jobs](#1-from-steps-to-jobs)
+  - [2. Running Example: One Workflow, Many Calls](#2-running-example-one-workflow-many-calls)
+  - [3. Anatomy of a Reusable Workflow](#3-anatomy-of-a-reusable-workflow)
+  - [4. Calling It](#4-calling-it)
+  - [5. Inputs, Defaults and Required Inputs](#5-inputs-defaults-and-required-inputs)
+  - [6. Outputs Come Back](#6-outputs-come-back)
+  - [7. What Crosses the Boundary](#7-what-crosses-the-boundary)
+  - [8. Secrets, Three Ways](#8-secrets-three-ways)
+  - [9. The Permission Ceiling, and Whose Token Is It](#9-the-permission-ceiling-and-whose-token-is-it)
+  - [10. Nesting, Limits and Matrices](#10-nesting-limits-and-matrices)
+  - [11. Workflow Templates (Organizations Only)](#11-workflow-templates-organizations-only)
+  - [12. Versioning a Reusable Workflow](#12-versioning-a-reusable-workflow)
+  - [13. Case Study: Forty Copies of CI](#13-case-study-forty-copies-of-ci)
+  - [14. Comparison: Ways to Share Pipeline Logic](#14-comparison-ways-to-share-pipeline-logic)
+  - [15. Practical Tips](#15-practical-tips)
+  - [16. Demonstrated Failure Modes](#16-demonstrated-failure-modes)
+  - [17. Key Takeaways](#17-key-takeaways)
+  - [18. Exercises](#18-exercises)
+  - [19. Additional Resources](#19-additional-resources)
+  - [20. Appendix A: Code Index](#20-appendix-a-code-index)
+    - [A.1 Read the reusable-workflow run](#a1-read-the-reusable-workflow-run)
 
 ---
 
 ## 1. From Steps to Jobs
 
-Chapter 19's composite action reuses a *sequence of steps* inside the caller's own job. A **reusable workflow** reuses *jobs*: when you call it, GitHub starts **its own jobs on its own runners**, in the caller's run. That makes it the right granularity for "our standard CI pipeline" or "our deploy procedure".
+Chapter 19's composite action reuses a _sequence of steps_ inside the caller's own job. A **reusable workflow** reuses _jobs_: when you call it, GitHub starts **its own jobs on its own runners**, in the caller's run. That makes it the right granularity for "our standard CI pipeline" or "our deploy procedure".
 
 ## 2. Running Example: One Workflow, Many Calls
 
@@ -83,11 +87,11 @@ Chapter 19's composite action reuses a *sequence of steps* inside the caller's o
 on:
   workflow_call:
     inputs:
-      who:            { type: string,  required: true }
-      python-version: { type: string,  default: '3.12' }
-      run-tests:      { type: boolean, default: true }
+      who: { type: string, required: true }
+      python-version: { type: string, default: "3.12" }
+      run-tests: { type: boolean, default: true }
     secrets:
-      demo_secret:    { required: false }
+      demo_secret: { required: false }
     outputs:
       summary:
         value: ${{ jobs.build.outputs.summary }}
@@ -97,14 +101,14 @@ jobs:
   build: ...
 ```
 
-Rules (docs, verified 2026-10): the trigger must include `workflow_call`; the file must sit in `.github/workflows/` (subdirectories are not supported); input types are `boolean`, `number` or `string`; **outputs map in two hops**: a step output becomes a *job* output, which becomes a *workflow* output through `on.workflow_call.outputs`, and the caller reads it as `needs.<call job id>.outputs.<name>`.
+Rules (docs, verified 2026-10): the trigger must include `workflow_call`; the file must sit in `.github/workflows/` (subdirectories are not supported); input types are `boolean`, `number` or `string`; **outputs map in two hops**: a step output becomes a _job_ output, which becomes a _workflow_ output through `on.workflow_call.outputs`, and the caller reads it as `needs.<call job id>.outputs.<name>`.
 
 ## 4. Calling It
 
 ```yaml
 jobs:
   call_local:
-    uses: ./.github/workflows/ch20-reusable.yml       # same repository
+    uses: ./.github/workflows/ch20-reusable.yml # same repository
     with:
       who: Tally
   call_remote_path:
@@ -135,19 +139,19 @@ All succeeded. **What to notice:** each called job is a **real job on its own ru
 
 What the called workflow reported (`called who=... python=... run_tests=...`):
 
-| Call | `who` | `python-version` | `run-tests` | Where each value came from |
-| --- | --- | --- | --- | --- |
-| `call_local` | `Tally` | **`3.12`** | **`true`** | default, default |
-| `call_matrix (3.11)` | `matrix` | `3.11` | `false` | `${{ matrix.python }}`, explicit |
-| `call_matrix (3.12)` | `matrix` | `3.12` | `false` | |
-| `call_remote_path` | `remote` | `3.12` (default) | `false` | |
+| Call                 | `who`    | `python-version` | `run-tests` | Where each value came from       |
+| -------------------- | -------- | ---------------- | ----------- | -------------------------------- |
+| `call_local`         | `Tally`  | **`3.12`**       | **`true`**  | default, default                 |
+| `call_matrix (3.11)` | `matrix` | `3.11`           | `false`     | `${{ matrix.python }}`, explicit |
+| `call_matrix (3.12)` | `matrix` | `3.12`           | `false`     |                                  |
+| `call_remote_path`   | `remote` | `3.12` (default) | `false`     |                                  |
 
 Defaults fill in what the caller omits. A **required** input that the caller omits fails the run. We built `ch20-caller-bad-input.yml` to omit `who`:
 
-| Layer | Result |
-| --- | --- |
-| `actionlint` (before pushing) | **caught it**: `input "who" is required by "./.github/workflows/ch20-reusable.yml" reusable workflow [workflow-call]` |
-| GitHub (run 37333193334) | **`startup_failure`**, **0 jobs**, and `gh run view` says only `This run likely failed because of a workflow file issue.`; no message through the API (to push this probe at all we suppressed that one finding for that one file in `.github/actionlint.yaml`) |
+| Layer                         | Result                                                                                                                                                                                                                                                          |
+| ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `actionlint` (before pushing) | **caught it**: `input "who" is required by "./.github/workflows/ch20-reusable.yml" reusable workflow [workflow-call]`                                                                                                                                           |
+| GitHub (run 37333193334)      | **`startup_failure`**, **0 jobs**, and `gh run view` says only `This run likely failed because of a workflow file issue.`; no message through the API (to push this probe at all we suppressed that one finding for that one file in `.github/actionlint.yaml`) |
 
 Chapter 05, 16 and now 20 share this shape: **a call-time configuration error is a `startup_failure`**, and lint is your only early warning.
 
@@ -165,31 +169,31 @@ Same rules as Chapter 09: outputs are strings, and a failed or skipped call yiel
 
 The docs say little about this, so the called workflow printed everything it could see. Results from run 37333020006:
 
-| What the called workflow saw | Value | Crosses? |
-| --- | --- | --- |
-| `github.workflow` | **`ch20 caller`** (the **caller's** name) | the caller's identity |
-| `github.event_name` | `workflow_dispatch` (the caller's event) | yes |
-| `github.workflow_ref` | `.../.github/workflows/ch20-caller.yml@refs/heads/main` | yes: names the **caller** |
-| `env.CALLER_ENV` (set in the caller's workflow-level `env:`) | **empty** | **no** |
-| `vars.TALLY_COLOR` (a repository variable) | `blue` | **yes** |
-| `inputs.*` | as passed | yes (that is the purpose) |
-| `secrets.demo_secret` (not passed) | length **0** | **no** |
+| What the called workflow saw                                 | Value                                                   | Crosses?                  |
+| ------------------------------------------------------------ | ------------------------------------------------------- | ------------------------- |
+| `github.workflow`                                            | **`ch20 caller`** (the **caller's** name)               | the caller's identity     |
+| `github.event_name`                                          | `workflow_dispatch` (the caller's event)                | yes                       |
+| `github.workflow_ref`                                        | `.../.github/workflows/ch20-caller.yml@refs/heads/main` | yes: names the **caller** |
+| `env.CALLER_ENV` (set in the caller's workflow-level `env:`) | **empty**                                               | **no**                    |
+| `vars.TALLY_COLOR` (a repository variable)                   | `blue`                                                  | **yes**                   |
+| `inputs.*`                                                   | as passed                                               | yes (that is the purpose) |
+| `secrets.demo_secret` (not passed)                           | length **0**                                            | **no**                    |
 
 **What to notice:**
 
 - **`env` does not propagate.** The caller set `CALLER_ENV: from-the-caller` at workflow level; the called workflow saw an empty string. Pass values you need as **inputs**.
 - **Repository variables do** reach the called workflow (`vars` are looked up in the repository, not carried in the call).
-- Inside the called workflow, `github.workflow` and `github.event_name` describe the **caller's** run, so a reusable workflow cannot tell by those which workflow it *is*. If it needs its own identity, use `github.workflow_ref` knowing it names the caller, or the OIDC claim in Section 9.
+- Inside the called workflow, `github.workflow` and `github.event_name` describe the **caller's** run, so a reusable workflow cannot tell by those which workflow it _is_. If it needs its own identity, use `github.workflow_ref` knowing it names the caller, or the OIDC claim in Section 9.
 
 ## 8. Secrets, Three Ways
 
 We created a dummy 23-character repository secret and called the workflow three ways (we deleted the secret afterwards). The called workflow reported `secret_len`:
 
-| Call | How the secret was passed | `secret_len` |
-| --- | --- | --- |
-| `call_local` | not passed | **0** |
-| `call_inherit` | `secrets: inherit` | **23** |
-| `call_explicit_secret` | `secrets: { demo_secret: ${{ secrets.DEMO_SECRET }} }` | **23** |
+| Call                   | How the secret was passed                              | `secret_len` |
+| ---------------------- | ------------------------------------------------------ | ------------ |
+| `call_local`           | not passed                                             | **0**        |
+| `call_inherit`         | `secrets: inherit`                                     | **23**       |
+| `call_explicit_secret` | `secrets: { demo_secret: ${{ secrets.DEMO_SECRET }} }` | **23**       |
 
 **What to notice:**
 
@@ -203,10 +207,10 @@ Docs (verified 2026-10): "Permissions can only be maintained or reduced—not el
 
 **The failure.** `ch20-reusable-oidc.yml` declares `permissions: contents: read, id-token: write` (it needs a token to ask for OIDC). `ch20-caller-denied.yml` has `permissions: contents: read` and calls it with no job-level grant. Run 37333146229:
 
-| Layer | Result |
-| --- | --- |
-| `actionlint` | **passed** (exit 0), no warning |
-| GitHub | **`startup_failure`**, **0 jobs**, no message via the API |
+| Layer        | Result                                                    |
+| ------------ | --------------------------------------------------------- |
+| `actionlint` | **passed** (exit 0), no warning                           |
+| GitHub       | **`startup_failure`**, **0 jobs**, no message via the API |
 
 The successful caller instead granted the permission **on the calling job**:
 
@@ -222,12 +226,12 @@ and the call worked. The grant belongs on the **call job**, because that is the 
 
 **Whose identity is the token?** Inside that called workflow we decoded the OIDC token (Chapter 13), and finally tested the claim we only observed there:
 
-| Claim | Value |
-| --- | --- |
-| `job_workflow_ref` | `.../.github/workflows/ch20-reusable-oidc.yml@refs/heads/main` (the **called** workflow) |
-| `workflow_ref` | `.../.github/workflows/ch20-caller.yml@refs/heads/main` (the **caller**) |
-| `workflow` | `ch20 caller` |
-| `sub` | `repo:Friend09@7501015/practice_git_intro_to_github_actions@1405684500:ref:refs/heads/main` |
+| Claim              | Value                                                                                       |
+| ------------------ | ------------------------------------------------------------------------------------------- |
+| `job_workflow_ref` | `.../.github/workflows/ch20-reusable-oidc.yml@refs/heads/main` (the **called** workflow)    |
+| `workflow_ref`     | `.../.github/workflows/ch20-caller.yml@refs/heads/main` (the **caller**)                    |
+| `workflow`         | `ch20 caller`                                                                               |
+| `sub`              | `repo:Friend09@7501015/practice_git_intro_to_github_actions@1405684500:ref:refs/heads/main` |
 
 **What to notice:** the token carries **both**: `workflow_ref` names the caller and **`job_workflow_ref` names the called workflow**. A cloud trust policy can therefore say "only tokens whose `job_workflow_ref` is `org/platform/.github/workflows/deploy.yml@<sha>` may assume this role", which pins trust to **one reviewed deploy workflow** regardless of which repository calls it. Chapter 13 described that as documented behavior; here it is measured. (The `sub` is ref-based because this job has no `environment`; Chapter 13 explained why.)
 
@@ -257,13 +261,13 @@ A company has 40 repositories, each with a hand-copied 80-line `ci.yml`. A secur
 
 ## 14. Comparison: Ways to Share Pipeline Logic
 
-| Approach | Setup Effort | Control | Failure Visibility | Security Exposure | Maintenance Burden |
-| --- | --- | --- | --- | --- | --- |
-| Copy and paste | Minimal | Weak - drifts per repo | Fair - each copy independent | Moderate - fixes are missed | Very High - N copies |
-| Composite action (Chapter 19) | Low | Moderate - steps only | Strong - steps in the caller's job | Low - runs in the caller's job | Low |
-| Reusable workflow | Moderate - define inputs/secrets | Strong - whole jobs, own runners | Moderate - `startup_failure` has no message | Moderate - boundary rules, pin the ref | Low |
-| Workflow template | Low - org repo | Weak - a copy that drifts | Weak | Moderate | High unless it only calls a reusable workflow |
-| Platform-wide required workflow | High - org policy | Excellent | Strong | Low | Moderate |
+| Approach                        | Setup Effort                     | Control                          | Failure Visibility                          | Security Exposure                      | Maintenance Burden                            |
+| ------------------------------- | -------------------------------- | -------------------------------- | ------------------------------------------- | -------------------------------------- | --------------------------------------------- |
+| Copy and paste                  | Minimal                          | Weak - drifts per repo           | Fair - each copy independent                | Moderate - fixes are missed            | Very High - N copies                          |
+| Composite action (Chapter 19)   | Low                              | Moderate - steps only            | Strong - steps in the caller's job          | Low - runs in the caller's job         | Low                                           |
+| Reusable workflow               | Moderate - define inputs/secrets | Strong - whole jobs, own runners | Moderate - `startup_failure` has no message | Moderate - boundary rules, pin the ref | Low                                           |
+| Workflow template               | Low - org repo                   | Weak - a copy that drifts        | Weak                                        | Moderate                               | High unless it only calls a reusable workflow |
+| Platform-wide required workflow | High - org policy                | Excellent                        | Strong                                      | Low                                    | Moderate                                      |
 
 (Required workflows are an organization feature we did not test.)
 
@@ -332,7 +336,7 @@ All verified 2026-10.
 - GitHub Docs: OpenID Connect (claims, including `job_workflow_ref`) - https://docs.github.com/en/actions/concepts/security/openid-connect
 - actionlint (reusable-workflow checks) - https://github.com/rhysd/actionlint
 - Live evidence: runs 37333020006, 37333146229, 37333193334; called workflows at commit `58e6665c76701fbc2f31ef401c54bd6a79b94992`
-- Laster, *Learning GitHub Actions* (O'Reilly), Chapter 12
+- Laster, _Learning GitHub Actions_ (O'Reilly), Chapter 12
 
 ## 20. Appendix A: Code Index
 

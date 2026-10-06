@@ -21,7 +21,7 @@
 
 - **Expression:** a tiny formula inside `${{ ... }}` that GitHub evaluates **before** your shell sees the text.
 - **Context:** a named bundle of values you can read (`github`, `env`, `inputs`, `matrix`, `steps`, `runner` ...).
-- **Truthy / falsy:** whether a value counts as "yes" or "no" in a condition. `false` the *string* counts as yes.
+- **Truthy / falsy:** whether a value counts as "yes" or "no" in a condition. `false` the _string_ counts as yes.
 - **Status function:** `success()`, `failure()`, `always()`, `cancelled()`: conditions about how the job is going.
 
 **If you have written shell conditions** (`[ "$X" = "y" ]`), expressions are similar but run in GitHub's engine, not in bash, and they do not do arithmetic.
@@ -42,30 +42,34 @@
 
 ## Table of Contents
 
-<!-- TOC -->
-- [1. Why Expressions](#1-why-expressions)
-- [2. Running Example: The Engine Answers Back](#2-running-example-the-engine-answers-back)
-- [3. Two Syntaxes](#3-two-syntaxes)
-- [4. Types and Literals](#4-types-and-literals)
-- [5. Truthiness, Measured](#5-truthiness-measured)
-- [6. Comparison and Coercion](#6-comparison-and-coercion)
-- [7. `&&` and `||` Return Values](#7--and--return-values)
-- [8. Built-in Functions](#8-built-in-functions)
-- [9. Contexts and Where They Are Allowed](#9-contexts-and-where-they-are-allowed)
-- [10. Status Functions and the `if` That Did Not Run](#10-status-functions-and-the-if-that-did-not-run)
-- [11. `hashFiles` and Cache Keys](#11-hashfiles-and-cache-keys)
-- [12. Object Filters and `toJSON` Debugging](#12-object-filters-and-tojson-debugging)
-- [13. Case Study: The Release That Always Deployed](#13-case-study-the-release-that-always-deployed)
-- [14. Comparison: Where to Decide](#14-comparison-where-to-decide)
-- [15. Practical Tips](#15-practical-tips)
-- [16. Demonstrated Failure Modes](#16-demonstrated-failure-modes)
-- [17. Key Takeaways](#17-key-takeaways)
-- [18. Exercises](#18-exercises)
-- [19. Additional Resources](#19-additional-resources)
-- [20. Appendix A: Code Index](#20-appendix-a-code-index)
-   - [A.1 Run the evaluator against real engine results](#a1-run-the-evaluator-against-real-engine-results)
-   - [A.2 Extract and replay every expression from the workflow](#a2-extract-and-replay-every-expression-from-the-workflow)
-<!-- /TOC -->
+<!-- toc-start -->
+
+- [Chapter 07: Contexts, Expressions and Conditionals](#chapter-07-contexts-expressions-and-conditionals)
+  - [Beginner's Guide](#beginners-guide)
+  - [What You'll Learn](#what-youll-learn)
+  - [Table of Contents](#table-of-contents)
+  - [1. Why Expressions](#1-why-expressions)
+  - [2. Running Example: The Engine Answers Back](#2-running-example-the-engine-answers-back)
+  - [3. Two Syntaxes](#3-two-syntaxes)
+  - [4. Types and Literals](#4-types-and-literals)
+  - [5. Truthiness, Measured](#5-truthiness-measured)
+  - [6. Comparison and Coercion](#6-comparison-and-coercion)
+  - [7. `&&` and `||` Return Values](#7--and--return-values)
+  - [8. Built-in Functions](#8-built-in-functions)
+  - [9. Contexts and Where They Are Allowed](#9-contexts-and-where-they-are-allowed)
+  - [10. Status Functions and the `if` That Did Not Run](#10-status-functions-and-the-if-that-did-not-run)
+  - [11. `hashFiles` and Cache Keys](#11-hashfiles-and-cache-keys)
+  - [12. Object Filters and `toJSON` Debugging](#12-object-filters-and-tojson-debugging)
+  - [13. Case Study: The Release That Always Deployed](#13-case-study-the-release-that-always-deployed)
+  - [14. Comparison: Where to Decide](#14-comparison-where-to-decide)
+  - [15. Practical Tips](#15-practical-tips)
+  - [16. Demonstrated Failure Modes](#16-demonstrated-failure-modes)
+  - [17. Key Takeaways](#17-key-takeaways)
+  - [18. Exercises](#18-exercises)
+  - [19. Additional Resources](#19-additional-resources)
+  - [20. Appendix A: Code Index](#20-appendix-a-code-index)
+    - [A.1 Run the evaluator against real engine results](#a1-run-the-evaluator-against-real-engine-results)
+    - [A.2 Extract and replay every expression from the workflow](#a2-extract-and-replay-every-expression-from-the-workflow)
 
 ---
 
@@ -81,12 +85,12 @@ The evaluator in `src/intro_gha/expr.py` reproduces **all 32 single-expression r
 
 ## 3. Two Syntaxes
 
-| Where | Syntax | Example |
-| --- | --- | --- |
-| Anywhere in a value | `${{ expression }}` | `run: echo "${{ github.ref_name }}"` |
-| In an `if:` | the bare expression is accepted | `if: github.event_name == 'push'` |
+| Where               | Syntax                          | Example                              |
+| ------------------- | ------------------------------- | ------------------------------------ |
+| Anywhere in a value | `${{ expression }}`             | `run: echo "${{ github.ref_name }}"` |
+| In an `if:`         | the bare expression is accepted | `if: github.event_name == 'push'`    |
 
-**Always wrap in `${{ }}`** when the expression starts with `!`. YAML reads a leading `!` as a *tag* indicator. `actionlint` shows the failure:
+**Always wrap in `${{ }}`** when the expression starts with `!`. YAML reads a leading `!` as a _tag_ indicator. `actionlint` shows the failure:
 
 ```
 if: !cancelled()
@@ -99,11 +103,11 @@ String literals inside an expression use **single quotes**: `'main'`, never `"ma
 
 **Evaluation order.** Before step `Truthiness and comparison` ran, GitHub replaced each `${{ ... }}` in the `run:` text with its result. Bash never saw the braces. Using Chapter 02's bracket:
 
-| Moment | State |
-| --- | --- |
+| Moment            | State                                      |
+| ----------------- | ------------------------------------------ |
 | Before evaluation | `echo "REPORT eq_num_str=${{ 1 == '1' }}"` |
-| After evaluation | `echo "REPORT eq_num_str=true"` |
-| Bash prints | `REPORT eq_num_str=true` |
+| After evaluation  | `echo "REPORT eq_num_str=true"`            |
+| Bash prints       | `REPORT eq_num_str=true`                   |
 
 ## 4. Types and Literals
 
@@ -121,17 +125,17 @@ Our evaluator raises the same error for `+`. To compute, do it in shell (`$((x +
 
 Docs (verified 2026-10): the **falsy** values are `false`, `0`, `-0`, `''` (empty string) and `null`. Everything else is **truthy**. The real engine's answers, using the pattern `X && 'truthy' || 'falsy'`:
 
-| Expression value | Type | Engine result |
-| --- | --- | --- |
-| `'false'` | string | **truthy** |
-| `'0'` | string | **truthy** |
-| `0` | number | falsy |
-| `''` | string | falsy |
-| `null` | null | falsy |
-| `fromJSON('false')` | boolean | falsy |
-| `env.FLAG_TEXT` (set to `'false'`) | string | **truthy** |
-| `inputs.flag` (boolean `false`) | boolean | falsy |
-| `inputs.flag` (boolean `true`) | boolean | truthy |
+| Expression value                   | Type    | Engine result |
+| ---------------------------------- | ------- | ------------- |
+| `'false'`                          | string  | **truthy**    |
+| `'0'`                              | string  | **truthy**    |
+| `0`                                | number  | falsy         |
+| `''`                               | string  | falsy         |
+| `null`                             | null    | falsy         |
+| `fromJSON('false')`                | boolean | falsy         |
+| `env.FLAG_TEXT` (set to `'false'`) | string  | **truthy**    |
+| `inputs.flag` (boolean `false`)    | boolean | falsy         |
+| `inputs.flag` (boolean `true`)     | boolean | truthy        |
 
 **What to notice:**
 
@@ -145,29 +149,29 @@ Docs (verified 2026-10): the **falsy** values are `false`, `0`, `-0`, `''` (empt
 
 `==`, `!=`, `<`, `<=`, `>` and `>=` follow two rules (docs, verified 2026-10): if the types differ GitHub converts **both to numbers** (null to 0, `true` to 1, `false` to 0, an empty string to 0, a string parsed as JSON else NaN, arrays and objects NaN); and **string comparison ignores case**. Engine results:
 
-| Expression | Result | Why |
-| --- | --- | --- |
-| `1 == '1'` | true | string `'1'` becomes the number 1 |
-| `'abc' == 'ABC'` | true | strings compare case-insensitively |
-| `null == ''` | true | null is 0 and `''` is 0 |
-| `env.NOPE == ''` | true | a missing value is null, which is 0, which equals `''` |
-| `10 > 9` | true | numbers |
-| `'10' > '9'` | **false** | two strings: compared as text, `'1'` sorts before `'9'` |
-| `'10' > 9` | true | mixed types: `'10'` becomes 10 |
+| Expression       | Result    | Why                                                     |
+| ---------------- | --------- | ------------------------------------------------------- |
+| `1 == '1'`       | true      | string `'1'` becomes the number 1                       |
+| `'abc' == 'ABC'` | true      | strings compare case-insensitively                      |
+| `null == ''`     | true      | null is 0 and `''` is 0                                 |
+| `env.NOPE == ''` | true      | a missing value is null, which is 0, which equals `''`  |
+| `10 > 9`         | true      | numbers                                                 |
+| `'10' > '9'`     | **false** | two strings: compared as text, `'1'` sorts before `'9'` |
+| `'10' > 9`       | true      | mixed types: `'10'` becomes 10                          |
 
-**What to notice:** `'10' > '9'` is false but `'10' > 9` is true. The same digits give opposite answers depending on whether *both* sides are strings. Values from `env`, `outputs` and `matrix` are strings, so a version comparison like `matrix.py > '3.9'` is a text comparison. Text compares one character at a time: for `'3.10'` against `'3.9'` the first difference is the third character, where `'1'` sorts before `'9'`, so `'3.10' > '3.9'` is **false** (by the rule we measured with `'10' > '9'`). Compare versions in a script, not in an expression.
+**What to notice:** `'10' > '9'` is false but `'10' > 9` is true. The same digits give opposite answers depending on whether _both_ sides are strings. Values from `env`, `outputs` and `matrix` are strings, so a version comparison like `matrix.py > '3.9'` is a text comparison. Text compares one character at a time: for `'3.10'` against `'3.9'` the first difference is the third character, where `'1'` sorts before `'9'`, so `'3.10' > '3.9'` is **false** (by the rule we measured with `'10' > '9'`). Compare versions in a script, not in an expression.
 
 ## 7. `&&` and `||` Return Values
 
 They are not just booleans: `a && b` returns `a` if `a` is falsy, else `b`; `a || b` returns `a` if truthy, else `b`.
 
-| Expression | Engine result |
-| --- | --- |
-| `'a' && 'b'` | `b` |
-| `'' \|\| 'default'` | `default` |
-| `!'x'` | false (`!` always returns a boolean) |
-| `inputs.name \|\| 'world'` (name empty) | `world` |
-| `inputs.name \|\| 'world'` (name = `Tally`) | `Tally` |
+| Expression                                  | Engine result                        |
+| ------------------------------------------- | ------------------------------------ |
+| `'a' && 'b'`                                | `b`                                  |
+| `'' \|\| 'default'`                         | `default`                            |
+| `!'x'`                                      | false (`!` always returns a boolean) |
+| `inputs.name \|\| 'world'` (name empty)     | `world`                              |
+| `inputs.name \|\| 'world'` (name = `Tally`) | `Tally`                              |
 
 Two idioms follow:
 
@@ -178,35 +182,35 @@ Two idioms follow:
 
 All results below are real engine output:
 
-| Call | Result | Note |
-| --- | --- | --- |
-| `contains('Hello World', 'WORLD')` | true | case-insensitive substring |
-| `contains(fromJSON('["a","b"]'), 'b')` | true | array membership |
-| `startsWith('refs/heads/main', 'refs/heads/')` | true | |
-| `endsWith('report.md', '.md')` | true | |
-| `format('{0}-{1}-{0}', 'a', 'b')` | `a-b-a` | positional |
-| `format('{{literal}} {0}', 'x')` | `{literal} x` | `{{ }}` escapes braces |
-| `join(fromJSON('["x","y","z"]'), '+')` | `x+y+z` | |
-| `fromJSON('3')` | `3` | JSON text to a value |
-| `toJSON(fromJSON('[1,2]'))` | `[1,2]` after `jq -c` | the engine pretty-prints; we compacted it |
-| `hashFiles('sandbox/tally/tally/add.py')` | `1df4e1f8...20ddf` | see Section 11 |
+| Call                                           | Result                | Note                                      |
+| ---------------------------------------------- | --------------------- | ----------------------------------------- |
+| `contains('Hello World', 'WORLD')`             | true                  | case-insensitive substring                |
+| `contains(fromJSON('["a","b"]'), 'b')`         | true                  | array membership                          |
+| `startsWith('refs/heads/main', 'refs/heads/')` | true                  |                                           |
+| `endsWith('report.md', '.md')`                 | true                  |                                           |
+| `format('{0}-{1}-{0}', 'a', 'b')`              | `a-b-a`               | positional                                |
+| `format('{{literal}} {0}', 'x')`               | `{literal} x`         | `{{ }}` escapes braces                    |
+| `join(fromJSON('["x","y","z"]'), '+')`         | `x+y+z`               |                                           |
+| `fromJSON('3')`                                | `3`                   | JSON text to a value                      |
+| `toJSON(fromJSON('[1,2]'))`                    | `[1,2]` after `jq -c` | the engine pretty-prints; we compacted it |
+| `hashFiles('sandbox/tally/tally/add.py')`      | `1df4e1f8...20ddf`    | see Section 11                            |
 
 `toJSON` is the debugging tool: `${{ toJSON(github) }}` prints the whole context. In run 37316097820 the matrix job printed `toJSON(matrix)` as `{"py":"3.10"}` for the first entry and `{"py":"3.12","extra":"only-on-312"}` for the second. Note that `extra` exists **only** on the entry that an `include` added it to; on the other entry `matrix.extra` was an empty string (`extra=[]` in the report).
 
 ## 9. Contexts and Where They Are Allowed
 
-| Context | Holds | Example |
-| --- | --- | --- |
-| `github` | event and run metadata | `github.event_name`, `github.ref_name` |
-| `env` | environment variables you set | `env.PYTHON_VERSION` |
-| `vars` | repository/org variables | `vars.GHA_ENABLE_SELFHOSTED` (Chapter 08) |
-| `secrets` | secret values (masked in logs) | `secrets.MY_TOKEN` (Chapter 08) |
-| `inputs` | `workflow_dispatch` / `workflow_call` inputs | `inputs.flag` |
-| `job` | the running job | `job.status` |
-| `steps` | earlier steps' outputs and results | `steps.flaky.outcome` |
-| `runner` | the machine | `runner.os` |
-| `strategy`, `matrix` | the matrix leg | `matrix.py` |
-| `needs` | upstream jobs' outputs and results | `needs.build.outputs.v` (Chapter 09) |
+| Context              | Holds                                        | Example                                   |
+| -------------------- | -------------------------------------------- | ----------------------------------------- |
+| `github`             | event and run metadata                       | `github.event_name`, `github.ref_name`    |
+| `env`                | environment variables you set                | `env.PYTHON_VERSION`                      |
+| `vars`               | repository/org variables                     | `vars.GHA_ENABLE_SELFHOSTED` (Chapter 08) |
+| `secrets`            | secret values (masked in logs)               | `secrets.MY_TOKEN` (Chapter 08)           |
+| `inputs`             | `workflow_dispatch` / `workflow_call` inputs | `inputs.flag`                             |
+| `job`                | the running job                              | `job.status`                              |
+| `steps`              | earlier steps' outputs and results           | `steps.flaky.outcome`                     |
+| `runner`             | the machine                                  | `runner.os`                               |
+| `strategy`, `matrix` | the matrix leg                               | `matrix.py`                               |
+| `needs`              | upstream jobs' outputs and results           | `needs.build.outputs.v` (Chapter 09)      |
 
 Not every context works everywhere. Real `actionlint` output (1.7.12) when we put `success()` inside a `run:` line:
 
@@ -221,33 +225,33 @@ Rule of thumb: **status functions belong in `if:` only**. Likewise `actionlint` 
 
 Without an `if:`, a step runs only if all previous steps succeeded, as if it said `if: success()`. The four status functions (docs, verified 2026-10):
 
-| Function | True when |
-| --- | --- |
-| `success()` | all previous steps succeeded (the default) |
-| `failure()` | a previous step of the job failed |
-| `always()` | always, even if the run was cancelled |
-| `cancelled()` | the workflow was cancelled |
+| Function      | True when                                  |
+| ------------- | ------------------------------------------ |
+| `success()`   | all previous steps succeeded (the default) |
+| `failure()`   | a previous step of the job failed          |
+| `always()`    | always, even if the run was cancelled      |
+| `cancelled()` | the workflow was cancelled                 |
 
 Job `status` in run 37316097820 had a step `flaky` that ran `exit 1` with `continue-on-error: true`, followed by four guarded steps. The result:
 
-| Step | Condition | Ran? |
-| --- | --- | --- |
-| `flaky` | (runs `exit 1`) | ran, exit code 1 |
-| `Outcome vs conclusion` | default | yes: printed the two values below |
-| `Runs only on success()` | `success()` | **yes** (`success_step_ran=yes`) |
-| `Runs only on failure()` | `failure()` | **no** (no `failure_step_ran` line exists) |
-| `Runs always` | `always()` | yes (`always_step_ran=yes`) |
+| Step                     | Condition       | Ran?                                       |
+| ------------------------ | --------------- | ------------------------------------------ |
+| `flaky`                  | (runs `exit 1`) | ran, exit code 1                           |
+| `Outcome vs conclusion`  | default         | yes: printed the two values below          |
+| `Runs only on success()` | `success()`     | **yes** (`success_step_ran=yes`)           |
+| `Runs only on failure()` | `failure()`     | **no** (no `failure_step_ran` line exists) |
+| `Runs always`            | `always()`      | yes (`always_step_ran=yes`)                |
 
 and the two status values of the failed step:
 
 | `steps.flaky.outcome` | `steps.flaky.conclusion` |
-| --- | --- |
-| `failure` | `success` |
+| --------------------- | ------------------------ |
+| `failure`             | `success`                |
 
 **What to notice:**
 
 - **`outcome`** is what the step actually did (`failure`); **`conclusion`** is the result after `continue-on-error` is applied (`success`). With `continue-on-error: true`, the failure is "forgiven" at the job level.
-- Because the forgiven step counts as a success, `success()` stayed true and **`failure()` stayed false** even though a command exited 1. The step guarded by `failure()` never ran. This is the observed behavior; our reading is that the status functions look at conclusions. If you need to react to the *real* result of a forgiven step, test `steps.flaky.outcome == 'failure'`.
+- Because the forgiven step counts as a success, `success()` stayed true and **`failure()` stayed false** even though a command exited 1. The step guarded by `failure()` never ran. This is the observed behavior; our reading is that the status functions look at conclusions. If you need to react to the _real_ result of a forgiven step, test `steps.flaky.outcome == 'failure'`.
 - Use `always()` for cleanup that must run, and `if: ${{ failure() }}` for "tell me when it breaks" steps; they only fire on an unforgiven failure.
 
 ## 11. `hashFiles` and Cache Keys
@@ -268,12 +272,12 @@ A workflow sets `DEPLOY: 'false'` for dry runs and gates the deploy step with `i
 
 ## 14. Comparison: Where to Decide
 
-| Approach | Setup Effort | Control | Failure Visibility | Security Exposure | Maintenance Burden |
-| --- | --- | --- | --- | --- | --- |
-| Expression in `if:` | Minimal - one line | Moderate - no arithmetic or loops | Fair - skipped steps show as skipped | Low - no shell involved | Low |
-| Expression inside `run:` text | Minimal - inline | Moderate - evaluated before the shell | Weak - result is baked into the script text | High - input is pasted into the shell | Moderate - quoting traps |
-| Shell conditional in `run:` | Low - plain bash | Excellent - full language | Strong - the log shows the branch | Low - values come from env vars | Low |
-| Separate decision job with outputs | Moderate - wire `needs` | Strong - reusable decision | Strong - own job in the UI | Low | Moderate - more jobs, more minutes |
+| Approach                           | Setup Effort            | Control                               | Failure Visibility                          | Security Exposure                     | Maintenance Burden                 |
+| ---------------------------------- | ----------------------- | ------------------------------------- | ------------------------------------------- | ------------------------------------- | ---------------------------------- |
+| Expression in `if:`                | Minimal - one line      | Moderate - no arithmetic or loops     | Fair - skipped steps show as skipped        | Low - no shell involved               | Low                                |
+| Expression inside `run:` text      | Minimal - inline        | Moderate - evaluated before the shell | Weak - result is baked into the script text | High - input is pasted into the shell | Moderate - quoting traps           |
+| Shell conditional in `run:`        | Low - plain bash        | Excellent - full language             | Strong - the log shows the branch           | Low - values come from env vars       | Low                                |
+| Separate decision job with outputs | Moderate - wire `needs` | Strong - reusable decision            | Strong - own job in the UI                  | Low                                   | Moderate - more jobs, more minutes |
 
 ## 15. Practical Tips
 
@@ -336,7 +340,7 @@ All verified 2026-10.
 - GitHub Docs: Secure use reference (script injection) - https://docs.github.com/en/actions/reference/security/secure-use
 - actionlint checks (expression and context-availability rules) - https://github.com/rhysd/actionlint/blob/main/docs/checks.md
 - Live evidence: runs 37316097820 and 37316108422 in this repo
-- Laster, *Learning GitHub Actions* (O'Reilly), Chapter 8
+- Laster, _Learning GitHub Actions_ (O'Reilly), Chapter 8
 
 ## 20. Appendix A: Code Index
 

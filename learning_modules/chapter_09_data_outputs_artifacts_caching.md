@@ -21,11 +21,11 @@
 
 - **Output:** a small text value one step or job hands to later steps or jobs.
 - **Artifact:** a file or folder saved at the end of a job, so another job or a person can download it.
-- **Cache:** files saved under a key so a *future run* can skip re-creating them (typically installed dependencies).
+- **Cache:** files saved under a key so a _future run_ can skip re-creating them (typically installed dependencies).
 - **Key:** the name a cache is stored under. Same key means same cache.
 - **Hit / miss:** the key was found, or it was not.
 
-**If you have passed files between pipeline stages before**, artifacts are that. A cache is different: it is for speed across *runs*, not for passing results within one.
+**If you have passed files between pipeline stages before**, artifacts are that. A cache is different: it is for speed across _runs_, not for passing results within one.
 
 > **🔬 Platform Engineer's Lens:** These three features look interchangeable and are not. An **output** is capped at about a megabyte and, as we measured, a large one can cost minutes of billed runner time in a job that did no work. An **artifact** is the right way to move build results and is immutable. A **cache** is a performance hint that may vanish at any time, so your workflow must be correct without it.
 
@@ -43,30 +43,34 @@
 
 ## Table of Contents
 
-<!-- TOC -->
-- [1. Three Ways to Pass Data](#1-three-ways-to-pass-data)
-- [2. Running Example: Tally Builds and Packs](#2-running-example-tally-builds-and-packs)
-- [3. Step Outputs](#3-step-outputs)
-- [4. Job Outputs and `needs`](#4-job-outputs-and-needs)
-- [5. How Big Can an Output Be?](#5-how-big-can-an-output-be)
-- [6. Artifacts](#6-artifacts)
-- [7. Caching, with Real Timings](#7-caching-with-real-timings)
-- [8. Designing a Cache Key](#8-designing-a-cache-key)
-- [9. Choosing the Mechanism](#9-choosing-the-mechanism)
-- [10. Cache Scope Rules](#10-cache-scope-rules)
-- [11. Limits and Eviction](#11-limits-and-eviction)
-- [12. Job Summaries](#12-job-summaries)
-- [13. Case Study: The Stale Dependency](#13-case-study-the-stale-dependency)
-- [14. Comparison: Moving Data](#14-comparison-moving-data)
-- [15. Practical Tips](#15-practical-tips)
-- [16. Demonstrated Failure Modes](#16-demonstrated-failure-modes)
-- [17. Key Takeaways](#17-key-takeaways)
-- [18. Exercises](#18-exercises)
-- [19. Additional Resources](#19-additional-resources)
-- [20. Appendix A: Code Index](#20-appendix-a-code-index)
-   - [A.1 Verify outputs, artifacts and cache from the saved runs](#a1-verify-outputs-artifacts-and-cache-from-the-saved-runs)
-   - [A.2 Cache savings and billing](#a2-cache-savings-and-billing)
-<!-- /TOC -->
+<!-- toc-start -->
+
+- [Chapter 09: Data Between Steps and Jobs: Outputs, Artifacts, Caching](#chapter-09-data-between-steps-and-jobs-outputs-artifacts-caching)
+  - [Beginner's Guide](#beginners-guide)
+  - [What You'll Learn](#what-youll-learn)
+  - [Table of Contents](#table-of-contents)
+  - [1. Three Ways to Pass Data](#1-three-ways-to-pass-data)
+  - [2. Running Example: Tally Builds and Packs](#2-running-example-tally-builds-and-packs)
+  - [3. Step Outputs](#3-step-outputs)
+  - [4. Job Outputs and `needs`](#4-job-outputs-and-needs)
+  - [5. How Big Can an Output Be?](#5-how-big-can-an-output-be)
+  - [6. Artifacts](#6-artifacts)
+  - [7. Caching, with Real Timings](#7-caching-with-real-timings)
+  - [8. Designing a Cache Key](#8-designing-a-cache-key)
+  - [9. Choosing the Mechanism](#9-choosing-the-mechanism)
+  - [10. Cache Scope Rules](#10-cache-scope-rules)
+  - [11. Limits and Eviction](#11-limits-and-eviction)
+  - [12. Job Summaries](#12-job-summaries)
+  - [13. Case Study: The Stale Dependency](#13-case-study-the-stale-dependency)
+  - [14. Comparison: Moving Data](#14-comparison-moving-data)
+  - [15. Practical Tips](#15-practical-tips)
+  - [16. Demonstrated Failure Modes](#16-demonstrated-failure-modes)
+  - [17. Key Takeaways](#17-key-takeaways)
+  - [18. Exercises](#18-exercises)
+  - [19. Additional Resources](#19-additional-resources)
+  - [20. Appendix A: Code Index](#20-appendix-a-code-index)
+    - [A.1 Verify outputs, artifacts and cache from the saved runs](#a1-verify-outputs-artifacts-and-cache-from-the-saved-runs)
+    - [A.2 Cache savings and billing](#a2-cache-savings-and-billing)
 
 ---
 
@@ -74,11 +78,11 @@
 
 Chapter 02 established that every job gets a fresh machine. Anything one job produces is gone unless you move it deliberately. The platform offers three mechanisms, for three different jobs:
 
-| Mechanism | Carries | Lives for | Direction |
-| --- | --- | --- | --- |
-| Output | a short string | the workflow run | step to step, job to job |
-| Artifact | files | days (retention period) | job to job, and out to humans |
-| Cache | files | until evicted | run to **later runs** |
+| Mechanism | Carries        | Lives for               | Direction                     |
+| --------- | -------------- | ----------------------- | ----------------------------- |
+| Output    | a short string | the workflow run        | step to step, job to job      |
+| Artifact  | files          | days (retention period) | job to job, and out to humans |
+| Cache     | files          | until evicted           | run to **later runs**         |
 
 ## 2. Running Example: Tally Builds and Packs
 
@@ -100,10 +104,10 @@ For a value with newlines, use a delimiter (docs, verified 2026-10):
 
 The delimiter (`EOF`) must not appear on a line of its own inside the value. Results in the real run:
 
-| Output | Value in the three runs |
-| --- | --- |
+| Output    | Value in the three runs                                                |
+| --------- | ---------------------------------------------------------------------- |
 | `version` | `0.1.1`, `0.1.2`, `0.1.3` (the **run number** increments per workflow) |
-| `notes` | two lines; first line `line one` |
+| `notes`   | two lines; first line `line one`                                       |
 
 **What to notice:** `github.run_number` counts runs of **this workflow** (1, 2, 3 across our three dispatches), which is why it is a convenient build number. It is not the run id (`37318380786`).
 
@@ -135,13 +139,13 @@ In the `consume` job of run 37318380786 the log shows `REPORT version=0.1.1` and
 
 The docs do not state a step or job output limit, so we measured. `ch09-output-limits.yml` and `ch09-output-bisect.yml` make producer jobs, each emitting one string of repeated `a`. Runs **37317645339** and **37320026502**:
 
-| Producer | Characters | Job duration | Result |
-| --- | --- | --- | --- |
-| `p400k` | 400,000 | **128 s** | success |
-| `p520k` | 520,000 | **215 s** | success |
-| `p530k` | 530,000 | **226 s** | **failure** |
-| `p1m` | 1,000,000 | **786 s** | **failure** |
-| `p1_1m` | 1,100,000 | **781 s** | **failure** |
+| Producer | Characters | Job duration | Result      |
+| -------- | ---------- | ------------ | ----------- |
+| `p400k`  | 400,000    | **128 s**    | success     |
+| `p520k`  | 520,000    | **215 s**    | success     |
+| `p530k`  | 530,000    | **226 s**    | **failure** |
+| `p1m`    | 1,000,000  | **786 s**    | **failure** |
+| `p1_1m`  | 1,100,000  | **781 s**    | **failure** |
 
 Every failing job's annotation: **`Job outputs exceed 1,048,576 bytes`**.
 
@@ -170,19 +174,19 @@ An artifact is a named, zipped set of files stored with the run. Upload and down
 
 What the real run stored (API `repos/OWNER/REPO/actions/runs/<id>/artifacts`):
 
-| Field | Value |
-| --- | --- |
-| name | `tally-dist` |
-| size_in_bytes | **277** (from 2,060 raw bytes: it is zipped) |
-| created_at | 2026-10-05T13:38:36Z |
-| expires_at | 2026-10-06T13:38:36Z (**exactly +1 day**: `retention-days: 1`) |
+| Field         | Value                                                          |
+| ------------- | -------------------------------------------------------------- |
+| name          | `tally-dist`                                                   |
+| size_in_bytes | **277** (from 2,060 raw bytes: it is zipped)                   |
+| created_at    | 2026-10-05T13:38:36Z                                           |
+| expires_at    | 2026-10-06T13:38:36Z (**exactly +1 day**: `retention-days: 1`) |
 
 And in the `consume` job, which never checked out the repo (`no_checkout_here=absent`):
 
-| Check | Result |
-| --- | --- |
-| files downloaded | `got/payload.bin`, `got/tally.txt` |
-| content digest equals the producer's output | **yes** (`digest_match=yes`) |
+| Check                                       | Result                             |
+| ------------------------------------------- | ---------------------------------- |
+| files downloaded                            | `got/payload.bin`, `got/tally.txt` |
+| content digest equals the producer's output | **yes** (`digest_match=yes`)       |
 
 **What to notice:**
 
@@ -193,7 +197,7 @@ And in the `consume` job, which never checked out the repo (`no_checkout_here=ab
 
 ## 7. Caching, with Real Timings
 
-An artifact carries results *forward in a run*. A **cache** carries expensive-to-rebuild files *forward across runs*. Our cache job:
+An artifact carries results _forward in a run_. A **cache** carries expensive-to-rebuild files _forward across runs_. Our cache job:
 
 ```yaml
 - uses: actions/cache@v6
@@ -208,11 +212,11 @@ An artifact carries results *forward in a run*. A **cache** carries expensive-to
 
 The same job, three runs. Step durations are real (from the jobs API):
 
-| Run | Salt | `cache-hit` output | Restore | Install | Post (save) | Sum of steps |
-| --- | --- | --- | --- | --- | --- | --- |
-| 37318380786 | a | *empty* | 0 s | **13 s** | **2 s** | 17 s |
-| 37318461776 | a | `true` | 2 s | **skipped** | 0 s | 4 s |
-| 37318514549 | b | *empty* | 1 s | **12 s** | 1 s | 14 s |
+| Run         | Salt | `cache-hit` output | Restore | Install     | Post (save) | Sum of steps |
+| ----------- | ---- | ------------------ | ------- | ----------- | ----------- | ------------ |
+| 37318380786 | a    | _empty_            | 0 s     | **13 s**    | **2 s**     | 17 s         |
+| 37318461776 | a    | `true`             | 2 s     | **skipped** | 0 s         | 4 s          |
+| 37318514549 | b    | _empty_            | 1 s     | **12 s**    | 1 s         | 14 s         |
 
 **What to notice:**
 
@@ -222,7 +226,7 @@ The same job, three runs. Step durations are real (from the jobs API):
 - The cache holds 20,003,186 bytes for 20,000,000 raw bytes. Random data does not compress; real dependency trees do.
 - The repository's cache listing afterward showed four entries: our two plus two created by `setup-uv` in `ci.yml`. (The separate usage endpoint, which lags, reported 3 entries and 82,148,885 bytes at that moment.)
 
-**Savings arithmetic.** A hit saved 13 s of install at the price of 2 s of restore: **11 s per run**. But look at billing (Chapter 01): the miss job's steps sum to 17 s and the hit job's to 4 s, and **both bill 1 minute**. Caching saves *time* always; it saves *money* only when it moves a job across a minute boundary (for example 70 s down to 55 s). For a repo with a 3-minute install, the same 11-second-ish ratio becomes decisive.
+**Savings arithmetic.** A hit saved 13 s of install at the price of 2 s of restore: **11 s per run**. But look at billing (Chapter 01): the miss job's steps sum to 17 s and the hit job's to 4 s, and **both bill 1 minute**. Caching saves _time_ always; it saves _money_ only when it moves a job across a minute boundary (for example 70 s down to 55 s). For a repo with a 3-minute install, the same 11-second-ish ratio becomes decisive.
 
 > 📝 **Full implementation:** See [Appendix A.2](#a2-cache-savings-and-billing)
 
@@ -235,24 +239,24 @@ A good key changes **exactly when the cached content would change**. The standar
 ch09-deps-Linux-${{ hashFiles('**/requirements.txt') }}
 ```
 
-| Key design | Behavior |
-| --- | --- |
-| No hash (`ch09-deps`) | One cache forever: **stale** after a dependency change |
-| Hash of the lock file | New cache whenever dependencies change |
-| Includes OS (`runner.os`) | Prevents restoring Linux files on macOS |
-| Includes a salt | Lets you force a miss on purpose (our `salt` input) |
+| Key design                | Behavior                                               |
+| ------------------------- | ------------------------------------------------------ |
+| No hash (`ch09-deps`)     | One cache forever: **stale** after a dependency change |
+| Hash of the lock file     | New cache whenever dependencies change                 |
+| Includes OS (`runner.os`) | Prevents restoring Linux files on macOS                |
+| Includes a salt           | Lets you force a miss on purpose (our `salt` input)    |
 
 `restore-keys` provide **fallback prefixes**: if the exact key misses, a cache whose key starts with a listed prefix can be restored (and `cache-hit` stays not-`true`, since it was not an exact match), so you start from a nearly-right cache instead of nothing. Docs (verified 2026-10): matching checks the exact key first, then partial matches, then each `restore-keys` entry in order, and a key may be at most **512 characters**.
 
 ## 9. Choosing the Mechanism
 
-| Need | Use |
-| --- | --- |
-| Pass a version, flag or path to the next job | **Output** |
-| Pass a built file to the next job, or let a person download it | **Artifact** |
-| Avoid re-downloading dependencies on every run | **Cache** |
-| Pass something secret | none of these: use a secret/OIDC (Chapter 08, 13) |
-| Show a human a short report | job summary (`$GITHUB_STEP_SUMMARY`, 1 MiB per step per docs) |
+| Need                                                           | Use                                                           |
+| -------------------------------------------------------------- | ------------------------------------------------------------- |
+| Pass a version, flag or path to the next job                   | **Output**                                                    |
+| Pass a built file to the next job, or let a person download it | **Artifact**                                                  |
+| Avoid re-downloading dependencies on every run                 | **Cache**                                                     |
+| Pass something secret                                          | none of these: use a secret/OIDC (Chapter 08, 13)             |
+| Show a human a short report                                    | job summary (`$GITHUB_STEP_SUMMARY`, 1 MiB per step per docs) |
 
 ## 10. Cache Scope Rules
 
@@ -278,12 +282,12 @@ A team caches `~/.cache/pip` under the key `pip-cache` with no hash. Months late
 
 ## 14. Comparison: Moving Data
 
-| Mechanism | Setup Effort | Control | Failure Visibility | Security Exposure | Maintenance Burden |
-| --- | --- | --- | --- | --- | --- |
-| Step output | Minimal - one line | Moderate - strings only, size-capped | Fair - empty if mis-wired | Low - visible in logs, so no secrets | Low |
-| Job output (`needs`) | Low - declare and wire | Moderate - same limits | Fair - skipped job gives empty | Low - same | Low |
-| Artifact | Low - two actions | Strong - any files, retention set | Excellent - listed on the run page | Moderate - downloadable by anyone with access | Low |
-| Cache | Low - one action | Weak - may be evicted any time | Fair - hit or miss in the log | Moderate - shared across runs, can be poisoned (Chapter 16) | Moderate - key design |
+| Mechanism            | Setup Effort           | Control                              | Failure Visibility                 | Security Exposure                                           | Maintenance Burden    |
+| -------------------- | ---------------------- | ------------------------------------ | ---------------------------------- | ----------------------------------------------------------- | --------------------- |
+| Step output          | Minimal - one line     | Moderate - strings only, size-capped | Fair - empty if mis-wired          | Low - visible in logs, so no secrets                        | Low                   |
+| Job output (`needs`) | Low - declare and wire | Moderate - same limits               | Fair - skipped job gives empty     | Low - same                                                  | Low                   |
+| Artifact             | Low - two actions      | Strong - any files, retention set    | Excellent - listed on the run page | Moderate - downloadable by anyone with access               | Low                   |
+| Cache                | Low - one action       | Weak - may be evicted any time       | Fair - hit or miss in the log      | Moderate - shared across runs, can be poisoned (Chapter 16) | Moderate - key design |
 
 ## 15. Practical Tips
 
@@ -360,7 +364,7 @@ All verified 2026-10.
 - actions/download-artifact - https://github.com/actions/download-artifact
 - actions/cache - https://github.com/actions/cache
 - Live evidence: runs 37318380786, 37318461776, 37318514549 (data) and 37317645339 (output size) in this repo
-- Laster, *Learning GitHub Actions* (O'Reilly), Chapter 7
+- Laster, _Learning GitHub Actions_ (O'Reilly), Chapter 7
 
 ## 20. Appendix A: Code Index
 

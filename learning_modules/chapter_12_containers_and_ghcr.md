@@ -20,7 +20,7 @@
 **Key concepts in plain English:**
 
 - **Container:** a lightweight, isolated environment built from an **image** (a packaged filesystem).
-- **Container job:** a job whose steps run *inside* a container instead of directly on the runner VM.
+- **Container job:** a job whose steps run _inside_ a container instead of directly on the runner VM.
 - **Service container:** a helper container (a database, a cache) that starts beside your job and is thrown away after.
 - **Registry:** a server that stores images. **GHCR** (`ghcr.io`) is GitHub's.
 - **Digest:** the content hash of an image (`sha256:...`). A **tag** (`latest`) is a movable label for a digest.
@@ -43,39 +43,43 @@
 
 ## Table of Contents
 
-<!-- TOC -->
-- [1. Three Uses of Containers](#1-three-uses-of-containers)
-- [2. Running Example: Tally in a Box](#2-running-example-tally-in-a-box)
-- [3. Container Jobs](#3-container-jobs)
-- [4. Service Containers](#4-service-containers)
-- [5. Building an Image](#5-building-an-image)
-- [6. Pushing to GHCR with `GITHUB_TOKEN`](#6-pushing-to-ghcr-with-github_token)
-- [7. Tags Move, Digests Do Not](#7-tags-move-digests-do-not)
-- [8. Visibility: Who Can Pull It?](#8-visibility-who-can-pull-it)
-- [9. Image Size, Layers and Time](#9-image-size-layers-and-time)
-- [10. Build Caching and Multi-Platform](#10-build-caching-and-multi-platform)
-- [11. Provenance and Attestations](#11-provenance-and-attestations)
-- [12. Cleaning Up Packages](#12-cleaning-up-packages)
-- [13. Case Study: The Deploy That Ran Yesterday's Image](#13-case-study-the-deploy-that-ran-yesterdays-image)
-- [14. Comparison: Ways to Build and Publish](#14-comparison-ways-to-build-and-publish)
-- [15. Practical Tips](#15-practical-tips)
-- [16. Demonstrated Failure Modes](#16-demonstrated-failure-modes)
-- [17. Key Takeaways](#17-key-takeaways)
-- [18. Exercises](#18-exercises)
-- [19. Additional Resources](#19-additional-resources)
-- [20. Appendix A: Code Index](#20-appendix-a-code-index)
-   - [A.1 Image references and the published digest](#a1-image-references-and-the-published-digest)
-<!-- /TOC -->
+<!-- toc-start -->
+
+- [Chapter 12: Containers, Service Containers and GHCR](#chapter-12-containers-service-containers-and-ghcr)
+  - [Beginner's Guide](#beginners-guide)
+  - [What You'll Learn](#what-youll-learn)
+  - [Table of Contents](#table-of-contents)
+  - [1. Three Uses of Containers](#1-three-uses-of-containers)
+  - [2. Running Example: Tally in a Box](#2-running-example-tally-in-a-box)
+  - [3. Container Jobs](#3-container-jobs)
+  - [4. Service Containers](#4-service-containers)
+  - [5. Building an Image](#5-building-an-image)
+  - [6. Pushing to GHCR with `GITHUB_TOKEN`](#6-pushing-to-ghcr-with-github_token)
+  - [7. Tags Move, Digests Do Not](#7-tags-move-digests-do-not)
+  - [8. Visibility: Who Can Pull It?](#8-visibility-who-can-pull-it)
+  - [9. Image Size, Layers and Time](#9-image-size-layers-and-time)
+  - [10. Build Caching and Multi-Platform](#10-build-caching-and-multi-platform)
+  - [11. Provenance and Attestations](#11-provenance-and-attestations)
+  - [12. Cleaning Up Packages](#12-cleaning-up-packages)
+  - [13. Case Study: The Deploy That Ran Yesterday's Image](#13-case-study-the-deploy-that-ran-yesterdays-image)
+  - [14. Comparison: Ways to Build and Publish](#14-comparison-ways-to-build-and-publish)
+  - [15. Practical Tips](#15-practical-tips)
+  - [16. Demonstrated Failure Modes](#16-demonstrated-failure-modes)
+  - [17. Key Takeaways](#17-key-takeaways)
+  - [18. Exercises](#18-exercises)
+  - [19. Additional Resources](#19-additional-resources)
+  - [20. Appendix A: Code Index](#20-appendix-a-code-index)
+    - [A.1 Image references and the published digest](#a1-image-references-and-the-published-digest)
 
 ---
 
 ## 1. Three Uses of Containers
 
-| Use | Syntax | Purpose |
-| --- | --- | --- |
-| Container job | `container: image` | Run all steps of a job in a chosen environment |
-| Service container | `services:` | Run a dependency (database, cache) beside the job |
-| Build and publish | `docker build` / `docker push` | Produce an image as the pipeline's output |
+| Use               | Syntax                         | Purpose                                           |
+| ----------------- | ------------------------------ | ------------------------------------------------- |
+| Container job     | `container: image`             | Run all steps of a job in a chosen environment    |
+| Service container | `services:`                    | Run a dependency (database, cache) beside the job |
+| Build and publish | `docker build` / `docker push` | Produce an image as the pipeline's output         |
 
 They solve different problems and combine freely.
 
@@ -101,12 +105,12 @@ in_container:
 
 The runner VM is still `ubuntu-latest` (it hosts Docker), but every step now executes **inside** the container. What the real run reported from inside:
 
-| Question | Answer |
-| --- | --- |
-| Operating system | **Debian GNU/Linux 13 (trixie)** (not the runner's Ubuntu) |
-| Python | **3.12.15**, from the image |
-| Is `git` installed? | **No** (`command -v git` printed nothing) |
-| Did `actions/checkout` still work? | **Yes**: 20 top-level entries, `pyproject.toml` present |
+| Question                           | Answer                                                     |
+| ---------------------------------- | ---------------------------------------------------------- |
+| Operating system                   | **Debian GNU/Linux 13 (trixie)** (not the runner's Ubuntu) |
+| Python                             | **3.12.15**, from the image                                |
+| Is `git` installed?                | **No** (`command -v git` printed nothing)                  |
+| Did `actions/checkout` still work? | **Yes**: 20 top-level entries, `pyproject.toml` present    |
 
 The checkout log explains how, with no `git`:
 
@@ -147,10 +151,10 @@ and the job's one step then opened a TCP connection to `localhost:6379`, sent `P
 
 **Networking, by docs (verified 2026-10):**
 
-| Your job runs... | Reach the service at | Port mapping |
-| --- | --- | --- |
-| directly on the runner VM (this example) | `localhost:<mapped port>` | **required** (`ports: - 6379:6379`) |
-| inside a container | the service's **label** as hostname (`redis:6379`) | not needed: containers on the same network expose all ports |
+| Your job runs...                         | Reach the service at                               | Port mapping                                                |
+| ---------------------------------------- | -------------------------------------------------- | ----------------------------------------------------------- |
+| directly on the runner VM (this example) | `localhost:<mapped port>`                          | **required** (`ports: - 6379:6379`)                         |
+| inside a container                       | the service's **label** as hostname (`redis:6379`) | not needed: containers on the same network expose all ports |
 
 Service containers need an **Ubuntu (Linux)** runner on GitHub-hosted runners; Windows and macOS runners do not support them (docs). We tested only the on-runner case above.
 
@@ -221,11 +225,11 @@ docker run --rm ghcr.io/friend09/tally@sha256:a5437692...      # prints 5
 
 It printed `5` (Tally's `add(2, 3)`), proving the exact bytes that were published are the bytes that ran.
 
-| Reference | Style | Can change under you? |
-| --- | --- | --- |
-| `ghcr.io/friend09/tally:latest` | tag | **Yes**: the next push re-points it |
-| `ghcr.io/friend09/tally:2d37aef...` | tag (commit SHA) | Only if someone re-pushes that exact tag |
-| `ghcr.io/friend09/tally@sha256:a5437692...` | digest | **No**: it is the content hash |
+| Reference                                   | Style            | Can change under you?                    |
+| ------------------------------------------- | ---------------- | ---------------------------------------- |
+| `ghcr.io/friend09/tally:latest`             | tag              | **Yes**: the next push re-points it      |
+| `ghcr.io/friend09/tally:2d37aef...`         | tag (commit SHA) | Only if someone re-pushes that exact tag |
+| `ghcr.io/friend09/tally@sha256:a5437692...` | digest           | **No**: it is the content hash           |
 
 This is Chapter 04's tag-versus-SHA lesson, applied to images. A deployment should record the digest.
 
@@ -263,12 +267,12 @@ A team deploys with `image: ghcr.io/org/app:latest`. A hot-fix is pushed at 10:0
 
 ## 14. Comparison: Ways to Build and Publish
 
-| Approach | Setup Effort | Control | Failure Visibility | Security Exposure | Maintenance Burden |
-| --- | --- | --- | --- | --- | --- |
-| Plain `docker build`/`push` (this chapter) | Minimal - preinstalled | Moderate - no cache or multi-arch | Strong - raw CLI output | Low - first-party token, scoped permissions | Low |
-| `docker/build-push-action` | Low - one action | Strong - cache, multi-arch, attestations | Fair - action wrapper logs | Moderate - third-party action | Moderate - keep updated |
-| Build on a laptop and push | Minimal | Weak - unreproducible | Weak - no record | High - personal credentials | High - tribal knowledge |
-| External build service | High - account, integration | Strong | Fair - separate UI | High - extra credentials | Moderate |
+| Approach                                   | Setup Effort                | Control                                  | Failure Visibility         | Security Exposure                           | Maintenance Burden      |
+| ------------------------------------------ | --------------------------- | ---------------------------------------- | -------------------------- | ------------------------------------------- | ----------------------- |
+| Plain `docker build`/`push` (this chapter) | Minimal - preinstalled      | Moderate - no cache or multi-arch        | Strong - raw CLI output    | Low - first-party token, scoped permissions | Low                     |
+| `docker/build-push-action`                 | Low - one action            | Strong - cache, multi-arch, attestations | Fair - action wrapper logs | Moderate - third-party action               | Moderate - keep updated |
+| Build on a laptop and push                 | Minimal                     | Weak - unreproducible                    | Weak - no record           | High - personal credentials                 | High - tribal knowledge |
+| External build service                     | High - account, integration | Strong                                   | Fair - separate UI         | High - extra credentials                    | Moderate                |
 
 ## 15. Practical Tips
 
@@ -330,7 +334,7 @@ All verified 2026-10.
 - Docker docs: Dockerfile reference - https://docs.docker.com/reference/dockerfile/
 - OCI Image Spec: annotations (`org.opencontainers.image.source`) - https://github.com/opencontainers/image-spec/blob/main/annotations.md
 - Live evidence: run 37322069271 in this repo; image `ghcr.io/friend09/tally`
-- Laster, *Learning GitHub Actions* (O'Reilly), Chapters 5 and 12
+- Laster, _Learning GitHub Actions_ (O'Reilly), Chapters 5 and 12
 
 ## 20. Appendix A: Code Index
 

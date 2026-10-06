@@ -43,40 +43,44 @@
 
 ## Table of Contents
 
-<!-- TOC -->
-- [1. Four Controls](#1-four-controls)
-- [2. Running Example: Five Real Experiments](#2-running-example-five-real-experiments)
-- [3. `needs` and Failure](#3-needs-and-failure)
-- [4. The Matrix](#4-the-matrix)
-- [5. `fail-fast`: Before and After](#5-fail-fast-before-and-after)
-- [6. `max-parallel`](#6-max-parallel)
-- [7. Concurrency Groups](#7-concurrency-groups)
-- [8. Timeouts](#8-timeouts)
-- [9. Forgiving a Leg](#9-forgiving-a-leg)
-- [10. Dynamic Matrices](#10-dynamic-matrices)
-- [11. Runner Concurrency Limits](#11-runner-concurrency-limits)
-- [12. Matrix Naming and Required Checks](#12-matrix-naming-and-required-checks)
-- [13. Case Study: The 256-Leg Surprise](#13-case-study-the-256-leg-surprise)
-- [14. Comparison: Controlling a Pipeline](#14-comparison-controlling-a-pipeline)
-- [15. Practical Tips](#15-practical-tips)
-- [16. Demonstrated Failure Modes](#16-demonstrated-failure-modes)
-- [17. Key Takeaways](#17-key-takeaways)
-- [18. Exercises](#18-exercises)
-- [19. Additional Resources](#19-additional-resources)
-- [20. Appendix A: Code Index](#20-appendix-a-code-index)
-   - [A.1 `needs` skip propagation and matrix expansion](#a1-needs-skip-propagation-and-matrix-expansion)
-<!-- /TOC -->
+<!-- toc-start -->
+
+- [Chapter 10: Execution Control: needs, Matrix, Concurrency, Timeouts](#chapter-10-execution-control-needs-matrix-concurrency-timeouts)
+  - [Beginner's Guide](#beginners-guide)
+  - [What You'll Learn](#what-youll-learn)
+  - [Table of Contents](#table-of-contents)
+  - [1. Four Controls](#1-four-controls)
+  - [2. Running Example: Five Real Experiments](#2-running-example-five-real-experiments)
+  - [3. `needs` and Failure](#3-needs-and-failure)
+  - [4. The Matrix](#4-the-matrix)
+  - [5. `fail-fast`: Before and After](#5-fail-fast-before-and-after)
+  - [6. `max-parallel`](#6-max-parallel)
+  - [7. Concurrency Groups](#7-concurrency-groups)
+  - [8. Timeouts](#8-timeouts)
+  - [9. Forgiving a Leg](#9-forgiving-a-leg)
+  - [10. Dynamic Matrices](#10-dynamic-matrices)
+  - [11. Runner Concurrency Limits](#11-runner-concurrency-limits)
+  - [12. Matrix Naming and Required Checks](#12-matrix-naming-and-required-checks)
+  - [13. Case Study: The 256-Leg Surprise](#13-case-study-the-256-leg-surprise)
+  - [14. Comparison: Controlling a Pipeline](#14-comparison-controlling-a-pipeline)
+  - [15. Practical Tips](#15-practical-tips)
+  - [16. Demonstrated Failure Modes](#16-demonstrated-failure-modes)
+  - [17. Key Takeaways](#17-key-takeaways)
+  - [18. Exercises](#18-exercises)
+  - [19. Additional Resources](#19-additional-resources)
+  - [20. Appendix A: Code Index](#20-appendix-a-code-index)
+    - [A.1 `needs` skip propagation and matrix expansion](#a1-needs-skip-propagation-and-matrix-expansion)
 
 ---
 
 ## 1. Four Controls
 
-| Control | Question it answers |
-| --- | --- |
-| `needs` | In what order, and what if a dependency fails? |
-| `strategy.matrix` | How many variations of this job? |
-| `concurrency` | May two runs overlap? |
-| `timeout-minutes` | How long is too long? |
+| Control           | Question it answers                            |
+| ----------------- | ---------------------------------------------- |
+| `needs`           | In what order, and what if a dependency fails? |
+| `strategy.matrix` | How many variations of this job?               |
+| `concurrency`     | May two runs overlap?                          |
+| `timeout-minutes` | How long is too long?                          |
 
 ## 2. Running Example: Five Real Experiments
 
@@ -95,14 +99,14 @@ a       ──▶ report_default  (no if)
 
 Real result (run 37318821322, overall `failure`):
 
-| Job | Conclusion | Why |
-| --- | --- | --- |
-| `a` | **failure** | `exit 1` |
-| `b` | skipped | its need `a` failed |
-| `c` | skipped | its need `b` was **skipped** (not even a failure) |
-| `report_default` | skipped | no `if`, so the implicit `success()` applies and `a` failed |
-| `report_always` | **success** | `if: always()` runs whatever happened |
-| `report_on_failure` | **success** | `if: failure()`: a needed job failed |
+| Job                 | Conclusion  | Why                                                         |
+| ------------------- | ----------- | ----------------------------------------------------------- |
+| `a`                 | **failure** | `exit 1`                                                    |
+| `b`                 | skipped     | its need `a` failed                                         |
+| `c`                 | skipped     | its need `b` was **skipped** (not even a failure)           |
+| `report_default`    | skipped     | no `if`, so the implicit `success()` applies and `a` failed |
+| `report_always`     | **success** | `if: always()` runs whatever happened                       |
+| `report_on_failure` | **success** | `if: failure()`: a needed job failed                        |
 
 And what the always-job saw: `needs.a.result = failure`, `needs.b.result = skipped`, `needs.c.result = skipped`.
 
@@ -125,20 +129,20 @@ strategy:
   max-parallel: 2
   matrix:
     os: [ubuntu-latest, ubuntu-22.04]
-    py: ['3.11', '3.12', '3.13']
+    py: ["3.11", "3.12", "3.13"]
     exclude:
-      - { os: ubuntu-22.04, py: '3.11' }
+      - { os: ubuntu-22.04, py: "3.11" }
     include:
-      - { os: ubuntu-latest, py: '3.14', experimental: true }
+      - { os: ubuntu-latest, py: "3.14", experimental: true }
 ```
 
 **Expansion by hand.**
 
-| Step | Combinations | Count |
-| --- | --- | --- |
-| Cross product of the axes | 2 `os` x 3 `py` | **6** |
-| Remove `exclude` matches | minus `(ubuntu-22.04, 3.11)` | **5** |
-| Apply `include` | `(ubuntu-latest, 3.14)` matches **no** existing combination (3.14 is not an axis value), so it becomes a **new job**, carrying `experimental: true` | **6** |
+| Step                      | Combinations                                                                                                                                        | Count |
+| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
+| Cross product of the axes | 2 `os` x 3 `py`                                                                                                                                     | **6** |
+| Remove `exclude` matches  | minus `(ubuntu-22.04, 3.11)`                                                                                                                        | **5** |
+| Apply `include`           | `(ubuntu-latest, 3.14)` matches **no** existing combination (3.14 is not an axis value), so it becomes a **new job**, carrying `experimental: true` | **6** |
 
 The real run listed exactly six legs: `(ubuntu-latest, 3.11)`, `(ubuntu-latest, 3.12)`, `(ubuntu-latest, 3.13)`, `(ubuntu-22.04, 3.12)`, `(ubuntu-22.04, 3.13)` and `(ubuntu-latest, 3.14)`. Docs (verified 2026-10): include entries that match existing combinations add properties to them; entries that do not match create new jobs; and a matrix may produce at most 256 jobs (Chapter 01).
 
@@ -148,15 +152,15 @@ The real run listed exactly six legs: `(ubuntu-latest, 3.11)`, `(ubuntu-latest, 
 
 `fail-fast: true` means that when any leg fails, legs that are queued or running are cancelled (docs, verified 2026-10). One leg, `(ubuntu-22.04, 3.12)`, fails on purpose after 3 seconds; every other leg works for 15 seconds. Same matrix, both settings:
 
-| Leg | `fail-fast: true` (run 37319094292) | `fail-fast: false` (run 37319194753) |
-| --- | --- | --- |
-| `(ubuntu-latest, 3.11)` | success | success |
-| `(ubuntu-latest, 3.12)` | success | success |
-| `(ubuntu-22.04, 3.12)` | **failure** | **failure** |
-| `(ubuntu-latest, 3.13)` | **cancelled** (steps had finished) | success |
-| `(ubuntu-22.04, 3.13)` | **cancelled** (never got a runner) | success |
-| `(ubuntu-latest, 3.14)` | **cancelled** (never got a runner) | success |
-| Legs that got a runner | **4** | **6** |
+| Leg                     | `fail-fast: true` (run 37319094292) | `fail-fast: false` (run 37319194753) |
+| ----------------------- | ----------------------------------- | ------------------------------------ |
+| `(ubuntu-latest, 3.11)` | success                             | success                              |
+| `(ubuntu-latest, 3.12)` | success                             | success                              |
+| `(ubuntu-22.04, 3.12)`  | **failure**                         | **failure**                          |
+| `(ubuntu-latest, 3.13)` | **cancelled** (steps had finished)  | success                              |
+| `(ubuntu-22.04, 3.13)`  | **cancelled** (never got a runner)  | success                              |
+| `(ubuntu-latest, 3.14)` | **cancelled** (never got a runner)  | success                              |
+| Legs that got a runner  | **4**                               | **6**                                |
 
 The two "never got a runner" legs have **no steps and an empty runner name** in the API. The run's conclusion is `failure` either way.
 
@@ -172,14 +176,14 @@ The two "never got a runner" legs have **no steps and an empty runner name** in 
 
 `max-parallel: 2` caps simultaneous legs. From the `fail-fast: false` run's timestamps:
 
-| Leg | Started | Completed |
-| --- | --- | --- |
-| `(ubuntu-latest, 3.11)` | 13:44:58 | 13:45:16 |
-| `(ubuntu-latest, 3.12)` | 13:44:58 | 13:45:16 |
-| `(ubuntu-latest, 3.13)` | 13:45:18 | 13:45:36 |
-| `(ubuntu-22.04, 3.12)` | 13:45:19 | 13:45:25 |
-| `(ubuntu-22.04, 3.13)` | 13:45:27 | 13:45:45 |
-| `(ubuntu-latest, 3.14)` | 13:45:39 | 13:45:56 |
+| Leg                     | Started  | Completed |
+| ----------------------- | -------- | --------- |
+| `(ubuntu-latest, 3.11)` | 13:44:58 | 13:45:16  |
+| `(ubuntu-latest, 3.12)` | 13:44:58 | 13:45:16  |
+| `(ubuntu-latest, 3.13)` | 13:45:18 | 13:45:36  |
+| `(ubuntu-22.04, 3.12)`  | 13:45:19 | 13:45:25  |
+| `(ubuntu-22.04, 3.13)`  | 13:45:27 | 13:45:45  |
+| `(ubuntu-latest, 3.14)` | 13:45:39 | 13:45:56  |
 
 The most legs ever overlapping is **2**. The whole run took 58 seconds (13:44:58 to 13:45:56); with no cap, six 15-second legs would overlap and finish in roughly the time of one (about 18 seconds each including setup). The cap trades **wall-clock time** for **runner pressure**. Billing is unchanged: 6 legs, 6 billed minutes. Use it to be polite to a shared service (a database, a rate-limited API), not to save money.
 
@@ -195,19 +199,19 @@ Docs (verified 2026-10): at most **one running** run per group; by default only 
 
 **With `cancel-in-progress: false`** (runs started 13:46:30, :37, :44):
 
-| Run | Final | What happened |
-| --- | --- | --- |
-| x1 | **success** | started immediately, ran to completion |
-| x2 | **cancelled** | went **pending** behind x1, then was **replaced** by x3 without ever running |
-| x3 | **success** | pending until x1 finished, then ran |
+| Run | Final         | What happened                                                                |
+| --- | ------------- | ---------------------------------------------------------------------------- |
+| x1  | **success**   | started immediately, ran to completion                                       |
+| x2  | **cancelled** | went **pending** behind x1, then was **replaced** by x3 without ever running |
+| x3  | **success**   | pending until x1 finished, then ran                                          |
 
 **With `cancel-in-progress: true`** (runs created 13:48:16, :30, :44):
 
-| Run | Final | What happened |
-| --- | --- | --- |
-| y1 | **cancelled** | annotation: `Canceling since a higher priority waiting request for ch10-demo exists` |
-| y2 | **cancelled** | never ran: replaced by y3 |
-| y3 | **success** | ran last |
+| Run | Final         | What happened                                                                        |
+| --- | ------------- | ------------------------------------------------------------------------------------ |
+| y1  | **cancelled** | annotation: `Canceling since a higher priority waiting request for ch10-demo exists` |
+| y2  | **cancelled** | never ran: replaced by y3                                                            |
+| y3  | **success**   | ran last                                                                             |
 
 **What to notice:**
 
@@ -219,10 +223,10 @@ Docs (verified 2026-10): at most **one running** run per group; by default only 
 
 `timeout-minutes` limits a job or a step. Both set to **1 minute** around `sleep 120`. Real results (run 37318827012):
 
-| Scope | Limit | Actual | Conclusion |
-| --- | --- | --- | --- |
-| Job `job_timeout` | 60 s | job ran **90 s** (13:42:08 to 13:43:38), its step 88 s | job **cancelled** |
-| Step `Slow step` (in job `step_timeout`) | 60 s | step ran **73 s** (13:42:08 to 13:43:21) | step **failure**, forgiven by `continue-on-error` (conclusion `success`) |
+| Scope                                    | Limit | Actual                                                 | Conclusion                                                               |
+| ---------------------------------------- | ----- | ------------------------------------------------------ | ------------------------------------------------------------------------ |
+| Job `job_timeout`                        | 60 s  | job ran **90 s** (13:42:08 to 13:43:38), its step 88 s | job **cancelled**                                                        |
+| Step `Slow step` (in job `step_timeout`) | 60 s  | step ran **73 s** (13:42:08 to 13:43:21)               | step **failure**, forgiven by `continue-on-error` (conclusion `success`) |
 
 The job's annotations: `The job has exceeded the maximum execution time of 1m0s` and `The operation was canceled.`
 
@@ -261,13 +265,13 @@ A library tests 4 interpreters x 8 dependency versions x 8 plugin versions = **2
 
 ## 14. Comparison: Controlling a Pipeline
 
-| Control | Setup Effort | Control | Failure Visibility | Security Exposure | Maintenance Burden |
-| --- | --- | --- | --- | --- | --- |
-| `needs` + `if` | Low - declare and gate | Strong - exact ordering | Strong - skipped jobs are visible | Low | Low |
-| Matrix, `fail-fast: true` | Low - one block | Moderate - fast but partial results | Fair - cancelled legs hide information | Low | Low |
-| Matrix, `fail-fast: false` | Low - one block | Strong - full results | Excellent - every leg reports | Low | Moderate - higher cost |
-| Concurrency group | Minimal - two lines | Moderate - only the latest wins | Weak - dropped runs show as cancelled | Low | Low |
-| Timeouts | Minimal - one line | Moderate - enforced late | Fair - ends as cancelled | Low | Low |
+| Control                    | Setup Effort           | Control                             | Failure Visibility                     | Security Exposure | Maintenance Burden     |
+| -------------------------- | ---------------------- | ----------------------------------- | -------------------------------------- | ----------------- | ---------------------- |
+| `needs` + `if`             | Low - declare and gate | Strong - exact ordering             | Strong - skipped jobs are visible      | Low               | Low                    |
+| Matrix, `fail-fast: true`  | Low - one block        | Moderate - fast but partial results | Fair - cancelled legs hide information | Low               | Low                    |
+| Matrix, `fail-fast: false` | Low - one block        | Strong - full results               | Excellent - every leg reports          | Low               | Moderate - higher cost |
+| Concurrency group          | Minimal - two lines    | Moderate - only the latest wins     | Weak - dropped runs show as cancelled  | Low               | Low                    |
+| Timeouts                   | Minimal - one line     | Moderate - enforced late            | Fair - ends as cancelled               | Low               | Low                    |
 
 ## 15. Practical Tips
 
@@ -330,7 +334,7 @@ All verified 2026-10.
 - GitHub Docs: Workflow syntax (`needs`, `timeout-minutes`, `strategy`) - https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax
 - GitHub Docs: Actions limits - https://docs.github.com/en/actions/reference/limits
 - Live evidence: runs 37318821322, 37319094292, 37319194753, 37319409690, 37319423478, 37319437491, 37319632048, 37319663031, 37319694303, 37318827012 in this repo
-- Laster, *Learning GitHub Actions* (O'Reilly), Chapter 8
+- Laster, _Learning GitHub Actions_ (O'Reilly), Chapter 8
 
 ## 20. Appendix A: Code Index
 

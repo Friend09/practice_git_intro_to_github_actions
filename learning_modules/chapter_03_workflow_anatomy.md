@@ -42,29 +42,34 @@
 
 ## Table of Contents
 
-<!-- TOC -->
-- [1. The Goal](#1-the-goal)
-- [2. Running Example: Tally's First CI](#2-running-example-tallys-first-ci)
-- [3. The File, Key by Key](#3-the-file-key-by-key)
-- [4. Triggers: `on`](#4-triggers-on)
-- [5. `permissions` and `env`](#5-permissions-and-env)
-- [6. The Job](#6-the-job)
-- [7. The Steps](#7-the-steps)
-- [8. Reading a Green Run](#8-reading-a-green-run)
-- [9. Reading a Red Run](#9-reading-a-red-run)
-- [10. Run Names and Titles](#10-run-names-and-titles)
-- [11. Gating and `continue-on-error`](#11-gating-and-continue-on-error)
-- [12. Step IDs and Outputs Preview](#12-step-ids-and-outputs-preview)
-- [13. Case Study: The Workflow Nobody Ran](#13-case-study-the-workflow-nobody-ran)
-- [14. Comparison: `run:` vs `uses:`](#14-comparison-run-vs-uses)
-- [15. Practical Tips](#15-practical-tips)
-- [16. Demonstrated Failure Mode: A Regression Caught](#16-demonstrated-failure-mode-a-regression-caught)
-- [17. Key Takeaways](#17-key-takeaways)
-- [18. Exercises](#18-exercises)
-- [19. Additional Resources](#19-additional-resources)
-- [20. Appendix A: Code Index](#20-appendix-a-code-index)
-   - [A.1 Parse the workflow and test the paths filter](#a1-parse-the-workflow-and-test-the-paths-filter)
-<!-- /TOC -->
+<!-- toc-start -->
+
+- [Chapter 03: Workflow YAML Anatomy and Your First Green Check](#chapter-03-workflow-yaml-anatomy-and-your-first-green-check)
+  - [Beginner's Guide](#beginners-guide)
+  - [What You'll Learn](#what-youll-learn)
+  - [Table of Contents](#table-of-contents)
+  - [1. The Goal](#1-the-goal)
+  - [2. Running Example: Tally's First CI](#2-running-example-tallys-first-ci)
+  - [3. The File, Key by Key](#3-the-file-key-by-key)
+  - [4. Triggers: `on`](#4-triggers-on)
+  - [5. `permissions` and `env`](#5-permissions-and-env)
+  - [6. The Job](#6-the-job)
+  - [7. The Steps](#7-the-steps)
+  - [8. Reading a Green Run](#8-reading-a-green-run)
+    - [Status Badges](#status-badges)
+  - [9. Reading a Red Run](#9-reading-a-red-run)
+  - [10. Run Names and Titles](#10-run-names-and-titles)
+  - [11. Gating and `continue-on-error`](#11-gating-and-continue-on-error)
+  - [12. Step IDs and Outputs Preview](#12-step-ids-and-outputs-preview)
+  - [13. Case Study: The Workflow Nobody Ran](#13-case-study-the-workflow-nobody-ran)
+  - [14. Comparison: `run:` vs `uses:`](#14-comparison-run-vs-uses)
+  - [15. Practical Tips](#15-practical-tips)
+  - [16. Demonstrated Failure Mode: A Regression Caught](#16-demonstrated-failure-mode-a-regression-caught)
+  - [17. Key Takeaways](#17-key-takeaways)
+  - [18. Exercises](#18-exercises)
+  - [19. Additional Resources](#19-additional-resources)
+  - [20. Appendix A: Code Index](#20-appendix-a-code-index)
+    - [A.1 Parse the workflow and test the paths filter](#a1-parse-the-workflow-and-test-the-paths-filter)
 
 ---
 
@@ -83,14 +88,14 @@ name: ch03 tally ci
 run-name: Tally CI (fail=${{ inputs.fail || false }}) by ${{ github.actor }}
 on:
   push:
-    paths: ['sandbox/**', '.github/workflows/ch03-tally-ci.yml']
+    paths: ["sandbox/**", ".github/workflows/ch03-tally-ci.yml"]
   workflow_dispatch:
     inputs:
-      fail: { description: 'Break add() first', type: boolean, default: false }
+      fail: { description: "Break add() first", type: boolean, default: false }
 permissions:
   contents: read
 env:
-  PYTHON_VERSION: '3.12'
+  PYTHON_VERSION: "3.12"
 ```
 
 ```yaml
@@ -102,7 +107,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v7
-        with: { python-version: '${{ env.PYTHON_VERSION }}' }
+        with: { python-version: "${{ env.PYTHON_VERSION }}" }
       - run: python -m pip install pytest
       - if: ${{ inputs.fail }}
         run: sed -i 's/return a + b/return a - b/' tally/add.py
@@ -113,21 +118,21 @@ jobs:
 
 ## 3. The File, Key by Key
 
-| Key | Level | What it does | In Tally's file |
-| --- | --- | --- | --- |
-| `name` | workflow | Label in the Actions tab | `ch03 tally ci` |
-| `run-name` | workflow | Label of each run (can use expressions) | `Tally CI (fail=...) by Friend09` |
-| `on` | workflow | Events that start the workflow | `push`, `workflow_dispatch` |
-| `permissions` | workflow or job | Scopes of the run's `GITHUB_TOKEN` | `contents: read` |
-| `env` | workflow, job or step | Environment variables | `PYTHON_VERSION` |
-| `jobs` | workflow | The jobs, keyed by id | `test` |
-| `runs-on` | job | Runner label | `ubuntu-latest` |
-| `timeout-minutes` | job | Kill the job after N minutes | `5` |
-| `defaults.run` | job | Defaults for every `run:` step | `working-directory: sandbox/tally` |
-| `steps` | job | Ordered list of steps | five |
-| `uses` / `run` | step | An action, or a shell command | both |
-| `with` | step | Inputs passed to an action | `python-version` |
-| `if` | step or job | Gate: run only when true | `inputs.fail` |
+| Key               | Level                 | What it does                            | In Tally's file                    |
+| ----------------- | --------------------- | --------------------------------------- | ---------------------------------- |
+| `name`            | workflow              | Label in the Actions tab                | `ch03 tally ci`                    |
+| `run-name`        | workflow              | Label of each run (can use expressions) | `Tally CI (fail=...) by Friend09`  |
+| `on`              | workflow              | Events that start the workflow          | `push`, `workflow_dispatch`        |
+| `permissions`     | workflow or job       | Scopes of the run's `GITHUB_TOKEN`      | `contents: read`                   |
+| `env`             | workflow, job or step | Environment variables                   | `PYTHON_VERSION`                   |
+| `jobs`            | workflow              | The jobs, keyed by id                   | `test`                             |
+| `runs-on`         | job                   | Runner label                            | `ubuntu-latest`                    |
+| `timeout-minutes` | job                   | Kill the job after N minutes            | `5`                                |
+| `defaults.run`    | job                   | Defaults for every `run:` step          | `working-directory: sandbox/tally` |
+| `steps`           | job                   | Ordered list of steps                   | five                               |
+| `uses` / `run`    | step                  | An action, or a shell command           | both                               |
+| `with`            | step                  | Inputs passed to an action              | `python-version`                   |
+| `if`              | step or job           | Gate: run only when true                | `inputs.fail`                      |
 
 **What to notice:**
 
@@ -141,12 +146,12 @@ Two triggers are set.
 
 **`push` with `paths`.** The workflow fires on a push only if **at least one changed file** matches a path pattern. `sandbox/**` matches any file under `sandbox/`, at any depth.
 
-| Files changed in the push | Fires? | Why |
-| --- | --- | --- |
-| `sandbox/tally/tally/add.py` | Yes | matches `sandbox/**` |
-| `README.md` | No | matches nothing |
-| `README.md` and `sandbox/tally/tests/test_add.py` | Yes | **any** match is enough |
-| `.github/workflows/ch03-tally-ci.yml` | Yes | listed explicitly |
+| Files changed in the push                         | Fires? | Why                     |
+| ------------------------------------------------- | ------ | ----------------------- |
+| `sandbox/tally/tally/add.py`                      | Yes    | matches `sandbox/**`    |
+| `README.md`                                       | No     | matches nothing         |
+| `README.md` and `sandbox/tally/tests/test_add.py` | Yes    | **any** match is enough |
+| `.github/workflows/ch03-tally-ci.yml`             | Yes    | listed explicitly       |
 
 This is why the repo's curriculum edits never trigger the demo: a push touching only `learning_modules/` matches none of the paths. The matcher behind this table is `intro_gha.triggers.paths_trigger`; Chapter 06 covers its edge cases.
 
@@ -179,13 +184,13 @@ test:
 
 ## 7. The Steps
 
-| # | Step | Kind | Purpose |
-| --- | --- | --- | --- |
-| 2 | Check out repository | `uses` | Fill the empty workspace with the repo |
-| 3 | Set up Python | `uses` + `with` | Install Python 3.12 |
-| 4 | Install pytest | `run` | `python -m pip install pytest` |
-| 5 | Break add() on purpose | `run` + `if` | Only when `inputs.fail` is true |
-| 6 | Run tests | `run` | `python -m pytest -v` |
+| #   | Step                   | Kind            | Purpose                                |
+| --- | ---------------------- | --------------- | -------------------------------------- |
+| 2   | Check out repository   | `uses`          | Fill the empty workspace with the repo |
+| 3   | Set up Python          | `uses` + `with` | Install Python 3.12                    |
+| 4   | Install pytest         | `run`           | `python -m pip install pytest`         |
+| 5   | Break add() on purpose | `run` + `if`    | Only when `inputs.fail` is true        |
+| 6   | Run tests              | `run`           | `python -m pytest -v`                  |
 
 (Numbers start at 2 in the log because GitHub numbers its own **Set up job** as step 1.)
 
@@ -193,17 +198,17 @@ test:
 
 Run **37311496555**, triggered by a push. State dump from the fixture:
 
-| Step | Conclusion |
-| --- | --- |
-| 1 Set up job | success |
-| 2 Check out repository | success |
-| 3 Set up Python | success |
-| 4 Install pytest | success |
-| 5 Break add() on purpose | **skipped** |
-| 6 Run tests | success |
-| 11 Post Set up Python | success |
-| 12 Post Check out repository | success |
-| 13 Complete job | success |
+| Step                         | Conclusion  |
+| ---------------------------- | ----------- |
+| 1 Set up job                 | success     |
+| 2 Check out repository       | success     |
+| 3 Set up Python              | success     |
+| 4 Install pytest             | success     |
+| 5 Break add() on purpose     | **skipped** |
+| 6 Run tests                  | success     |
+| 11 Post Set up Python        | success     |
+| 12 Post Check out repository | success     |
+| 13 Complete job              | success     |
 
 **What to notice:**
 
@@ -217,13 +222,13 @@ The overall result is a **green check**. On a private repo this 14-second run bi
 
 Laster (Ch 4) shows a **status badge**: a small SVG you paste into a README that reports the workflow's latest result. The URL is `https://github.com/OWNER/REPO/actions/workflows/FILE/badge.svg`; `intro_gha.badge.badge_url` builds it, and this repository's README carries one for `ci.yml`. We fetched the badge for `ch03-tally-ci.yml` with different query filters on 2026-10-05 and read the `<title>` of each SVG (`fixtures/badge_ch03.json`):
 
-| Query | Latest matching run | Badge says |
-| --- | --- | --- |
-| *(none)* | `push` on `main`, green (37337700070) | **passing** |
-| `?branch=main` | same | **passing** |
-| `?event=push` | same | **passing** |
-| `?event=workflow_dispatch` | the `fail=true` run 37311583393 | **failing** |
-| `?branch=nonexistent` | none | **no status** |
+| Query                      | Latest matching run                   | Badge says    |
+| -------------------------- | ------------------------------------- | ------------- |
+| _(none)_                   | `push` on `main`, green (37337700070) | **passing**   |
+| `?branch=main`             | same                                  | **passing**   |
+| `?event=push`              | same                                  | **passing**   |
+| `?event=workflow_dispatch` | the `fail=true` run 37311583393       | **failing**   |
+| `?branch=nonexistent`      | none                                  | **no status** |
 
 **What to notice:**
 
@@ -235,17 +240,17 @@ Laster (Ch 4) shows a **status badge**: a small SVG you paste into a README that
 
 Run **37311583393**, triggered with `gh workflow run ch03-tally-ci.yml -f fail=true`:
 
-| Step | Conclusion |
-| --- | --- |
-| 1 Set up job | success |
-| 2 Check out repository | success |
-| 3 Set up Python | success |
-| 4 Install pytest | success |
-| 5 Break add() on purpose | success (it ran: `if` was true) |
-| 6 Run tests | **failure** |
-| 11 Post Set up Python | skipped |
-| 12 Post Check out repository | success |
-| 13 Complete job | success |
+| Step                         | Conclusion                      |
+| ---------------------------- | ------------------------------- |
+| 1 Set up job                 | success                         |
+| 2 Check out repository       | success                         |
+| 3 Set up Python              | success                         |
+| 4 Install pytest             | success                         |
+| 5 Break add() on purpose     | success (it ran: `if` was true) |
+| 6 Run tests                  | **failure**                     |
+| 11 Post Set up Python        | skipped                         |
+| 12 Post Check out repository | success                         |
+| 13 Complete job              | success                         |
 
 The failing step's log, trimmed to the lines that matter:
 
@@ -262,7 +267,7 @@ FAILED tests/test_add.py::test_add_negative - assert 5 == -1
 **What to notice:**
 
 - The `sed` step changed `return a + b` into `return a - b`. Tally's own tests caught it: `add(2, 3)` returned `-1` instead of `5`.
-- One failed step makes the job and the run `failure`. The remaining steps either still ran (cleanup posts) or were skipped; later *work* steps would have been skipped by default.
+- One failed step makes the job and the run `failure`. The remaining steps either still ran (cleanup posts) or were skipped; later _work_ steps would have been skipped by default.
 - The log shows **why**: the assertion text is right there. A red X is the summary; the step log is the evidence.
 
 ## 10. Run Names and Titles
@@ -287,11 +292,11 @@ A new contributor adds a workflow with `on: push: paths: ['src/**']`. The projec
 
 ## 14. Comparison: `run:` vs `uses:`
 
-| Approach | Setup Effort | Control | Failure Visibility | Security Exposure | Maintenance Burden |
-| --- | --- | --- | --- | --- | --- |
-| `run:` shell command | Minimal - one line | Excellent - exact command | Strong - raw output in log | Low - your own code | Low - nothing to update |
-| `uses:` first-party action | Minimal - one line | Moderate - set by inputs | Fair - grouped log | Low - GitHub-maintained | Low - bump version |
-| `uses:` third-party action | Minimal - one line | Moderate - set by inputs | Fair - grouped log | High - code you did not write | Moderate - track updates |
+| Approach                   | Setup Effort       | Control                   | Failure Visibility         | Security Exposure             | Maintenance Burden       |
+| -------------------------- | ------------------ | ------------------------- | -------------------------- | ----------------------------- | ------------------------ |
+| `run:` shell command       | Minimal - one line | Excellent - exact command | Strong - raw output in log | Low - your own code           | Low - nothing to update  |
+| `uses:` first-party action | Minimal - one line | Moderate - set by inputs  | Fair - grouped log         | Low - GitHub-maintained       | Low - bump version       |
+| `uses:` third-party action | Minimal - one line | Moderate - set by inputs  | Fair - grouped log         | High - code you did not write | Moderate - track updates |
 
 ## 15. Practical Tips
 
@@ -305,12 +310,12 @@ A new contributor adds a workflow with `on: push: paths: ['src/**']`. The projec
 
 **Setup:** Section 2's workflow, run with `fail=true`.
 
-| Step | State |
-| --- | --- |
-| Before | `add(a, b)` returns `a + b`; tests pass |
-| Change | `sed` rewrites it to `a - b` |
+| Step      | State                                              |
+| --------- | -------------------------------------------------- |
+| Before    | `add(a, b)` returns `a + b`; tests pass            |
+| Change    | `sed` rewrites it to `a - b`                       |
 | Run tests | `add(2, 3)` returns `-1`; `add(2, -3)` returns `5` |
-| Result | 2 failed in 0.03 s; job `failure`; run red |
+| Result    | 2 failed in 0.03 s; job `failure`; run red         |
 
 **Symptom:** red X, `FAILED tests/test_add.py::...`. **Cause:** a real behavior change, detected by tests. **Fix:** revert the change. This is the system working: the red X is the point of CI.
 
@@ -356,7 +361,7 @@ All verified 2026-10.
 - actions/setup-python - https://github.com/actions/setup-python
 - GitHub Docs: Adding a workflow status badge - https://docs.github.com/en/actions/how-tos/monitor-workflows/add-a-status-badge
 - Live evidence: runs 37311496555 (green) and 37311583393 (red) in this repo; badge titles in `fixtures/badge_ch03.json`
-- Laster, *Learning GitHub Actions* (O'Reilly), Chapter 4
+- Laster, _Learning GitHub Actions_ (O'Reilly), Chapter 4
 
 ## 20. Appendix A: Code Index
 

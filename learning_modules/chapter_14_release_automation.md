@@ -44,29 +44,33 @@
 
 ## Table of Contents
 
-<!-- TOC -->
-- [1. What a Release Is](#1-what-a-release-is)
-- [2. Running Example: Four Releases of Tally](#2-running-example-four-releases-of-tally)
-- [3. SemVer and Tag Patterns](#3-semver-and-tag-patterns)
-- [4. From a Tag (or an Input) to a Validated Version](#4-from-a-tag-or-an-input-to-a-validated-version)
-- [5. Building and Verifying the Assets](#5-building-and-verifying-the-assets)
-- [6. The Release and Its Generated Notes](#6-the-release-and-its-generated-notes)
-- [7. The Previous-Tag Trap](#7-the-previous-tag-trap)
-- [8. Two Ways to Start a Release](#8-two-ways-to-start-a-release)
-- [9. Pre-release, Draft and Latest](#9-pre-release-draft-and-latest)
-- [10. Immutable Releases](#10-immutable-releases)
-- [11. Publishing to PyPI](#11-publishing-to-pypi)
-- [12. Other Registries](#12-other-registries)
-- [13. Case Study: The Release That Listed Itself Twice](#13-case-study-the-release-that-listed-itself-twice)
-- [14. Comparison: Ways to Make a Release](#14-comparison-ways-to-make-a-release)
-- [15. Practical Tips](#15-practical-tips)
-- [16. Demonstrated Failure Modes](#16-demonstrated-failure-modes)
-- [17. Key Takeaways](#17-key-takeaways)
-- [18. Exercises](#18-exercises)
-- [19. Additional Resources](#19-additional-resources)
-- [20. Appendix A: Code Index](#20-appendix-a-code-index)
-   - [A.1 SemVer parsing, ordering and the release facts](#a1-semver-parsing-ordering-and-the-release-facts)
-<!-- /TOC -->
+<!-- toc-start -->
+
+- [Chapter 14: Release Automation: Tags, Changelogs, Packages](#chapter-14-release-automation-tags-changelogs-packages)
+  - [Beginner's Guide](#beginners-guide)
+  - [What You'll Learn](#what-youll-learn)
+  - [Table of Contents](#table-of-contents)
+  - [1. What a Release Is](#1-what-a-release-is)
+  - [2. Running Example: Four Releases of Tally](#2-running-example-four-releases-of-tally)
+  - [3. SemVer and Tag Patterns](#3-semver-and-tag-patterns)
+  - [4. From a Tag (or an Input) to a Validated Version](#4-from-a-tag-or-an-input-to-a-validated-version)
+  - [5. Building and Verifying the Assets](#5-building-and-verifying-the-assets)
+  - [6. The Release and Its Generated Notes](#6-the-release-and-its-generated-notes)
+  - [7. The Previous-Tag Trap](#7-the-previous-tag-trap)
+  - [8. Two Ways to Start a Release](#8-two-ways-to-start-a-release)
+  - [9. Pre-release, Draft and Latest](#9-pre-release-draft-and-latest)
+  - [10. Immutable Releases](#10-immutable-releases)
+  - [11. Publishing to PyPI](#11-publishing-to-pypi)
+  - [12. Other Registries](#12-other-registries)
+  - [13. Case Study: The Release That Listed Itself Twice](#13-case-study-the-release-that-listed-itself-twice)
+  - [14. Comparison: Ways to Make a Release](#14-comparison-ways-to-make-a-release)
+  - [15. Practical Tips](#15-practical-tips)
+  - [16. Demonstrated Failure Modes](#16-demonstrated-failure-modes)
+  - [17. Key Takeaways](#17-key-takeaways)
+  - [18. Exercises](#18-exercises)
+  - [19. Additional Resources](#19-additional-resources)
+  - [20. Appendix A: Code Index](#20-appendix-a-code-index)
+    - [A.1 SemVer parsing, ordering and the release facts](#a1-semver-parsing-ordering-and-the-release-facts)
 
 ---
 
@@ -87,27 +91,27 @@ A tag filter in a workflow is a **glob**, not a regular expression (Chapter 06).
 ```yaml
 on:
   push:
-    tags: ['v[0-9]*.[0-9]*.[0-9]*']
+    tags: ["v[0-9]*.[0-9]*.[0-9]*"]
 ```
 
 `v0.1.0` matches; `v1.0` does not (two parts); `release-1` does not. The glob is loose (`v1.2.3-anything` matches), so the workflow **validates again** in code. The `intro_gha.semver` helper encodes the precise rules, tested in `tests/test_semver.py`:
 
-| Input | Valid SemVer? | Why |
-| --- | --- | --- |
-| `0.1.0` | yes | |
-| `1.2.3-rc.1` | yes | pre-release suffix |
-| `1.0` | **no** | two parts |
-| `v1.0.0` | **no** | the leading `v` belongs to the **tag**, not the version |
-| `01.0.0` | **no** | leading zero |
-| `1.0.0.0` | **no** | four parts |
+| Input        | Valid SemVer? | Why                                                     |
+| ------------ | ------------- | ------------------------------------------------------- |
+| `0.1.0`      | yes           |                                                         |
+| `1.2.3-rc.1` | yes           | pre-release suffix                                      |
+| `1.0`        | **no**        | two parts                                               |
+| `v1.0.0`     | **no**        | the leading `v` belongs to the **tag**, not the version |
+| `01.0.0`     | **no**        | leading zero                                            |
+| `1.0.0.0`    | **no**        | four parts                                              |
 
 **Ordering is numeric, not textual**, and pre-releases sort **below** the release they precede:
 
-| Compare | Result | Rule |
-| --- | --- | --- |
-| `0.1.10` vs `0.1.9` | `0.1.10` is higher | 10 > 9 as numbers (as text `'1' < '9'` would say the opposite: Chapter 07) |
-| `1.0.0-rc.1` vs `1.0.0` | `1.0.0` is higher | a pre-release is lower than its release |
-| `1.0.0-alpha.10` vs `1.0.0-alpha.2` | `alpha.10` is higher | numeric identifiers compare as numbers |
+| Compare                             | Result               | Rule                                                                       |
+| ----------------------------------- | -------------------- | -------------------------------------------------------------------------- |
+| `0.1.10` vs `0.1.9`                 | `0.1.10` is higher   | 10 > 9 as numbers (as text `'1' < '9'` would say the opposite: Chapter 07) |
+| `1.0.0-rc.1` vs `1.0.0`             | `1.0.0` is higher    | a pre-release is lower than its release                                    |
+| `1.0.0-alpha.10` vs `1.0.0-alpha.2` | `alpha.10` is higher | numeric identifiers compare as numbers                                     |
 
 > 📝 **Full implementation:** See [Appendix A.1](#a1-semver-parsing-ordering-and-the-release-facts)
 
@@ -123,11 +127,11 @@ printf '%s' "$v" | grep -Eq '^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(
 
 (`REF_NAME` and `INPUT_VERSION` arrive through `env:`, never inline: Chapter 07.) Real runs:
 
-| Run | Start | Input | Version derived | Result |
-| --- | --- | --- | --- | --- |
-| 37323902752 | tag push `v0.1.0` | n/a | `0.1.0` | success |
-| 37324188233 | dispatch | `0.1.1` | `0.1.1` | success |
-| 37324320986 | dispatch | **`v1.0`** | rejected | **build failed**, release **skipped** |
+| Run         | Start             | Input      | Version derived | Result                                |
+| ----------- | ----------------- | ---------- | --------------- | ------------------------------------- |
+| 37323902752 | tag push `v0.1.0` | n/a        | `0.1.0`         | success                               |
+| 37324188233 | dispatch          | `0.1.1`    | `0.1.1`         | success                               |
+| 37324320986 | dispatch          | **`v1.0`** | rejected        | **build failed**, release **skipped** |
 
 The failure's annotation: title **`Not a semantic version`**, message `'v1.0' is not MAJOR.MINOR.PATCH`. Because `release` `needs` `build`, the bad version stopped everything before any release or tag could exist.
 
@@ -142,11 +146,11 @@ python -m build            # writes dist/*.whl and dist/*.tar.gz
 
 What `v0.1.0` produced, as stored on the release (sizes and digests from the API):
 
-| Asset | Size | SHA-256 digest (first 24 hex) |
-| --- | --- | --- |
+| Asset                               | Size        | SHA-256 digest (first 24 hex) |
+| ----------------------------------- | ----------- | ----------------------------- |
 | `tally_demo-0.1.0-py3-none-any.whl` | 2,035 bytes | `c7093cb66a4baf6f29514af2...` |
-| `tally_demo-0.1.0.tar.gz` | 1,909 bytes | `6a6d9caf4b923f2af153af78...` |
-| `SHA256SUMS` | 194 bytes | `50143b93d4de5d65c1f27fb6...` |
+| `tally_demo-0.1.0.tar.gz`           | 1,909 bytes | `6a6d9caf4b923f2af153af78...` |
+| `SHA256SUMS`                        | 194 bytes   | `50143b93d4de5d65c1f27fb6...` |
 
 Three independent checks agreed:
 
@@ -156,7 +160,7 @@ Three independent checks agreed:
 
 And the wheel's own metadata, read from inside the zip: `Name: tally-demo`, **`Version: 0.1.0`**. The version in the tag, in the file names and in the package metadata all matched, because they all came from the one validated string.
 
-**What to notice:** the build ran **once**, in its own job; the release job only *downloads* that artifact (Chapter 09). Rebuilding in the release job could produce different bytes than the ones you tested. Build once, publish what you built.
+**What to notice:** the build ran **once**, in its own job; the release job only _downloads_ that artifact (Chapter 09). Rebuilding in the release job could produce different bytes than the ones you tested. Build once, publish what you built.
 
 ## 6. The Release and Its Generated Notes
 
@@ -203,10 +207,10 @@ The real notes for `v0.1.0`:
 
 The second release (`v0.1.1`) was created at the **same commit** as `v0.1.0`, so its notes should be empty. They were not. The auto-generated body listed **PR #2 again**, with "New Contributors". Asking the API for the notes with the base given explicitly fixed it:
 
-| Request | What it listed |
-| --- | --- |
-| `POST .../releases/generate-notes` for `v0.1.1`, no `previous_tag_name` | **PR #2 again** (as if nothing had been released) |
-| same, with `previous_tag_name=v0.1.0` | no entries; only `Full Changelog: compare/v0.1.0...v0.1.1` |
+| Request                                                                 | What it listed                                             |
+| ----------------------------------------------------------------------- | ---------------------------------------------------------- |
+| `POST .../releases/generate-notes` for `v0.1.1`, no `previous_tag_name` | **PR #2 again** (as if nothing had been released)          |
+| same, with `previous_tag_name=v0.1.0`                                   | no entries; only `Full Changelog: compare/v0.1.0...v0.1.1` |
 
 Our inference (not documented in what we read): with no explicit base, the generator compares against the last **non-pre-release** release, and every release we had made was a pre-release, so it fell back to the start of history. The remedy is to name the base yourself. `gh release create` has `--notes-start-tag`, and the workflow now finds the highest other `v*` tag and passes it:
 
@@ -222,24 +226,24 @@ Verified on run 37324433803: the report said `notes_start_tag=v0.1.1`, and the r
 
 Chapter 06 predicted this; here are the real results.
 
-| How the tag came to exist | Created by | Workflows started by the tag |
-| --- | --- | --- |
-| `git push origin v0.1.0` from my machine | **my credentials** | `ch14 release`, **and also** `ch03 tally ci` and `ch11 python ci` |
-| `gh release create v0.1.1` inside a workflow | **`GITHUB_TOKEN`** | **none**: 0 push runs for tag `v0.1.1` |
+| How the tag came to exist                    | Created by         | Workflows started by the tag                                      |
+| -------------------------------------------- | ------------------ | ----------------------------------------------------------------- |
+| `git push origin v0.1.0` from my machine     | **my credentials** | `ch14 release`, **and also** `ch03 tally ci` and `ch11 python ci` |
+| `gh release create v0.1.1` inside a workflow | **`GITHUB_TOKEN`** | **none**: 0 push runs for tag `v0.1.1`                            |
 
 **What to notice:**
 
 - **A tag created with `GITHUB_TOKEN` starts nothing.** That is why our dispatch path builds and releases **in the same workflow run** instead of creating a tag and hoping a second workflow reacts. The dispatch run created tag `v0.1.1` (the API confirmed `refs/tags/v0.1.1 -> 35fe0d5`) and no tag-triggered run followed.
 - **A user-pushed tag fires everything that listens to tags**, including two workflows with `paths:` filters. Chapter 06: `paths` is not applied to tags. Our release tag therefore also ran the Python CI and the Chapter 03 demo. If that is unwanted, add `tags-ignore` (with `branches`) to those workflows.
-- To make a **tag push** the trigger *and* automate the tagging, create the tag with a **personal access token or a GitHub App token** (Chapter 15) instead of `GITHUB_TOKEN`.
+- To make a **tag push** the trigger _and_ automate the tagging, create the tag with a **personal access token or a GitHub App token** (Chapter 15) instead of `GITHUB_TOKEN`.
 
 ## 9. Pre-release, Draft and Latest
 
-| State | Meaning | Our releases |
-| --- | --- | --- |
-| Draft | not public; can be edited and have assets added | none |
-| Pre-release | public, flagged "not ready for production" | all four |
-| Latest | the release GitHub shows as the current stable one | **none** |
+| State       | Meaning                                            | Our releases |
+| ----------- | -------------------------------------------------- | ------------ |
+| Draft       | not public; can be edited and have assets added    | none         |
+| Pre-release | public, flagged "not ready for production"         | all four     |
+| Latest      | the release GitHub shows as the current stable one | **none**     |
 
 `gh release list` showed `isLatest=false` for all four: pre-releases are never "latest" (docs, verified 2026-10: the latest label is assigned by semantic versioning when you do not choose it). A repo whose releases are all pre-releases has no "latest", which breaks tools that fetch "the latest release". Publish a non-pre-release when you mean it.
 
@@ -249,13 +253,13 @@ GitHub can make a published release **immutable**. Docs (verified 2026-10): with
 
 We tested all of it. **Baseline** (setting off): uploading `extra.txt` to `v0.1.2` worked, and deleting it worked. Then we enabled the setting and released `v0.1.3` (run 37324580446):
 
-| Action on `v0.1.3` | Result |
-| --- | --- |
+| Action on `v0.1.3`                                     | Result                                                       |
+| ------------------------------------------------------ | ------------------------------------------------------------ |
 | Create the release with 3 assets (`gh release create`) | **success** (the files were attached as part of creating it) |
-| `gh release upload v0.1.3 extra.txt` | `HTTP 422: Cannot upload assets to an immutable release.` |
-| `gh release delete-asset v0.1.3 SHA256SUMS` | `HTTP 422 ... Cannot delete asset from an immutable release` |
-| Delete the tag through the API | `Repository rule violations found: Cannot delete this tag` |
-| `GET releases/tags/v0.1.3` | `"immutable": true` |
+| `gh release upload v0.1.3 extra.txt`                   | `HTTP 422: Cannot upload assets to an immutable release.`    |
+| `gh release delete-asset v0.1.3 SHA256SUMS`            | `HTTP 422 ... Cannot delete asset from an immutable release` |
+| Delete the tag through the API                         | `Repository rule violations found: Cannot delete this tag`   |
+| `GET releases/tags/v0.1.3`                             | `"immutable": true`                                          |
 
 After we turned the setting **off again**, `v0.1.3` stayed immutable (`true`) while `v0.1.2` was still `false`. **Immutability is a property of each release, set at publish time, and cannot be undone.** `v0.1.3` and its tag are permanent in this repository.
 
@@ -279,13 +283,13 @@ A team ships `v2.0.0-rc.1`, then `v2.0.0-rc.2`, then `v2.0.0`, each marked pre-r
 
 ## 14. Comparison: Ways to Make a Release
 
-| Approach | Setup Effort | Control | Failure Visibility | Security Exposure | Maintenance Burden |
-| --- | --- | --- | --- | --- | --- |
-| Manual (build locally, upload by hand) | Minimal | Weak - unrepeatable | Weak - no record | High - personal credentials | High - tribal knowledge |
-| Tag-push workflow (this chapter) | Low - one file | Strong - the tag is the trigger | Excellent - a run per release | Low - `contents: write` on one job | Low |
-| Dispatch workflow (this chapter) | Low | Strong - explicit human intent | Excellent | Low | Low |
-| Release bot (conventional commits) | Moderate - commit conventions | Moderate - automated bumps | Fair - bot PRs | Moderate - a bot token | Moderate |
-| Immutable releases on top | Minimal - one setting | Excellent - tamper-proof | Excellent - refusals are explicit | Low | Low - fix by new version |
+| Approach                               | Setup Effort                  | Control                         | Failure Visibility                | Security Exposure                  | Maintenance Burden       |
+| -------------------------------------- | ----------------------------- | ------------------------------- | --------------------------------- | ---------------------------------- | ------------------------ |
+| Manual (build locally, upload by hand) | Minimal                       | Weak - unrepeatable             | Weak - no record                  | High - personal credentials        | High - tribal knowledge  |
+| Tag-push workflow (this chapter)       | Low - one file                | Strong - the tag is the trigger | Excellent - a run per release     | Low - `contents: write` on one job | Low                      |
+| Dispatch workflow (this chapter)       | Low                           | Strong - explicit human intent  | Excellent                         | Low                                | Low                      |
+| Release bot (conventional commits)     | Moderate - commit conventions | Moderate - automated bumps      | Fair - bot PRs                    | Moderate - a bot token             | Moderate                 |
+| Immutable releases on top              | Minimal - one setting         | Excellent - tamper-proof        | Excellent - refusals are explicit | Low                                | Low - fix by new version |
 
 ## 15. Practical Tips
 
@@ -353,7 +357,7 @@ All verified 2026-10.
 - Python Packaging: Publishing with a trusted publisher - https://docs.pypi.org/trusted-publishers/
 - pypa/gh-action-pypi-publish - https://github.com/pypa/gh-action-pypi-publish
 - Live evidence: runs 37323902752, 37324188233, 37324433803, 37324580446, 37324320986 and releases `v0.1.0` to `v0.1.3` in this repo
-- Laster, *Learning GitHub Actions* (O'Reilly), Chapter 12
+- Laster, _Learning GitHub Actions_ (O'Reilly), Chapter 12
 
 ## 20. Appendix A: Code Index
 

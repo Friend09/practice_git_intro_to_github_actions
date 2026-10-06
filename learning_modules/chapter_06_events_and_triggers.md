@@ -21,7 +21,7 @@
 
 - **Trigger:** an entry under `on:` that says which events start the workflow.
 - **Filter:** a narrowing rule on a trigger (`branches`, `tags`, `paths`, `types`).
-- **Activity type:** the sub-kind of an event, such as a pull request being *opened* versus *closed*.
+- **Activity type:** the sub-kind of an event, such as a pull request being _opened_ versus _closed_.
 - **Default branch:** the branch (usually `main`) that scheduled and `workflow_run` workflows run on.
 - **`GITHUB_TOKEN`:** the automatic credential every run gets. Things done with it do not start new runs.
 
@@ -29,7 +29,7 @@
 
 > **🔬 Platform Engineer's Lens:** A trigger that does not fire raises no error, no warning and no red X. It just does not exist. Every failure in this chapter is of that kind, and every one was reproduced for real on this repo's runs. The cost is a pull request that merges with no checks, a release that never builds, or a nightly job that quietly stopped months ago.
 
-> **🚦 Native vs Marketplace vs Custom:** Trigger logic is entirely native. The "custom" work is only to *predict* it. This chapter ships a small executable model (`intro_gha/events.py`) that reproduces ten real outcomes, so you can check a filter before pushing it.
+> **🚦 Native vs Marketplace vs Custom:** Trigger logic is entirely native. The "custom" work is only to _predict_ it. This chapter ships a small executable model (`intro_gha/events.py`) that reproduces ten real outcomes, so you can check a filter before pushing it.
 
 ## What You'll Learn
 
@@ -43,30 +43,36 @@
 
 ## Table of Contents
 
-<!-- TOC -->
-- [1. Events Are the Front Door](#1-events-are-the-front-door)
-- [2. Running Example: One Workflow, Many Doors](#2-running-example-one-workflow-many-doors)
-- [3. What an Event Looks Like Inside a Run](#3-what-an-event-looks-like-inside-a-run)
-- [4. `push`: Branches, Tags and Paths](#4-push-branches-tags-and-paths)
-- [5. `pull_request`: The Merge Ref](#5-pull_request-the-merge-ref)
-- [6. `workflow_dispatch` and `repository_dispatch`](#6-workflow_dispatch-and-repository_dispatch)
-- [7. `schedule`: Cron](#7-schedule-cron)
-- [8. `workflow_run` and the Token Rule](#8-workflow_run-and-the-token-rule)
-- [9. Filter Patterns](#9-filter-patterns)
-- [10. Activity Types](#10-activity-types)
-- [11. The Long Tail of Events](#11-the-long-tail-of-events)
-- [12. Forks and `pull_request_target`](#12-forks-and-pull_request_target)
-- [13. Case Study: The Tag That Ran the Wrong Tests](#13-case-study-the-tag-that-ran-the-wrong-tests)
-- [14. Comparison: Ways to Start a Workflow](#14-comparison-ways-to-start-a-workflow)
-- [15. Practical Tips](#15-practical-tips)
-- [16. Demonstrated Failure Modes](#16-demonstrated-failure-modes)
-- [17. Key Takeaways](#17-key-takeaways)
-- [18. Exercises](#18-exercises)
-- [19. Additional Resources](#19-additional-resources)
-- [20. Appendix A: Code Index](#20-appendix-a-code-index)
-   - [A.1 The `would_fire` model](#a1-the-would_fire-model)
-   - [A.2 Cron evaluation](#a2-cron-evaluation)
-<!-- /TOC -->
+<!-- toc-start -->
+
+- [Chapter 06: Events and Triggers in Depth](#chapter-06-events-and-triggers-in-depth)
+  - [Beginner's Guide](#beginners-guide)
+  - [What You'll Learn](#what-youll-learn)
+  - [Table of Contents](#table-of-contents)
+  - [1. Events Are the Front Door](#1-events-are-the-front-door)
+  - [2. Running Example: One Workflow, Many Doors](#2-running-example-one-workflow-many-doors)
+  - [3. What an Event Looks Like Inside a Run](#3-what-an-event-looks-like-inside-a-run)
+  - [4. `push`: Branches, Tags and Paths](#4-push-branches-tags-and-paths)
+  - [5. `pull_request`: The Merge Ref](#5-pull_request-the-merge-ref)
+  - [6. `workflow_dispatch` and `repository_dispatch`](#6-workflow_dispatch-and-repository_dispatch)
+  - [7. `schedule`: Cron](#7-schedule-cron)
+  - [8. `workflow_run` and the Token Rule](#8-workflow_run-and-the-token-rule)
+    - [`workflow_run`: chaining](#workflow_run-chaining)
+    - [The token rule](#the-token-rule)
+  - [9. Filter Patterns](#9-filter-patterns)
+  - [10. Activity Types](#10-activity-types)
+  - [11. The Long Tail of Events](#11-the-long-tail-of-events)
+  - [12. Forks and `pull_request_target`](#12-forks-and-pull_request_target)
+  - [13. Case Study: The Tag That Ran the Wrong Tests](#13-case-study-the-tag-that-ran-the-wrong-tests)
+  - [14. Comparison: Ways to Start a Workflow](#14-comparison-ways-to-start-a-workflow)
+  - [15. Practical Tips](#15-practical-tips)
+  - [16. Demonstrated Failure Modes](#16-demonstrated-failure-modes)
+  - [17. Key Takeaways](#17-key-takeaways)
+  - [18. Exercises](#18-exercises)
+  - [19. Additional Resources](#19-additional-resources)
+  - [20. Appendix A: Code Index](#20-appendix-a-code-index)
+    - [A.1 The `would_fire` model](#a1-the-would_fire-model)
+    - [A.2 Cron evaluation](#a2-cron-evaluation)
 
 ---
 
@@ -81,17 +87,17 @@ Chapter 02 said an event selects workflows. Chapter 03 used two triggers. This c
 ```yaml
 on:
   push:
-    branches: ['main']
-    tags: ['demo-v*']
-    paths: ['sandbox/**', '.github/workflows/ch06-events.yml']
+    branches: ["main"]
+    tags: ["demo-v*"]
+    paths: ["sandbox/**", ".github/workflows/ch06-events.yml"]
   pull_request:
-    branches: ['main']
-    paths: ['sandbox/**']
+    branches: ["main"]
+    paths: ["sandbox/**"]
   workflow_dispatch:
   repository_dispatch:
     types: [tally-ping]
   schedule:
-    - cron: '23 4 1 1 *'
+    - cron: "23 4 1 1 *"
 ```
 
 The other two workflows' triggers, for reference: `ci.yml` is `push: branches: [main]` plus `pull_request` (no filter); `ch03-tally-ci.yml` is `push: paths: [sandbox/**, its own file]` plus `workflow_dispatch`.
@@ -100,11 +106,11 @@ The other two workflows' triggers, for reference: `ci.yml` is `push: branches: [
 
 The workflow's `REPORT` lines, from real runs:
 
-| Event | `ref` | `ref_type` | `ref_name` | `sha` | other |
-| --- | --- | --- | --- | --- | --- |
-| `push` (tag) | `refs/tags/demo-v1` | `tag` | `demo-v1` | `4c4ee30f...` (tagged commit) | |
-| `pull_request` | `refs/pull/1/merge` | `branch` | `1/merge` | `b2459d83...` | head `de54f8aa...`, `head_ref=demo/ch06-pr`, `base_ref=main` |
-| `repository_dispatch` | `refs/heads/main` | `branch` | `main` | `4c4ee30f...` | `action=tally-ping` |
+| Event                 | `ref`               | `ref_type` | `ref_name` | `sha`                         | other                                                        |
+| --------------------- | ------------------- | ---------- | ---------- | ----------------------------- | ------------------------------------------------------------ |
+| `push` (tag)          | `refs/tags/demo-v1` | `tag`      | `demo-v1`  | `4c4ee30f...` (tagged commit) |                                                              |
+| `pull_request`        | `refs/pull/1/merge` | `branch`   | `1/merge`  | `b2459d83...`                 | head `de54f8aa...`, `head_ref=demo/ch06-pr`, `base_ref=main` |
+| `repository_dispatch` | `refs/heads/main`   | `branch`   | `main`     | `4c4ee30f...`                 | `action=tally-ping`                                          |
 
 **What to notice:**
 
@@ -116,21 +122,21 @@ The workflow's `REPORT` lines, from real runs:
 
 Here is the single most useful table in this chapter. Each row is a **real experiment**; the last three columns say whether that workflow created a run.
 
-| # | Experiment | `ci.yml` (branches: main) | `ch03` (paths only) | `ch06-events` (branches + tags + paths) |
-| --- | --- | --- | --- | --- |
-| 1 | Push to `main`, changed only `.github/workflows/ch06-*.yml` | **fired** | no | **fired** |
-| 2 | Push tag `demo-v1` from a laptop | no | **fired** | **fired** |
-| 3 | Push tag `demo-v-token` using `GITHUB_TOKEN` | no | no | no |
-| 4 | Push branch `demo/ch06-pr`, changed `sandbox/...` | no | **fired** | no |
-| 5 | Delete tag `demo-v1` | no | no | no |
+| #   | Experiment                                                  | `ci.yml` (branches: main) | `ch03` (paths only) | `ch06-events` (branches + tags + paths) |
+| --- | ----------------------------------------------------------- | ------------------------- | ------------------- | --------------------------------------- |
+| 1   | Push to `main`, changed only `.github/workflows/ch06-*.yml` | **fired**                 | no                  | **fired**                               |
+| 2   | Push tag `demo-v1` from a laptop                            | no                        | **fired**           | **fired**                               |
+| 3   | Push tag `demo-v-token` using `GITHUB_TOKEN`                | no                        | no                  | no                                      |
+| 4   | Push branch `demo/ch06-pr`, changed `sandbox/...`           | no                        | **fired**           | no                                      |
+| 5   | Delete tag `demo-v1`                                        | no                        | no                  | no                                      |
 
 Three more experiments with two extra probe workflows, `ch06-tag-aware.yml` (`branches: ['**']`, `tags-ignore: ['**']`, `paths`) and `ch06-tags-only.yml` (`tags: ['demo-v*']` only):
 
-| # | Experiment | `tag-aware` | `tags-only` |
-| --- | --- | --- | --- |
-| 6 | Push to `main`, changed the two probe files | **fired** | no |
-| 7 | Push branch `demo/ch06-b`, changed `sandbox/...` | **fired** | no |
-| 8 | Push tag `demo-v2` | no | **fired** |
+| #   | Experiment                                       | `tag-aware` | `tags-only` |
+| --- | ------------------------------------------------ | ----------- | ----------- |
+| 6   | Push to `main`, changed the two probe files      | **fired**   | no          |
+| 7   | Push branch `demo/ch06-b`, changed `sandbox/...` | **fired**   | no          |
+| 8   | Push tag `demo-v2`                               | no          | **fired**   |
 
 Rows 7 and 8 together confirm that a **tags-only trigger ignores branch pushes**, and row 8 that `tags-ignore` cleanly excludes tags once `branches` is also defined.
 
@@ -150,14 +156,14 @@ Rows 7 and 8 together confirm that a **tags-only trigger ignores branch pushes**
 
 When a pull request is opened, GitHub builds a **test merge** of the head branch into the base and exposes it as `refs/pull/<n>/merge`. A `pull_request` workflow runs against that merge, not against your branch tip. Real values from run 37314622219:
 
-| Name | Value | Meaning |
-| --- | --- | --- |
-| `github.ref` | `refs/pull/1/merge` | the synthetic merge ref |
-| `github.sha` | `b2459d83...` | the **merge commit** |
-| `github.event.pull_request.head.sha` | `de54f8aa...` | your branch's actual tip |
-| `github.head_ref` | `demo/ch06-pr` | your branch name |
-| `github.base_ref` | `main` | the target branch |
-| API `merge_commit_sha` | `b2459d83...` | identical to `github.sha` |
+| Name                                 | Value               | Meaning                   |
+| ------------------------------------ | ------------------- | ------------------------- |
+| `github.ref`                         | `refs/pull/1/merge` | the synthetic merge ref   |
+| `github.sha`                         | `b2459d83...`       | the **merge commit**      |
+| `github.event.pull_request.head.sha` | `de54f8aa...`       | your branch's actual tip  |
+| `github.head_ref`                    | `demo/ch06-pr`      | your branch name          |
+| `github.base_ref`                    | `main`              | the target branch         |
+| API `merge_commit_sha`               | `b2459d83...`       | identical to `github.sha` |
 
 **What to notice:**
 
@@ -193,18 +199,18 @@ Both are the exceptions to the "tokens do not start runs" rule (Section 8): even
 
 ```yaml
 schedule:
-  - cron: '23 4 1 1 *'   # minute hour day-of-month month day-of-week
+  - cron: "23 4 1 1 *" # minute hour day-of-month month day-of-week
 ```
 
 Five fields, **UTC**. Docs (verified 2026-10): scheduled workflows run on the **last commit of the default branch**; the shortest interval is once every 5 minutes; load at the start of every hour can delay or drop runs; and in a **public** repo they are **disabled automatically after 60 days without repository activity**.
 
 Our demo cron fires once a year, so we cannot watch it live. Instead we evaluate it with code (`next_cron_run`). Worked evaluation from `2026-10-05 12:00 UTC`:
 
-| Expression | Meaning | Next run |
-| --- | --- | --- |
-| `23 4 1 1 *` | 04:23 on 1 January | 2027-01-01 04:23 |
-| `*/15 * * * *` (after 12:01) | every 15 minutes | 2026-10-05 12:15 |
-| `0 9 * * 1` | 09:00 every Monday | 2026-10-12 09:00 |
+| Expression                   | Meaning            | Next run         |
+| ---------------------------- | ------------------ | ---------------- |
+| `23 4 1 1 *`                 | 04:23 on 1 January | 2027-01-01 04:23 |
+| `*/15 * * * *` (after 12:01) | every 15 minutes   | 2026-10-05 12:15 |
+| `0 9 * * 1`                  | 09:00 every Monday | 2026-10-12 09:00 |
 
 **What to notice:**
 
@@ -220,12 +226,12 @@ Our demo cron fires once a year, so we cannot watch it live. Instead we evaluate
 
 `ch06-downstream.yml` triggers when the workflow named `ch06 upstream` completes. We dispatched the upstream **on a branch** (`demo/ch06-pr`) to see what the downstream sees. Real data:
 
-| Value | Upstream run | Downstream run |
-| --- | --- | --- |
-| Ran on branch | `demo/ch06-pr` | (default) `main` |
-| `github.sha` | `de54f8aa...` | `4c4ee30f...` (**main's latest commit**) |
-| `workflow_run.head_sha` | `de54f8aa...` | `de54f8aa...` (the **upstream's** commit) |
-| `github.ref` | | `refs/heads/main` |
+| Value                   | Upstream run   | Downstream run                            |
+| ----------------------- | -------------- | ----------------------------------------- |
+| Ran on branch           | `demo/ch06-pr` | (default) `main`                          |
+| `github.sha`            | `de54f8aa...`  | `4c4ee30f...` (**main's latest commit**)  |
+| `workflow_run.head_sha` | `de54f8aa...`  | `de54f8aa...` (the **upstream's** commit) |
+| `github.ref`            |                | `refs/heads/main`                         |
 
 **What to notice:** the downstream workflow runs with `main`'s code and `main`'s `github.sha`, and carries the upstream's commit only inside `github.event.workflow_run.head_sha`. If the downstream needs to check out the code that was tested, it must check out `workflow_run.head_sha` **explicitly**. Docs (verified 2026-10): `workflow_run` runs on the last commit of the default branch and cannot chain more than three levels deep.
 
@@ -233,12 +239,12 @@ Our demo cron fires once a year, so we cannot watch it live. Instead we evaluate
 
 Docs (verified 2026-10): "With the exception of `workflow_dispatch` and `repository_dispatch`, other `GITHUB_TOKEN`-triggered events do not create workflow runs at all." We proved it:
 
-| Step | State |
-| --- | --- |
-| Before | no tag `demo-v-token`; `ch06-events` would match `demo-v*` |
-| Action | `ch06-token-tag.yml` ran `git tag` + `git push origin demo-v-token` with `GITHUB_TOKEN` |
-| After | tag **exists** on the remote; **0 workflow runs** have `headBranch=demo-v-token` |
-| Control | the same kind of push from a laptop (`demo-v1`) started 2 runs |
+| Step    | State                                                                                   |
+| ------- | --------------------------------------------------------------------------------------- |
+| Before  | no tag `demo-v-token`; `ch06-events` would match `demo-v*`                              |
+| Action  | `ch06-token-tag.yml` ran `git tag` + `git push origin demo-v-token` with `GITHUB_TOKEN` |
+| After   | tag **exists** on the remote; **0 workflow runs** have `headBranch=demo-v-token`        |
+| Control | the same kind of push from a laptop (`demo-v1`) started 2 runs                          |
 
 The design reason: it stops a workflow from endlessly triggering itself. The consequence: a release workflow that creates a tag with `GITHUB_TOKEN` will **not** trigger the `on: push: tags` workflow you wrote to build it (Chapter 14 shows the standard fixes).
 
@@ -246,14 +252,14 @@ The design reason: it stops a workflow from endlessly triggering itself. The con
 
 Branch, tag and path filters use globs (the matcher is `intro_gha.triggers.matches_filter`):
 
-| Pattern | Matches | Does not match |
-| --- | --- | --- |
-| `main` | `main` | `main2`, `feature/main` |
-| `demo-v*` | `demo-v1`, `demo-v-token` | `demo-v/x` (`*` stops at `/`) |
-| `demo/**` | `demo/ch06-pr`, `demo/a/b` | `demo` alone |
-| `sandbox/**` | any file under `sandbox/` | `sandboxes/x.py` |
-| `**.md` | any file ending `.md` at any depth | |
-| `!docs/**` | negation: remove matches after a prior match | |
+| Pattern      | Matches                                      | Does not match                |
+| ------------ | -------------------------------------------- | ----------------------------- |
+| `main`       | `main`                                       | `main2`, `feature/main`       |
+| `demo-v*`    | `demo-v1`, `demo-v-token`                    | `demo-v/x` (`*` stops at `/`) |
+| `demo/**`    | `demo/ch06-pr`, `demo/a/b`                   | `demo` alone                  |
+| `sandbox/**` | any file under `sandbox/`                    | `sandboxes/x.py`              |
+| `**.md`      | any file ending `.md` at any depth           |                               |
+| `!docs/**`   | negation: remove matches after a prior match |                               |
 
 Rule: `*` does not cross `/`; `**` does. A `!` pattern excludes, and **order matters** (the last match wins); a list with only `!` patterns matches nothing.
 
@@ -281,14 +287,14 @@ A team writes `on: push: paths: ['src/**']` believing "tests run only when sourc
 
 ## 14. Comparison: Ways to Start a Workflow
 
-| Trigger | Setup Effort | Control | Failure Visibility | Security Exposure | Maintenance Burden |
-| --- | --- | --- | --- | --- | --- |
-| `push` | Minimal - one key | Moderate - branch/tag/path filters | Weak - a non-match is silent | Low - your commits | Low |
-| `pull_request` | Minimal - one key | Moderate - base branch filter | Weak - silent if filtered | Moderate - runs PR code (read-only for forks) | Low |
-| `workflow_dispatch` | Low - add inputs | Strong - explicit human intent | Excellent - you see the run you made | Low - needs write access | Low |
-| `repository_dispatch` | Moderate - needs an API caller | Strong - external system decides | Fair - payload is free-form | Moderate - caller needs a token | Moderate |
-| `schedule` | Minimal - one cron | Weak - best-effort timing | Weak - disabled after 60 idle days | Low | Moderate - silently stops |
-| `workflow_run` | Low - name the upstream | Moderate - default-branch code | Fair - chained across runs | Moderate - upstream data is untrusted | Moderate - 3-level cap |
+| Trigger               | Setup Effort                   | Control                            | Failure Visibility                   | Security Exposure                             | Maintenance Burden        |
+| --------------------- | ------------------------------ | ---------------------------------- | ------------------------------------ | --------------------------------------------- | ------------------------- |
+| `push`                | Minimal - one key              | Moderate - branch/tag/path filters | Weak - a non-match is silent         | Low - your commits                            | Low                       |
+| `pull_request`        | Minimal - one key              | Moderate - base branch filter      | Weak - silent if filtered            | Moderate - runs PR code (read-only for forks) | Low                       |
+| `workflow_dispatch`   | Low - add inputs               | Strong - explicit human intent     | Excellent - you see the run you made | Low - needs write access                      | Low                       |
+| `repository_dispatch` | Moderate - needs an API caller | Strong - external system decides   | Fair - payload is free-form          | Moderate - caller needs a token               | Moderate                  |
+| `schedule`            | Minimal - one cron             | Weak - best-effort timing          | Weak - disabled after 60 idle days   | Low                                           | Moderate - silently stops |
+| `workflow_run`        | Low - name the upstream        | Moderate - default-branch code     | Fair - chained across runs           | Moderate - upstream data is untrusted         | Moderate - 3-level cap    |
 
 ## 15. Practical Tips
 
@@ -305,7 +311,7 @@ A team writes `on: push: paths: ['src/**']` believing "tests run only when sourc
 
 **Failure 2: the `paths` filter that does not filter.** Symptom: "path-filtered" tests run on every release. Evidence: `ch03` fired on tag push `demo-v1` with an empty change list. Cause: paths are not applied to tags. Fix: use `branches: ['**']` together with `tags-ignore: ['**']`. We verified it live with `ch06-tag-aware.yml`: it fired on a branch push (run 37315330848) and on `main`, and did **not** fire when tag `demo-v2` was pushed (the same tag started `ch03`, `ch06 events` and `ch06 tags only`).
 
-**Failure 3: the `branches` filter that blocks tags.** Symptom: CI is silent on tags. Evidence: `ci.yml` (`branches: [main]`) did not fire on `demo-v1`. Cause: with only `branches` defined, tag pushes never match. This is usually the *desired* behavior, but it is silent when you meant otherwise.
+**Failure 3: the `branches` filter that blocks tags.** Symptom: CI is silent on tags. Evidence: `ci.yml` (`branches: [main]`) did not fire on `demo-v1`. Cause: with only `branches` defined, tag pushes never match. This is usually the _desired_ behavior, but it is silent when you meant otherwise.
 
 **Failure 4: the downstream that tests the wrong code.** Symptom: a `workflow_run` workflow passes using stale code. Evidence: downstream `github.sha` was `main`'s commit `4c4ee30f`, not the upstream's `de54f8aa`. Fix: check out `github.event.workflow_run.head_sha`.
 
@@ -351,7 +357,7 @@ All verified 2026-10.
 - GitHub REST: Create a repository dispatch event - https://docs.github.com/en/rest/repos/repos#create-a-repository-dispatch-event
 - crontab.guru (cron expression checker) - https://crontab.guru
 - Live evidence: runs 37314006999, 37314113036, 37314112978, 37314622219, 37314448134, 37314725398 in this repo
-- Laster, *Learning GitHub Actions* (O'Reilly), Chapter 4
+- Laster, _Learning GitHub Actions_ (O'Reilly), Chapter 4
 
 ## 20. Appendix A: Code Index
 

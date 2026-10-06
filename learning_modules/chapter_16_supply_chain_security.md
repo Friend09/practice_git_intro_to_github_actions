@@ -21,7 +21,7 @@
 
 - **Supply chain:** everything your pipeline trusts that you did not write: actions, the text of issues and pull requests, dependencies.
 - **Pinning:** referring to an action by the immutable SHA of one commit, not a movable tag.
-- **Script injection:** text from an outsider ending up *as code* in your script because GitHub pastes it in before the shell runs.
+- **Script injection:** text from an outsider ending up _as code_ in your script because GitHub pastes it in before the shell runs.
 - **`pull_request_target`:** a pull-request trigger that runs the **base** repository's workflow with the base repository's privileges.
 - **Attestation:** a signed statement, stored by GitHub, of how and where a file was built.
 
@@ -33,7 +33,7 @@
 
 ## What You'll Learn
 
-- Pin every remote action to a commit SHA, with the version in a comment, and verify the pin is a *commit*
+- Pin every remote action to a commit SHA, with the version in a comment, and verify the pin is a _commit_
 - Explain the difference between a tag, an annotated tag object and a commit, and why it matters for pins
 - Enforce pinning and an allow list with repository policy, and read what each rejection looks like
 - Demonstrate script injection and fix it with `env:`
@@ -43,29 +43,34 @@
 
 ## Table of Contents
 
-<!-- TOC -->
-- [1. What You Are Trusting](#1-what-you-are-trusting)
-- [2. Running Example: Attacking Our Own Repository](#2-running-example-attacking-our-own-repository)
-- [3. Pinning Every Action](#3-pinning-every-action)
-- [4. The Pin That Pointed at the Wrong Thing](#4-the-pin-that-pointed-at-the-wrong-thing)
-- [5. Making the Platform Enforce It](#5-making-the-platform-enforce-it)
-- [6. Allow Lists](#6-allow-lists)
-- [7. Script Injection, Run for Real](#7-script-injection-run-for-real)
-- [8. `pull_request` Versus `pull_request_target`](#8-pull_request-versus-pull_request_target)
-- [9. Attestations: Proof of Where a File Came From](#9-attestations-proof-of-where-a-file-came-from)
-- [10. Dependabot for Actions](#10-dependabot-for-actions)
-- [11. Scanning Workflows](#11-scanning-workflows)
-- [12. Caches and Artifacts Are Inputs Too](#12-caches-and-artifacts-are-inputs-too)
-- [13. Case Study: The Tag That Moved](#13-case-study-the-tag-that-moved)
-- [14. Comparison: Referencing an Action](#14-comparison-referencing-an-action)
-- [15. Practical Tips](#15-practical-tips)
-- [16. Demonstrated Failure Modes](#16-demonstrated-failure-modes)
-- [17. Key Takeaways](#17-key-takeaways)
-- [18. Exercises](#18-exercises)
-- [19. Additional Resources](#19-additional-resources)
-- [20. Appendix A: Code Index](#20-appendix-a-code-index)
-   - [A.1 Pin classification and the injection checker](#a1-pin-classification-and-the-injection-checker)
-<!-- /TOC -->
+<!-- toc-start -->
+
+- [Chapter 16: Supply-Chain Security: Pinning, Injection, Attestations](#chapter-16-supply-chain-security-pinning-injection-attestations)
+  - [Beginner's Guide](#beginners-guide)
+  - [What You'll Learn](#what-youll-learn)
+  - [Table of Contents](#table-of-contents)
+  - [1. What You Are Trusting](#1-what-you-are-trusting)
+  - [2. Running Example: Attacking Our Own Repository](#2-running-example-attacking-our-own-repository)
+  - [3. Pinning Every Action](#3-pinning-every-action)
+  - [4. The Pin That Pointed at the Wrong Thing](#4-the-pin-that-pointed-at-the-wrong-thing)
+  - [5. Making the Platform Enforce It](#5-making-the-platform-enforce-it)
+    - [Rulesets, Required Checks and CODEOWNERS](#rulesets-required-checks-and-codeowners)
+  - [6. Allow Lists](#6-allow-lists)
+  - [7. Script Injection, Run for Real](#7-script-injection-run-for-real)
+  - [8. `pull_request` Versus `pull_request_target`](#8-pull_request-versus-pull_request_target)
+  - [9. Attestations: Proof of Where a File Came From](#9-attestations-proof-of-where-a-file-came-from)
+  - [10. Dependabot for Actions](#10-dependabot-for-actions)
+  - [11. Scanning Workflows](#11-scanning-workflows)
+  - [12. Caches and Artifacts Are Inputs Too](#12-caches-and-artifacts-are-inputs-too)
+  - [13. Case Study: The Tag That Moved](#13-case-study-the-tag-that-moved)
+  - [14. Comparison: Referencing an Action](#14-comparison-referencing-an-action)
+  - [15. Practical Tips](#15-practical-tips)
+  - [16. Demonstrated Failure Modes](#16-demonstrated-failure-modes)
+  - [17. Key Takeaways](#17-key-takeaways)
+  - [18. Exercises](#18-exercises)
+  - [19. Additional Resources](#19-additional-resources)
+  - [20. Appendix A: Code Index](#20-appendix-a-code-index)
+    - [A.1 Pin classification and the injection checker](#a1-pin-classification-and-the-injection-checker)
 
 ---
 
@@ -107,20 +112,20 @@ build(deps): bump pypa/gh-action-pypi-publish from a892a5a6...  to dc37677b...  
 
 Both lines say **v1.14.2**. Nothing was being upgraded. The bot was **correcting** a mistake of ours. We had written the first SHA by hand in Chapter 14 from this API call: `GET /repos/pypa/gh-action-pypi-publish/git/ref/tags/v1.14.2`. Checking what it returned:
 
-| Name | Value | What it is |
-| --- | --- | --- |
-| `git/ref/tags/v1.14.2` `object.type` | **`tag`** | the ref points at a **tag object** |
-| `object.sha` (what we pinned) | `a892a5a6...` | the annotated **tag object** |
-| that tag object's `object` | `dc37677b...` (`commit`) | the **commit** the tag names |
+| Name                                 | Value                    | What it is                         |
+| ------------------------------------ | ------------------------ | ---------------------------------- |
+| `git/ref/tags/v1.14.2` `object.type` | **`tag`**                | the ref points at a **tag object** |
+| `object.sha` (what we pinned)        | `a892a5a6...`            | the annotated **tag object**       |
+| that tag object's `object`           | `dc37677b...` (`commit`) | the **commit** the tag names       |
 
-Git has two kinds of tags. A **lightweight** tag points straight at a commit. An **annotated** tag is its own object (with a message and author) that *points at* a commit. For `checkout`, `setup-uv` and the AWS action the API said `commit`; for this one it said `tag`, and we copied the tag object's SHA. (`pin_actions.py` handles this correctly by dereferencing; we had bypassed it by hand.)
+Git has two kinds of tags. A **lightweight** tag points straight at a commit. An **annotated** tag is its own object (with a message and author) that _points at_ a commit. For `checkout`, `setup-uv` and the AWS action the API said `commit`; for this one it said `tag`, and we copied the tag object's SHA. (`pin_actions.py` handles this correctly by dereferencing; we had bypassed it by hand.)
 
 **Does it matter?** We tested. `ch16-tag-object-sha.yml` references the action both ways (run 37327302627):
 
-| Reference | At "Set up job" | Later |
-| --- | --- | --- |
+| Reference                   | At "Set up job"                           | Later                                                                                                                       |
+| --------------------------- | ----------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
 | `@a892a5a6...` (tag object) | action **downloaded** (`SHA:a892a5a6...`) | failed at run time: `Trusted publishing exchange failure: OpenID Connect token retrieval failed` (we granted no `id-token`) |
-| `@dc37677b...` (commit) | action downloaded (`SHA:dc37677b...`) | the identical run-time failure |
+| `@dc37677b...` (commit)     | action downloaded (`SHA:dc37677b...`)     | the identical run-time failure                                                                                              |
 
 Both resolve and behave identically, so GitHub peels the tag object. But the log's `Download action repository '...' (SHA:...)` line for the first reports a SHA that **is not a commit**; tools that expect a commit may not handle it (we did not test which), and Dependabot, as we saw, did flag it. The bot then closed PR #3 with the comment "Looks like pypa/gh-action-pypi-publish is no longer updatable, so this is no longer needed." (we had already corrected the pin by then; we did not investigate what 'no longer updatable' keyed on). The fix, applied by hand, is the commit SHA, plus a guard so it cannot recur:
 
@@ -135,11 +140,11 @@ verify: 0 pin(s) are not commits
 
 A convention in your repo does not stop the next contributor. Repository policy does. `GET /repos/OWNER/REPO/actions/permissions` showed `"sha_pinning_required": false`. We turned it on (`PUT` the same endpoint with `sha_pinning_required: true`) and ran **the same workflow** before and after:
 
-| Job | Policy off (run 37327868250) | Policy on (run 37327919016) |
-| --- | --- | --- |
-| `pinned` (`checkout@3d3c42e5...`) | success | **success** |
-| `unpinned_tag` (`checkout@v7`) | success | **failure at `Set up job`** |
-| `tag_object_sha` (Section 4) | set-up ok, fails later (OIDC) | **set-up still ok**, same later failure |
+| Job                               | Policy off (run 37327868250)  | Policy on (run 37327919016)             |
+| --------------------------------- | ----------------------------- | --------------------------------------- |
+| `pinned` (`checkout@3d3c42e5...`) | success                       | **success**                             |
+| `unpinned_tag` (`checkout@v7`)    | success                       | **failure at `Set up job`**             |
+| `tag_object_sha` (Section 4)      | set-up ok, fails later (OIDC) | **set-up still ok**, same later failure |
 
 The rejection, as an annotation on the failed job:
 
@@ -158,13 +163,13 @@ because all actions must be pinned to a full-length commit SHA.
 
 A repository **ruleset** is the platform's answer to "who may change this ref, and what must pass first". Laster (Ch 9) covers protected branches, protected tags and `CODEOWNERS` as separate settings; today rulesets cover branch and tag rules in one place (docs verified 2026-10: [About rulesets](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/about-rulesets)). We tested one on throwaway refs so `main` stayed open: a **branch ruleset** on `demo/ch16-base` (`bypass_actors: []`, so it binds the admin too) with two rules, `pull_request` and `required_status_checks` naming `ci-ok (required check)`, the job from Chapter 11. Four pull requests then went into that branch (`fixtures/rulesets_ch16.json`):
 
-| Case | `ci-ok` on the head | `mergeable_state` | Why |
-| --- | --- | --- | --- |
-| Direct `git push` to the branch | n/a | **rejected** (`GH013`) | `Changes must be made through a pull request.` and `Required status check "ci-ok (required check)" is expected.` |
-| PR #9: harmless file under `sandbox/` | success | **clean** | the check passed |
-| PR #10: `add()` returns `a - b` | **failure** | **blocked** | the check ran and failed |
-| PR #11: README-only change | **none ran** | **blocked** | the workflow's `paths: sandbox/**` filter skipped it, so the required check never reported |
-| PR #9 again, ruleset now requires `ci-ok` (the pre-rename name) | success | **blocked** | nothing reports a check named `ci-ok` |
+| Case                                                            | `ci-ok` on the head | `mergeable_state`      | Why                                                                                                              |
+| --------------------------------------------------------------- | ------------------- | ---------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| Direct `git push` to the branch                                 | n/a                 | **rejected** (`GH013`) | `Changes must be made through a pull request.` and `Required status check "ci-ok (required check)" is expected.` |
+| PR #9: harmless file under `sandbox/`                           | success             | **clean**              | the check passed                                                                                                 |
+| PR #10: `add()` returns `a - b`                                 | **failure**         | **blocked**            | the check ran and failed                                                                                         |
+| PR #11: README-only change                                      | **none ran**        | **blocked**            | the workflow's `paths: sandbox/**` filter skipped it, so the required check never reported                       |
+| PR #9 again, ruleset now requires `ci-ok` (the pre-rename name) | success             | **blocked**            | nothing reports a check named `ci-ok`                                                                            |
 
 **What to notice:**
 
@@ -174,7 +179,7 @@ A repository **ruleset** is the platform's answer to "who may change this ref, a
 - Each push to a PR branch ran the workflow twice (`push` and `pull_request`), and both reported `ci-ok`; the rule needed one success per name.
 - **Tags:** a second ruleset on `refs/tags/demo-v*` with rules `deletion` and `update` refused both `git push --delete` (`Cannot delete this tag`) and a forced move (`Cannot update this protected ref.`). This replaces the book's "protected tags".
 
-**CODEOWNERS.** `.github/CODEOWNERS` in this repository owns `/.github/workflows/` (docs: [About code owners](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners)); `GET /repos/OWNER/REPO/codeowners/errors` returned `[]`, so the file is valid. The file alone enforces nothing: we raised the ruleset's `pull_request` rule to one approval with `require_code_owner_review: true`, then opened PR #12 touching a workflow file. All checks were green and it stayed **`REVIEW_REQUIRED` / blocked**. We could not show the owner being auto-requested: the owner was also the PR's author and `reviewRequests` stayed 0, and a solo maintainer cannot approve their own PR, so this rule suits a team, not a one-person repository. We also did **not** try to merge any of the PRs, and we did not test the organization-level *required workflows* the book describes (Chapter 20).
+**CODEOWNERS.** `.github/CODEOWNERS` in this repository owns `/.github/workflows/` (docs: [About code owners](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners)); `GET /repos/OWNER/REPO/codeowners/errors` returned `[]`, so the file is valid. The file alone enforces nothing: we raised the ruleset's `pull_request` rule to one approval with `require_code_owner_review: true`, then opened PR #12 touching a workflow file. All checks were green and it stayed **`REVIEW_REQUIRED` / blocked**. We could not show the owner being auto-requested: the owner was also the PR's author and `reviewRequests` stayed 0, and a solo maintainer cannot approve their own PR, so this rule suits a team, not a one-person repository. We also did **not** try to merge any of the PRs, and we did not test the organization-level _required workflows_ the book describes (Chapter 20).
 
 We deleted both rulesets, the tag, the four PRs' branches and the base branch afterwards (`GET /repos/OWNER/REPO/rulesets` returned `[]`).
 
@@ -182,9 +187,9 @@ We deleted both rulesets, the tag, the four PRs' branches and the base branch af
 
 `allowed_actions` can be `all` (our setting) or `selected` with finer rules (the API also has a local-only mode, which we did not test). We switched this repo to **`selected`, GitHub-owned actions only** (`github_owned_allowed: true`, `verified_allowed: false`, no patterns) and ran a workflow with two jobs: `github_owned` (`actions/checkout`) and `third_party` (`astral-sh/setup-uv`).
 
-| Policy | Result |
-| --- | --- |
-| `all` (run 37328032337) | both jobs **success** |
+| Policy                                          | Result                                                                |
+| ----------------------------------------------- | --------------------------------------------------------------------- |
+| `all` (run 37328032337)                         | both jobs **success**                                                 |
 | `selected`, GitHub-owned only (run 37328071702) | the **whole run** concludes **`startup_failure`**, with **zero jobs** |
 
 **What to notice:**
@@ -200,12 +205,12 @@ Chapter 07 explained that `${{ }}` is pasted into the script **before** the shel
 ```yaml
 vulnerable:
   steps:
-    - run: echo "REPORT vulnerable_title=${{ inputs.title }}"          # UNSAFE
+    - run: echo "REPORT vulnerable_title=${{ inputs.title }}" # UNSAFE
 safe:
   env:
     TITLE: ${{ inputs.title }}
   steps:
-    - run: echo "REPORT safe_title=$TITLE"                             # SAFE
+    - run: echo "REPORT safe_title=$TITLE" # SAFE
 ```
 
 We dispatched it with this payload (run 37327434888), a quote that closes the string, then a command, then an opening quote to keep the syntax valid:
@@ -224,10 +229,10 @@ and the output included `injected_user=runner injected_host=runner`: **our paylo
 
 **Safe job.** The identical payload was handed over as an **environment variable**, so the script text never changed. It printed the whole payload as inert text, including the literal `$(id -un)`, which was **not** executed.
 
-| Job | Script text after substitution | Injected command ran? |
-| --- | --- | --- |
-| `vulnerable` | contains the payload's `; echo ... $(id -un) ...` | **yes** (`injected_user=runner`) |
-| `safe` | unchanged: `echo "REPORT safe_title=$TITLE"` | **no** (`$(id -un)` printed literally) |
+| Job          | Script text after substitution                    | Injected command ran?                  |
+| ------------ | ------------------------------------------------- | -------------------------------------- |
+| `vulnerable` | contains the payload's `; echo ... $(id -un) ...` | **yes** (`injected_user=runner`)       |
+| `safe`       | unchanged: `echo "REPORT safe_title=$TITLE"`      | **no** (`$(id -un)` printed literally) |
 
 **What to notice:**
 
@@ -242,13 +247,13 @@ and the output included `injected_user=runner injected_host=runner`: **our paylo
 
 Both fire when a pull request is opened. They differ in **whose code and whose privileges**. We opened a real same-repository PR (#4) that changed **two** things: a data file `marker.txt` (`base-content` to `head-content`) and the workflow itself (`WORKFLOW_VERSION: base-version` to `head-version`). One workflow listens to both events. What each run saw:
 
-| What the run saw | `pull_request` (run 37327726357) | `pull_request_target` (run 37327727095) |
-| --- | --- | --- |
-| Which workflow file ran | the **PR's** (`workflow_version=head-version`) | the **base branch's** (`workflow_version=base-version`) |
-| `github.ref` | `refs/pull/4/merge` | `refs/heads/main` |
-| `github.sha` | `11ad8f8` (the **merge commit**) | `26b759a` (the **base** tip) |
-| Default `actions/checkout` content | the **PR's** (`marker=head-content`) | the **base's** (`marker=base-content`) |
-| `github.event.pull_request.head.sha` | `b859f59` | `b859f59` (same PR head) |
+| What the run saw                     | `pull_request` (run 37327726357)               | `pull_request_target` (run 37327727095)                 |
+| ------------------------------------ | ---------------------------------------------- | ------------------------------------------------------- |
+| Which workflow file ran              | the **PR's** (`workflow_version=head-version`) | the **base branch's** (`workflow_version=base-version`) |
+| `github.ref`                         | `refs/pull/4/merge`                            | `refs/heads/main`                                       |
+| `github.sha`                         | `11ad8f8` (the **merge commit**)               | `26b759a` (the **base** tip)                            |
+| Default `actions/checkout` content   | the **PR's** (`marker=head-content`)           | the **base's** (`marker=base-content`)                  |
+| `github.event.pull_request.head.sha` | `b859f59`                                      | `b859f59` (same PR head)                                |
 
 So `pull_request_target` deliberately runs **trusted base code** and does **not** run the PR's edits to the workflow or the files, which is why it is allowed to use secrets and a write token (for fork PRs, `pull_request` gets a read-only token and no secrets, Chapters 08 and 15).
 
@@ -266,14 +271,14 @@ That is the PR author's data, **inside the privileged context**. If the file wer
 
 An **artifact attestation** is a signed record that a particular file (identified by its digest) was built by a particular workflow in a particular repository. `ch16-attest.yml` builds the Tally wheel and calls `actions/attest-build-provenance` (v4.2.2, pinned `4d101475...`) with `permissions: id-token: write` and `attestations: write`. Then a second job downloads the wheel and verifies it with the GitHub CLI.
 
-| Check | Result (run 37328228420) |
-| --- | --- |
-| Wheel digest | `sha256:baec4267987d866bb1e98db092d595e0eb6a043e1c6ef28517866a693b0e5e91` |
-| Digest in the verify job equals the build job's | **yes** |
-| `gh attestation verify <wheel> --repo OWNER/REPO` in the workflow | **ok** |
-| Predicate type | `https://slsa.dev/provenance/v1` (SLSA build provenance) |
-| Signer identity | `.../.github/workflows/ch16-attest.yml@refs/heads/main` |
-| The same verify **on my laptop**, with the downloaded artifact | **ok** (exit 0) |
+| Check                                                              | Result (run 37328228420)                                                     |
+| ------------------------------------------------------------------ | ---------------------------------------------------------------------------- |
+| Wheel digest                                                       | `sha256:baec4267987d866bb1e98db092d595e0eb6a043e1c6ef28517866a693b0e5e91`    |
+| Digest in the verify job equals the build job's                    | **yes**                                                                      |
+| `gh attestation verify <wheel> --repo OWNER/REPO` in the workflow  | **ok**                                                                       |
+| Predicate type                                                     | `https://slsa.dev/provenance/v1` (SLSA build provenance)                     |
+| Signer identity                                                    | `.../.github/workflows/ch16-attest.yml@refs/heads/main`                      |
+| The same verify **on my laptop**, with the downloaded artifact     | **ok** (exit 0)                                                              |
 | The wheel with **one byte appended** (digest `sha256:0d0363d4...`) | **rejected**: `HTTP 404: Not Found` on `.../attestations/sha256:0d0363d4...` |
 
 **What to notice:**
@@ -281,7 +286,7 @@ An **artifact attestation** is a signed record that a particular file (identifie
 - Verification is **by digest**: GitHub stores attestations keyed by the file's hash. Change one byte and the hash changes and **no attestation exists for it**: that is the 404.
 - The signer identity names the **workflow file and ref** that built it. A consumer can require "built by `release.yml` on `main` in this repo" and refuse anything else (`gh attestation verify --signer-workflow ...`; we did not exercise that flag).
 - It works **off the runner**: I verified on a laptop with only `gh` and the file.
-- **What it does not prove:** that the code is safe or the build clean. It proves *origin*: this workflow, this repository, this commit produced these bytes. A compromised workflow would attest compromised output. Combine with Sections 3 to 8.
+- **What it does not prove:** that the code is safe or the build clean. It proves _origin_: this workflow, this repository, this commit produced these bytes. A compromised workflow would attest compromised output. Combine with Sections 3 to 8.
 
 ## 10. Dependabot for Actions
 
@@ -307,13 +312,13 @@ A popular action's maintainer account is compromised. The attacker re-points the
 
 ## 14. Comparison: Referencing an Action
 
-| Approach | Setup Effort | Control | Failure Visibility | Security Exposure | Maintenance Burden |
-| --- | --- | --- | --- | --- | --- |
-| Floating tag (`@v7`) | Minimal - copy one line | Weak - maintainer decides | Fair - log shows the SHA used | High - a moved tag runs new code | Low - updates arrive silently |
-| Exact tag (`@v7.0.1`) | Minimal | Moderate | Fair | Moderate - tags can still move | Moderate - manual bumps |
-| Full commit SHA + comment | Low - a script resolves it | Excellent - immutable | Strong - the exact commit is named | Low | Moderate - needs Dependabot |
-| Pinned + `sha_pinning_required` policy | Low - one setting | Excellent - cannot be bypassed | Excellent - fails at Set up job | Very Low | Moderate |
-| Pinned + allow list | Moderate - curate the list | Excellent | Fair - `startup_failure` is terse | Very Low | Moderate - maintain the list |
+| Approach                               | Setup Effort               | Control                        | Failure Visibility                 | Security Exposure                | Maintenance Burden            |
+| -------------------------------------- | -------------------------- | ------------------------------ | ---------------------------------- | -------------------------------- | ----------------------------- |
+| Floating tag (`@v7`)                   | Minimal - copy one line    | Weak - maintainer decides      | Fair - log shows the SHA used      | High - a moved tag runs new code | Low - updates arrive silently |
+| Exact tag (`@v7.0.1`)                  | Minimal                    | Moderate                       | Fair                               | Moderate - tags can still move   | Moderate - manual bumps       |
+| Full commit SHA + comment              | Low - a script resolves it | Excellent - immutable          | Strong - the exact commit is named | Low                              | Moderate - needs Dependabot   |
+| Pinned + `sha_pinning_required` policy | Low - one setting          | Excellent - cannot be bypassed | Excellent - fails at Set up job    | Very Low                         | Moderate                      |
+| Pinned + allow list                    | Moderate - curate the list | Excellent                      | Fair - `startup_failure` is terse  | Very Low                         | Moderate - maintain the list  |
 
 ## 15. Practical Tips
 
@@ -388,7 +393,7 @@ All verified 2026-10.
 - GitHub Docs: About rulesets - https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/about-rulesets
 - GitHub Docs: About code owners - https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
 - Live evidence for the rulesets subsection: PRs #9-#12 (closed, branches deleted) and `fixtures/rulesets_ch16.json`
-- Laster, *Learning GitHub Actions* (O'Reilly), Chapter 9
+- Laster, _Learning GitHub Actions_ (O'Reilly), Chapter 9
 
 ## 20. Appendix A: Code Index
 

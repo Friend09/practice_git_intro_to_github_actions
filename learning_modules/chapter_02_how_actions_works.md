@@ -43,29 +43,33 @@
 
 ## Table of Contents
 
-<!-- TOC -->
-- [1. The Model in One Picture](#1-the-model-in-one-picture)
-- [2. Running Example: A Real Three-Job Run](#2-running-example-a-real-three-job-run)
-- [3. The Five Nouns](#3-the-five-nouns)
-- [4. From Event to Run](#4-from-event-to-run)
-- [5. Scheduling: One Run, Timestamp by Timestamp](#5-scheduling-one-run-timestamp-by-timestamp)
-- [6. Steps: Sequential, Same Machine](#6-steps-sequential-same-machine)
-- [7. The Empty Workspace: What Checkout Does](#7-the-empty-workspace-what-checkout-does)
-- [8. Jobs Are Isolated](#8-jobs-are-isolated)
-- [9. Why a Fresh VM](#9-why-a-fresh-vm)
-- [10. Where Contexts Come From](#10-where-contexts-come-from)
-- [11. Workflow vs Run vs Job Naming](#11-workflow-vs-run-vs-job-naming)
-- [12. Where This Model Bends](#12-where-this-model-bends)
-- [13. Case Study: "It Passed in lint but Failed in test"](#13-case-study-it-passed-in-lint-but-failed-in-test)
-- [14. Comparison: One Job vs Several](#14-comparison-one-job-vs-several)
-- [15. Practical Tips](#15-practical-tips)
-- [16. Demonstrated Failure Mode: The Missing Checkout](#16-demonstrated-failure-mode-the-missing-checkout)
-- [17. Key Takeaways](#17-key-takeaways)
-- [18. Exercises](#18-exercises)
-- [19. Additional Resources](#19-additional-resources)
-- [20. Appendix A: Code Index](#20-appendix-a-code-index)
-   - [A.1 Compute waves and wall-clock from a run](#a1-compute-waves-and-wall-clock-from-a-run)
-<!-- /TOC -->
+<!-- toc-start -->
+
+- [Chapter 02: How Actions Works: Event, Workflow, Job, Step, Runner](#chapter-02-how-actions-works-event-workflow-job-step-runner)
+  - [Beginner's Guide](#beginners-guide)
+  - [What You'll Learn](#what-youll-learn)
+  - [Table of Contents](#table-of-contents)
+  - [1. The Model in One Picture](#1-the-model-in-one-picture)
+  - [2. Running Example: A Real Three-Job Run](#2-running-example-a-real-three-job-run)
+  - [3. The Five Nouns](#3-the-five-nouns)
+  - [4. From Event to Run](#4-from-event-to-run)
+  - [5. Scheduling: One Run, Timestamp by Timestamp](#5-scheduling-one-run-timestamp-by-timestamp)
+  - [6. Steps: Sequential, Same Machine](#6-steps-sequential-same-machine)
+  - [7. The Empty Workspace: What Checkout Does](#7-the-empty-workspace-what-checkout-does)
+  - [8. Jobs Are Isolated](#8-jobs-are-isolated)
+  - [9. Why a Fresh VM](#9-why-a-fresh-vm)
+  - [10. Where Contexts Come From](#10-where-contexts-come-from)
+  - [11. Workflow vs Run vs Job Naming](#11-workflow-vs-run-vs-job-naming)
+  - [12. Where This Model Bends](#12-where-this-model-bends)
+  - [13. Case Study: "It Passed in lint but Failed in test"](#13-case-study-it-passed-in-lint-but-failed-in-test)
+  - [14. Comparison: One Job vs Several](#14-comparison-one-job-vs-several)
+  - [15. Practical Tips](#15-practical-tips)
+  - [16. Demonstrated Failure Mode: The Missing Checkout](#16-demonstrated-failure-mode-the-missing-checkout)
+  - [17. Key Takeaways](#17-key-takeaways)
+  - [18. Exercises](#18-exercises)
+  - [19. Additional Resources](#19-additional-resources)
+  - [20. Appendix A: Code Index](#20-appendix-a-code-index)
+    - [A.1 Compute waves and wall-clock from a run](#a1-compute-waves-and-wall-clock-from-a-run)
 
 ---
 
@@ -86,22 +90,27 @@ Read it left to right. An event selects workflows; each workflow becomes a **run
 
 ```yaml
 jobs:
-  lint:  { runs-on: ubuntu-latest, steps: [{ run: echo lint }] }
-  test:  { runs-on: ubuntu-latest, steps: [{ run: echo test }] }
-  build: { needs: [lint, test], runs-on: ubuntu-latest, steps: [{ run: echo build }] }
+  lint: { runs-on: ubuntu-latest, steps: [{ run: echo lint }] }
+  test: { runs-on: ubuntu-latest, steps: [{ run: echo test }] }
+  build:
+    {
+      needs: [lint, test],
+      runs-on: ubuntu-latest,
+      steps: [{ run: echo build }],
+    }
 ```
 
 ## 3. The Five Nouns
 
 Definitions, per GitHub Docs (verified 2026-10):
 
-| Noun | Docs definition (condensed) | In Tally's run |
-| --- | --- | --- |
-| Event | A specific activity in a repository that triggers a workflow run | `workflow_dispatch` |
-| Workflow | A configurable automated process that runs one or more jobs; a YAML file in `.github/workflows` | `ch02-run-anatomy.yml` |
-| Job | A set of steps executed on the same runner | `lint`, `test`, `build` |
-| Step | A shell script or an action, run sequentially within a job | each `echo` |
-| Runner | A server that runs your workflows when triggered | three `ubuntu-latest` VMs |
+| Noun     | Docs definition (condensed)                                                                     | In Tally's run            |
+| -------- | ----------------------------------------------------------------------------------------------- | ------------------------- |
+| Event    | A specific activity in a repository that triggers a workflow run                                | `workflow_dispatch`       |
+| Workflow | A configurable automated process that runs one or more jobs; a YAML file in `.github/workflows` | `ch02-run-anatomy.yml`    |
+| Job      | A set of steps executed on the same runner                                                      | `lint`, `test`, `build`   |
+| Step     | A shell script or an action, run sequentially within a job                                      | each `echo`               |
+| Runner   | A server that runs your workflows when triggered                                                | three `ubuntu-latest` VMs |
 
 Also from the docs: **by default jobs run in parallel, each on its own runner; a job with `needs` waits for its dependencies.** Those two sentences predict the rest of this chapter.
 
@@ -109,12 +118,12 @@ Also from the docs: **by default jobs run in parallel, each on its own runner; a
 
 **State before:** nothing running. **Event:** you click "Run workflow" (or `gh workflow run ch02-run-anatomy.yml`). **State after:** GitHub creates one **run** with its own id (`37311041878`), records the event name (`workflow_dispatch`) and the commit it ran against (`4dafa17...`), and schedules the jobs.
 
-| Field | Value | Where it comes from |
-| --- | --- | --- |
-| run id | 37311041878 | assigned by GitHub |
-| event | `workflow_dispatch` | the trigger |
-| head SHA | `4dafa17c04c8...` | the commit the workflow file was read from |
-| conclusion | `success` | after all jobs finish |
+| Field      | Value               | Where it comes from                        |
+| ---------- | ------------------- | ------------------------------------------ |
+| run id     | 37311041878         | assigned by GitHub                         |
+| event      | `workflow_dispatch` | the trigger                                |
+| head SHA   | `4dafa17c04c8...`   | the commit the workflow file was read from |
+| conclusion | `success`           | after all jobs finish                      |
 
 **Command that reads this back:**
 
@@ -131,22 +140,22 @@ gh run view 37311041878 --json event,headSha,conclusion,jobs
 
 Here is the real timeline from the fixture (all times 2026-10-05 UTC):
 
-| Job | `needs` | Started | Completed | Duration |
-| --- | --- | --- | --- | --- |
-| lint | none | 12:39:27 | 12:39:29 | 2 s |
-| test | none | 12:39:28 | 12:39:32 | 4 s |
-| build | lint, test | 12:39:34 | 12:39:37 | 3 s |
+| Job   | `needs`    | Started  | Completed | Duration |
+| ----- | ---------- | -------- | --------- | -------- |
+| lint  | none       | 12:39:27 | 12:39:29  | 2 s      |
+| test  | none       | 12:39:28 | 12:39:32  | 4 s      |
+| build | lint, test | 12:39:34 | 12:39:37  | 3 s      |
 
 **State dump over time:**
 
-| Time | lint | test | build |
-| --- | --- | --- | --- |
-| :27 | running | queued | waiting |
-| :28 | running | running | waiting |
-| :29 | done | running | waiting |
-| :32 | done | done | eligible |
-| :34 | done | done | running |
-| :37 | done | done | done |
+| Time | lint    | test    | build    |
+| ---- | ------- | ------- | -------- |
+| :27  | running | queued  | waiting  |
+| :28  | running | running | waiting  |
+| :29  | done    | running | waiting  |
+| :32  | done    | done    | eligible |
+| :34  | done    | done    | running  |
+| :37  | done    | done    | done     |
 
 **What to notice:**
 
@@ -167,8 +176,8 @@ Inside a job, steps run top to bottom on the **same runner**, sharing its filesy
 
 ```yaml
 steps:
-  - uses: actions/checkout@v4   # an action: fetches your code
-  - run: python -m pytest       # a shell command
+  - uses: actions/checkout@v4 # an action: fetches your code
+  - run: python -m pytest # a shell command
 ```
 
 The contrast to hold on to: **steps share a machine; jobs do not.** A file written in step 1 is visible to step 2 of the same job. It is gone by the time another job starts.
@@ -177,10 +186,10 @@ The contrast to hold on to: **steps share a machine; jobs do not.** A file writt
 
 A runner starts with an **empty workspace**. Your repository is not on it. The `actions/checkout` action downloads your code into the workspace. We proved this with a real run (`37311217505`, workflow `ch02-no-checkout.yml`):
 
-| Moment | Entries in workspace | `pyproject.toml` |
-| --- | --- | --- |
-| Before the checkout step | **0** | MISSING |
-| After the checkout step | **20** | present |
+| Moment                   | Entries in workspace | `pyproject.toml` |
+| ------------------------ | -------------------- | ---------------- |
+| Before the checkout step | **0**                | MISSING          |
+| After the checkout step  | **20**               | present          |
 
 **What to notice:**
 
@@ -191,14 +200,14 @@ A runner starts with an **empty workspace**. Your repository is not on it. The `
 
 Because each job has its own VM, data moves between jobs only deliberately. Using the same run:
 
-| Question | Answer |
-| --- | --- |
-| Can `build` read a file `test` wrote? | No: different VM |
-| Can `build` read `test`'s result? | Yes, if `test` declares an **output** (Chapter 09) |
+| Question                               | Answer                                             |
+| -------------------------------------- | -------------------------------------------------- |
+| Can `build` read a file `test` wrote?  | No: different VM                                   |
+| Can `build` read `test`'s result?      | Yes, if `test` declares an **output** (Chapter 09) |
 | Can `build` get `test`'s build output? | Yes, via an **artifact** or **cache** (Chapter 09) |
-| Does `build` repeat `checkout`? | Yes: it also starts empty |
+| Does `build` repeat `checkout`?        | Yes: it also starts empty                          |
 
-**Variant on the same example:** put lint and test as two *steps of one job* instead of two jobs. They now share a VM and filesystem, run sequentially (2 + 4 = 6 s instead of overlapping), and bill 1 minute instead of 2 on a private repo. Choose by whether you value parallelism or shared state.
+**Variant on the same example:** put lint and test as two _steps of one job_ instead of two jobs. They now share a VM and filesystem, run sequentially (2 + 4 = 6 s instead of overlapping), and bill 1 minute instead of 2 on a private repo. Choose by whether you value parallelism or shared state.
 
 ## 9. Why a Fresh VM
 
@@ -222,7 +231,7 @@ A **workflow** is a file; a **run** is one execution of it; a **job** is a unit 
 
 > ⚠️ ADVANCED TOPIC: Skip on first read.
 
-Reusable workflows (Chapter 20) let one job *call* another workflow; matrices (Chapter 10) expand one job definition into many jobs; service containers (Chapter 12) add sidecar containers to a job. All three extend the model without breaking it: still events, runs, jobs on runners, steps in order.
+Reusable workflows (Chapter 20) let one job _call_ another workflow; matrices (Chapter 10) expand one job definition into many jobs; service containers (Chapter 12) add sidecar containers to a job. All three extend the model without breaking it: still events, runs, jobs on runners, steps in order.
 
 ## 13. Case Study: "It Passed in lint but Failed in test"
 
@@ -230,11 +239,11 @@ A team splits `lint` and `test`. `lint` installs dependencies; `test` does not, 
 
 ## 14. Comparison: One Job vs Several
 
-| Layout | Setup Effort | Control | Failure Visibility | Security Exposure | Maintenance Burden |
-| --- | --- | --- | --- | --- | --- |
-| One job, many steps | Minimal - one block | Moderate - sequential only | Fair - which step failed | Low - one VM | Low - one place |
-| Several parallel jobs | Low - repeat setup | Strong - run in parallel | Strong - one red job per problem | Low - isolated VMs | Moderate - repeated setup |
-| Jobs chained with `needs` | Moderate - wire outputs | Strong - gated stages | Strong - clear stage | Low - isolated VMs | Moderate - passing data |
+| Layout                    | Setup Effort            | Control                    | Failure Visibility               | Security Exposure  | Maintenance Burden        |
+| ------------------------- | ----------------------- | -------------------------- | -------------------------------- | ------------------ | ------------------------- |
+| One job, many steps       | Minimal - one block     | Moderate - sequential only | Fair - which step failed         | Low - one VM       | Low - one place           |
+| Several parallel jobs     | Low - repeat setup      | Strong - run in parallel   | Strong - one red job per problem | Low - isolated VMs | Moderate - repeated setup |
+| Jobs chained with `needs` | Moderate - wire outputs | Strong - gated stages      | Strong - clear stage             | Low - isolated VMs | Moderate - passing data   |
 
 ## 15. Practical Tips
 
@@ -302,7 +311,7 @@ All verified 2026-10.
 - actions/checkout repository - https://github.com/actions/checkout
 - `gh run view` manual - https://cli.github.com/manual/gh_run_view
 - Live evidence: run 37311041878 (anatomy) and run 37311217505 (no-checkout) in this repo
-- Laster, *Learning GitHub Actions* (O'Reilly), Chapter 2
+- Laster, _Learning GitHub Actions_ (O'Reilly), Chapter 2
 
 ## 20. Appendix A: Code Index
 

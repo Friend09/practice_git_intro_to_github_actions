@@ -43,29 +43,33 @@
 
 ## Table of Contents
 
-<!-- TOC -->
-- [1. What a Runner Is](#1-what-a-runner-is)
-- [2. Running Example: One Job, Four Machines](#2-running-example-one-job-four-machines)
-- [3. What a Hosted Runner Is, Measured](#3-what-a-hosted-runner-is-measured)
-- [4. The Forms of `runs-on`](#4-the-forms-of-runs-on)
-- [5. Worked Trace: Price the Matrix](#5-worked-trace-price-the-matrix)
-- [6. Ephemeral by Design](#6-ephemeral-by-design)
-- [7. The `runner` Context](#7-the-runner-context)
-- [8. Larger Runners](#8-larger-runners)
-- [9. Self-Hosted Runners](#9-self-hosted-runners)
-- [10. Actions Runner Controller (ARC)](#10-actions-runner-controller-arc)
-- [11. The Guard Pattern: Skip Instead of Hang](#11-the-guard-pattern-skip-instead-of-hang)
-- [12. Runner Groups and Labels](#12-runner-groups-and-labels)
-- [13. Case Study: The Build That Got Slower After Going Private](#13-case-study-the-build-that-got-slower-after-going-private)
-- [14. Comparison: Where to Run a Job](#14-comparison-where-to-run-a-job)
-- [15. Practical Tips](#15-practical-tips)
-- [16. Demonstrated Failure Mode: The Job That Waits Forever](#16-demonstrated-failure-mode-the-job-that-waits-forever)
-- [17. Key Takeaways](#17-key-takeaways)
-- [18. Exercises](#18-exercises)
-- [19. Additional Resources](#19-additional-resources)
-- [20. Appendix A: Code Index](#20-appendix-a-code-index)
-   - [A.1 Compare measured runners to the docs and price the run](#a1-compare-measured-runners-to-the-docs-and-price-the-run)
-<!-- /TOC -->
+<!-- toc-start -->
+
+- [Chapter 05: Runners: Hosted, Larger, Self-Hosted, ARC](#chapter-05-runners-hosted-larger-self-hosted-arc)
+  - [Beginner's Guide](#beginners-guide)
+  - [What You'll Learn](#what-youll-learn)
+  - [Table of Contents](#table-of-contents)
+  - [1. What a Runner Is](#1-what-a-runner-is)
+  - [2. Running Example: One Job, Four Machines](#2-running-example-one-job-four-machines)
+  - [3. What a Hosted Runner Is, Measured](#3-what-a-hosted-runner-is-measured)
+  - [4. The Forms of `runs-on`](#4-the-forms-of-runs-on)
+  - [5. Worked Trace: Price the Matrix](#5-worked-trace-price-the-matrix)
+  - [6. Ephemeral by Design](#6-ephemeral-by-design)
+  - [7. The `runner` Context](#7-the-runner-context)
+  - [8. Larger Runners](#8-larger-runners)
+  - [9. Self-Hosted Runners](#9-self-hosted-runners)
+  - [10. Actions Runner Controller (ARC)](#10-actions-runner-controller-arc)
+  - [11. The Guard Pattern: Skip Instead of Hang](#11-the-guard-pattern-skip-instead-of-hang)
+  - [12. Runner Groups and Labels](#12-runner-groups-and-labels)
+  - [13. Case Study: The Build That Got Slower After Going Private](#13-case-study-the-build-that-got-slower-after-going-private)
+  - [14. Comparison: Where to Run a Job](#14-comparison-where-to-run-a-job)
+  - [15. Practical Tips](#15-practical-tips)
+  - [16. Demonstrated Failure Mode: The Job That Waits Forever](#16-demonstrated-failure-mode-the-job-that-waits-forever)
+  - [17. Key Takeaways](#17-key-takeaways)
+  - [18. Exercises](#18-exercises)
+  - [19. Additional Resources](#19-additional-resources)
+  - [20. Appendix A: Code Index](#20-appendix-a-code-index)
+    - [A.1 Compare measured runners to the docs and price the run](#a1-compare-measured-runners-to-the-docs-and-price-the-run)
 
 ---
 
@@ -99,11 +103,11 @@ REPORT label=macos-latest    os=macOS   arch=ARM64 env=github-hosted cpu=3 mem_m
 
 Compare with GitHub's published specification (verified 2026-10):
 
-| Label | Measured here (public repo) | Docs, public repo | Docs, **private** repo |
-| --- | --- | --- | --- |
-| `ubuntu-latest` | 4 CPU, ~16 GB, Linux X64 | 4 vCPU, 16 GB | **2 vCPU, 8 GB** |
-| `windows-latest` | 4 CPU, ~16 GB, Windows X64 | 4 vCPU, 16 GB | **2 vCPU, 8 GB** |
-| `macos-latest` | 3 CPU, 7 GB, macOS ARM64 | 3 vCPU (M1), 7 GB, arm64 | same: 3 vCPU, 7 GB |
+| Label            | Measured here (public repo) | Docs, public repo        | Docs, **private** repo |
+| ---------------- | --------------------------- | ------------------------ | ---------------------- |
+| `ubuntu-latest`  | 4 CPU, ~16 GB, Linux X64    | 4 vCPU, 16 GB            | **2 vCPU, 8 GB**       |
+| `windows-latest` | 4 CPU, ~16 GB, Windows X64  | 4 vCPU, 16 GB            | **2 vCPU, 8 GB**       |
+| `macos-latest`   | 3 CPU, 7 GB, macOS ARM64    | 3 vCPU (M1), 7 GB, arm64 | same: 3 vCPU, 7 GB     |
 
 **What to notice:**
 
@@ -115,12 +119,12 @@ Compare with GitHub's published specification (verified 2026-10):
 
 ## 4. The Forms of `runs-on`
 
-| Form | Example | Meaning |
-| --- | --- | --- |
-| String | `runs-on: ubuntu-latest` | One label |
-| List | `runs-on: [self-hosted, linux]` | A runner must have **all** listed labels |
-| Matrix value | `runs-on: ${{ matrix.label }}` | One job per label (our example) |
-| Expression | `runs-on: ${{ github.repository == 'a/b' && 'ubuntu-latest' || 'self-hosted' }}` | Chosen at run time |
+| Form         | Example                                                     | Meaning                                  |
+| ------------ | ----------------------------------------------------------- | ---------------------------------------- | ----------------- | ------------------ |
+| String       | `runs-on: ubuntu-latest`                                    | One label                                |
+| List         | `runs-on: [self-hosted, linux]`                             | A runner must have **all** listed labels |
+| Matrix value | `runs-on: ${{ matrix.label }}`                              | One job per label (our example)          |
+| Expression   | `runs-on: ${{ github.repository == 'a/b' && 'ubuntu-latest' |                                          | 'self-hosted' }}` | Chosen at run time |
 
 The list form is "and", not "or": `[self-hosted, tally-gpu]` needs a runner that is self-hosted **and** labelled `tally-gpu`. If you want "either of these", use a matrix.
 
@@ -130,13 +134,13 @@ Other hosted labels exist beyond the four we ran. `actionlint` 1.7.12 recognizes
 
 Durations from the run's timestamps (Chapter 02's method):
 
-| Label | Started | Completed | Seconds | Billed minutes | Rate (mills/min) | Cost (mills) |
-| --- | --- | --- | --- | --- | --- | --- |
-| `ubuntu-latest` | 12:54:29 | 12:54:32 | 3 | 1 | 6 | 6 |
-| `ubuntu-22.04` | 12:54:29 | 12:54:37 | 8 | 1 | 6 | 6 |
-| `windows-latest` | 12:54:29 | 12:54:32 | 3 | 1 | 10 | 10 |
-| `macos-latest` | 12:54:35 | 12:54:40 | 5 | 1 | 62 | 62 |
-| **Total** | | | | **4 min** | | **84 mills = $0.084** |
+| Label            | Started  | Completed | Seconds | Billed minutes | Rate (mills/min) | Cost (mills)          |
+| ---------------- | -------- | --------- | ------- | -------------- | ---------------- | --------------------- |
+| `ubuntu-latest`  | 12:54:29 | 12:54:32  | 3       | 1              | 6                | 6                     |
+| `ubuntu-22.04`   | 12:54:29 | 12:54:37  | 8       | 1              | 6                | 6                     |
+| `windows-latest` | 12:54:29 | 12:54:32  | 3       | 1              | 10               | 10                    |
+| `macos-latest`   | 12:54:35 | 12:54:40  | 5       | 1              | 62               | 62                    |
+| **Total**        |          |           |         | **4 min**      |                  | **84 mills = $0.084** |
 
 **What to notice:**
 
@@ -148,12 +152,12 @@ Durations from the run's timestamps (Chapter 02's method):
 
 Per GitHub's docs (Chapter 01), a hosted runner is a **new VM for each job**, discarded afterwards. Practical consequences:
 
-| Question | Answer |
-| --- | --- |
-| Does the second job see the first job's files? | No (Chapter 02) |
-| Can `ubuntu-latest` change under you? | Yes: it is an alias GitHub re-points to a newer image over time |
-| How do I pin the OS? | Use the exact label, e.g. `ubuntu-24.04` |
-| Is state ever shared? | Only via outputs, artifacts and caches (Chapter 09) |
+| Question                                       | Answer                                                          |
+| ---------------------------------------------- | --------------------------------------------------------------- |
+| Does the second job see the first job's files? | No (Chapter 02)                                                 |
+| Can `ubuntu-latest` change under you?          | Yes: it is an alias GitHub re-points to a newer image over time |
+| How do I pin the OS?                           | Use the exact label, e.g. `ubuntu-24.04`                        |
+| Is state ever shared?                          | Only via outputs, artifacts and caches (Chapter 09)             |
 
 ## 7. The `runner` Context
 
@@ -167,14 +171,14 @@ GitHub-hosted **larger runners** (more cores, more memory, optional static IPs) 
 
 A self-hosted runner is a machine you register to a repo, organization or enterprise. It polls GitHub for jobs matching its labels.
 
-| Aspect | Hosted | Self-hosted |
-| --- | --- | --- |
-| Who owns the machine | GitHub | You |
-| Per-minute charge | Yes (private repos, beyond allowance) | None from GitHub; you pay for the machines |
-| Clean state each job | Yes | Only if you make it ephemeral |
-| Hardware | Fixed menu | Anything (GPU, ARM boards, on-prem network) |
-| Max job time | 6 hours | 5 days (limits page) |
-| Queue wait before auto-cancel | n/a (pool) | 24 hours |
+| Aspect                        | Hosted                                | Self-hosted                                 |
+| ----------------------------- | ------------------------------------- | ------------------------------------------- |
+| Who owns the machine          | GitHub                                | You                                         |
+| Per-minute charge             | Yes (private repos, beyond allowance) | None from GitHub; you pay for the machines  |
+| Clean state each job          | Yes                                   | Only if you make it ephemeral               |
+| Hardware                      | Fixed menu                            | Anything (GPU, ARM boards, on-prem network) |
+| Max job time                  | 6 hours                               | 5 days (limits page)                        |
+| Queue wait before auto-cancel | n/a (pool)                            | 24 hours                                    |
 
 **Security, from the docs (verified 2026-10):**
 
@@ -193,11 +197,11 @@ Per the docs, ARC is "a Kubernetes operator that orchestrates and scales self-ho
 
 In run 37312789542 the `self-hosted-guarded` job's `if:` was false (the repository variable `GHA_ENABLE_SELFHOSTED` is not set), and the result was:
 
-| Field | Value |
-| --- | --- |
-| conclusion | **skipped** |
+| Field               | Value                           |
+| ------------------- | ------------------------------- |
+| conclusion          | **skipped**                     |
 | started - completed | 12:54:26 - 12:54:26 (0 seconds) |
-| runner assigned | none |
+| runner assigned     | none                            |
 
 **What to notice:** a job-level `if:` is evaluated **before** a runner is requested, so a guarded job costs nothing and never waits. This is how every credential- or hardware-dependent demo in this course is written: it skips until you opt in by setting the variable. Opt in with `gh variable set GHA_ENABLE_SELFHOSTED --body true`, and only after registering a runner you control.
 
@@ -213,13 +217,13 @@ A team moves an open-source library into a private repo. Same workflow, same `ub
 
 ## 14. Comparison: Where to Run a Job
 
-| Option | Setup Effort | Control | Failure Visibility | Security Exposure | Maintenance Burden |
-| --- | --- | --- | --- | --- | --- |
-| Standard hosted | Minimal - one label | Weak - fixed menu | Excellent - UI and logs | Low - fresh VM per job | Minimal - GitHub runs it |
-| Larger hosted | Low - create in settings | Moderate - choose size | Excellent - UI and logs | Low - fresh VM per job | Minimal - GitHub runs it |
-| Self-hosted, persistent | Moderate - install agent | Excellent - any hardware | Strong - logs plus host logs | Very High - state persists, runs PR code | High - patch and clean it |
-| Self-hosted, ephemeral | High - needs automation | Excellent - any hardware | Strong - logs plus host logs | Moderate - one job per runner | High - build the automation |
-| ARC on Kubernetes | High - cluster and operator | Excellent - pod spec is yours | Strong - cluster tooling | Moderate - one pod per job | High - operate the cluster |
+| Option                  | Setup Effort                | Control                       | Failure Visibility           | Security Exposure                        | Maintenance Burden          |
+| ----------------------- | --------------------------- | ----------------------------- | ---------------------------- | ---------------------------------------- | --------------------------- |
+| Standard hosted         | Minimal - one label         | Weak - fixed menu             | Excellent - UI and logs      | Low - fresh VM per job                   | Minimal - GitHub runs it    |
+| Larger hosted           | Low - create in settings    | Moderate - choose size        | Excellent - UI and logs      | Low - fresh VM per job                   | Minimal - GitHub runs it    |
+| Self-hosted, persistent | Moderate - install agent    | Excellent - any hardware      | Strong - logs plus host logs | Very High - state persists, runs PR code | High - patch and clean it   |
+| Self-hosted, ephemeral  | High - needs automation     | Excellent - any hardware      | Strong - logs plus host logs | Moderate - one job per runner            | High - build the automation |
+| ARC on Kubernetes       | High - cluster and operator | Excellent - pod spec is yours | Strong - cluster tooling     | Moderate - one pod per job               | High - operate the cluster  |
 
 ## 15. Practical Tips
 
@@ -236,12 +240,12 @@ A team moves an open-source library into a private repo. Same workflow, same `ub
 
 Real run **37313375076**, observed 55 seconds after dispatch:
 
-| Field | Value |
-| --- | --- |
-| run status | `queued` |
-| job `stuck` status | `queued` |
-| job `runnerName` | `null` (no runner assigned) |
-| steps run | 0 |
+| Field              | Value                       |
+| ------------------ | --------------------------- |
+| run status         | `queued`                    |
+| job `stuck` status | `queued`                    |
+| job `runnerName`   | `null` (no runner assigned) |
+| steps run          | 0                           |
 
 No error appears. The run simply sits there. Per the limits page, a self-hosted job "can be in the queue for 24 hours before it is automatically cancelled". We ran `gh run cancel 37313375076` and the run ended `cancelled`.
 
@@ -288,7 +292,7 @@ All verified 2026-10.
 - GitHub Docs: Secure use reference (self-hosted runners and public repos) - https://docs.github.com/en/actions/reference/security/secure-use
 - GitHub Docs: Actions limits (queue time, concurrency) - https://docs.github.com/en/actions/reference/limits
 - Live evidence: runs 37312789542 (four runners), 37313375076 (stuck job), 37313041440 (invalid workflow file)
-- Laster, *Learning GitHub Actions* (O'Reilly), Chapter 5
+- Laster, _Learning GitHub Actions_ (O'Reilly), Chapter 5
 
 ## 20. Appendix A: Code Index
 

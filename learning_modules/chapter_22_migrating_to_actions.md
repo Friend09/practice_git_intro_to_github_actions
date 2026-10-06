@@ -21,14 +21,14 @@
 
 **Key concepts in plain English:**
 
-- **Migration:** moving a pipeline's *behavior*, not its syntax. A line-by-line translation can pass and still behave differently.
+- **Migration:** moving a pipeline's _behavior_, not its syntax. A line-by-line translation can pass and still behave differently.
 - **Concept map:** a table saying which Jenkins or GitLab construct corresponds to which Actions construct.
 - **Importer:** GitHub's tool that converts a pipeline to a workflow automatically. It gets you most of the way; a human reviews the rest.
 - **`post`:** a Jenkins block that runs after the stages whatever happened. Actions has no such keyword.
 
 **If you know Jenkins or GitLab already**, treat this chapter as a diff: Sections 3-7 list where your habits stop working, each verified on a real run.
 
-> **🔬 Platform Engineer's Lens:** Migrations fail quietly in the *error paths*. The happy path converts easily, and the first red build is where a dropped `post` block or a changed condition shows up, usually weeks later. This chapter runs the same translated pipeline green and red on purpose so the error-path behavior is observed, not assumed.
+> **🔬 Platform Engineer's Lens:** Migrations fail quietly in the _error paths_. The happy path converts easily, and the first red build is where a dropped `post` block or a changed condition shows up, usually weeks later. This chapter runs the same translated pipeline green and red on purpose so the error-path behavior is observed, not assumed.
 
 > **🚦 Native vs Marketplace vs Custom:** For conversion, the **native** answer is the GitHub Actions Importer (a first-party tool). For individual steps, prefer a Marketplace action only where a keyword does not exist (caching, artifacts). Writing your own converter, as we do here, is a **teaching model**, not a recommendation.
 
@@ -43,30 +43,34 @@
 
 ## Table of Contents
 
-<!-- TOC -->
-- [1. Why Migrate, and When Not To](#1-why-migrate-and-when-not-to)
-- [2. Running Example: Tally's Old Pipelines](#2-running-example-tallys-old-pipelines)
-- [3. The Concept Map](#3-the-concept-map)
-- [4. Translating the Pipeline: Stages Become `needs`](#4-translating-the-pipeline-stages-become-needs)
-- [5. Agents, Images and Tags](#5-agents-images-and-tags)
-- [6. `post` Has No Keyword](#6-post-has-no-keyword)
-- [7. Conditions: `when` and `rules` Become `if`](#7-conditions-when-and-rules-become-if)
-- [8. Caching, Artifacts and Credentials](#8-caching-artifacts-and-credentials)
-- [9. The GitHub Actions Importer](#9-the-github-actions-importer)
-- [10. Testing a Translation Locally](#10-testing-a-translation-locally)
-- [11. Observability](#11-observability)
-- [12. Limits and Cost Differences](#12-limits-and-cost-differences)
-- [13. Case Study: The Migration That Stopped Reporting Failures](#13-case-study-the-migration-that-stopped-reporting-failures)
-- [14. Comparison: Migration Approaches](#14-comparison-migration-approaches)
-- [15. Practical Tips](#15-practical-tips)
-- [16. Demonstrated Failure Modes](#16-demonstrated-failure-modes)
-- [17. Key Takeaways](#17-key-takeaways)
-- [18. Exercises](#18-exercises)
-- [19. Additional Resources](#19-additional-resources)
-- [20. Appendix A: Code Index](#20-appendix-a-code-index)
-   - [A.1 Convert a GitLab file and read its waves](#a1-convert-a-gitlab-file-and-read-its-waves)
-   - [A.2 Price a split pipeline](#a2-price-a-split-pipeline)
-<!-- /TOC -->
+<!-- toc-start -->
+
+- [Chapter 22: Migrating to Actions: Jenkins, GitLab, Importer](#chapter-22-migrating-to-actions-jenkins-gitlab-importer)
+  - [Beginner's Guide](#beginners-guide)
+  - [What You'll Learn](#what-youll-learn)
+  - [Table of Contents](#table-of-contents)
+  - [1. Why Migrate, and When Not To](#1-why-migrate-and-when-not-to)
+  - [2. Running Example: Tally's Old Pipelines](#2-running-example-tallys-old-pipelines)
+  - [3. The Concept Map](#3-the-concept-map)
+  - [4. Translating the Pipeline: Stages Become `needs`](#4-translating-the-pipeline-stages-become-needs)
+  - [5. Agents, Images and Tags](#5-agents-images-and-tags)
+  - [6. `post` Has No Keyword](#6-post-has-no-keyword)
+  - [7. Conditions: `when` and `rules` Become `if`](#7-conditions-when-and-rules-become-if)
+  - [8. Caching, Artifacts and Credentials](#8-caching-artifacts-and-credentials)
+  - [9. The GitHub Actions Importer](#9-the-github-actions-importer)
+  - [10. Testing a Translation Locally](#10-testing-a-translation-locally)
+  - [11. Observability](#11-observability)
+  - [12. Limits and Cost Differences](#12-limits-and-cost-differences)
+  - [13. Case Study: The Migration That Stopped Reporting Failures](#13-case-study-the-migration-that-stopped-reporting-failures)
+  - [14. Comparison: Migration Approaches](#14-comparison-migration-approaches)
+  - [15. Practical Tips](#15-practical-tips)
+  - [16. Demonstrated Failure Modes](#16-demonstrated-failure-modes)
+  - [17. Key Takeaways](#17-key-takeaways)
+  - [18. Exercises](#18-exercises)
+  - [19. Additional Resources](#19-additional-resources)
+  - [20. Appendix A: Code Index](#20-appendix-a-code-index)
+    - [A.1 Convert a GitLab file and read its waves](#a1-convert-a-gitlab-file-and-read-its-waves)
+    - [A.2 Price a split pipeline](#a2-price-a-split-pipeline)
 
 ## 1. Why Migrate, and When Not To
 
@@ -76,7 +80,7 @@ GitHub's own docs state a target of "an 80% conversion rate for every workflow",
 
 ## 2. Running Example: Tally's Old Pipelines
 
-> 📌 **Running Example: Tally on Jenkins and on GitLab.** Suppose Tally's CI had lived on two other platforms. Both files are in `sandbox/ch22/` and neither is run in this course; they are the *source*.
+> 📌 **Running Example: Tally on Jenkins and on GitLab.** Suppose Tally's CI had lived on two other platforms. Both files are in `sandbox/ch22/` and neither is run in this course; they are the _source_.
 >
 > - `Jenkinsfile` (Declarative): agent `docker { image 'python:3.12-slim' }`; `environment { TALLY_COLOR = 'blue' }`; a 10-minute timeout; three stages (**Lint**, **Test**, **Deploy**, the last with `when { branch 'main' }`); a `post` block with `always { archiveArtifacts ... }` and `failure { echo ... }`.
 > - `gitlab-ci.yml`: `stages: [lint, test, deploy]`, a default image `python:3.12-slim`, a `variables:` block, jobs `lint`, `test` (with `tags`, `cache`, `artifacts`) and `deploy` (with a `rules:` condition on `main`).
@@ -87,18 +91,18 @@ GitHub's own docs state a target of "an 80% conversion rate for every workflow",
 
 From the GitHub docs' migration guides (verified 2026-10):
 
-| Jenkins | GitLab CI | GitHub Actions |
-| --- | --- | --- |
-| `pipeline` | the file | a workflow file |
-| `stages` / `stage` | `stages:` + `stage:` | `jobs`, ordered only by `needs` |
-| `steps` / `sh` | `script:` | `steps` / `run` |
-| `agent` | `tags` (runner) / `image` | `runs-on` and/or `container` |
-| `environment` | `variables` | `env` |
-| `when` | `rules: - if:` | `if:` |
-| `post` | `after_script` (loosely) | **no keyword** (docs table says "None") |
-| `parallel` | jobs in the same stage | jobs without `needs` (default); `max-parallel` limits a matrix |
-| cache | `cache:` | `actions/cache` |
-| artifacts | `artifacts:` | `actions/upload-artifact` |
+| Jenkins            | GitLab CI                 | GitHub Actions                                                 |
+| ------------------ | ------------------------- | -------------------------------------------------------------- |
+| `pipeline`         | the file                  | a workflow file                                                |
+| `stages` / `stage` | `stages:` + `stage:`      | `jobs`, ordered only by `needs`                                |
+| `steps` / `sh`     | `script:`                 | `steps` / `run`                                                |
+| `agent`            | `tags` (runner) / `image` | `runs-on` and/or `container`                                   |
+| `environment`      | `variables`               | `env`                                                          |
+| `when`             | `rules: - if:`            | `if:`                                                          |
+| `post`             | `after_script` (loosely)  | **no keyword** (docs table says "None")                        |
+| `parallel`         | jobs in the same stage    | jobs without `needs` (default); `max-parallel` limits a matrix |
+| cache              | `cache:`                  | `actions/cache`                                                |
+| artifacts          | `artifacts:`              | `actions/upload-artifact`                                      |
 
 **What to notice:**
 
@@ -110,12 +114,12 @@ From the GitHub docs' migration guides (verified 2026-10):
 
 Our model (`intro_gha.migrate.gitlab_to_workflow`) converts the GitLab file's stage order into `needs`. Trace for `gitlab-ci.yml`:
 
-| Step | State |
-| --- | --- |
-| Read `stages` | `[lint, test, deploy]` |
-| Group jobs by stage | `lint: [lint]`, `test: [test]`, `deploy: [deploy]` |
-| Each job `needs` the previous stage's jobs | `test needs [lint]`, `deploy needs [test]` |
-| `execution_waves` (Chapter 10) | `[[lint], [test], [deploy]]`: three sequential waves |
+| Step                                       | State                                                |
+| ------------------------------------------ | ---------------------------------------------------- |
+| Read `stages`                              | `[lint, test, deploy]`                               |
+| Group jobs by stage                        | `lint: [lint]`, `test: [test]`, `deploy: [deploy]`   |
+| Each job `needs` the previous stage's jobs | `test needs [lint]`, `deploy needs [test]`           |
+| `execution_waves` (Chapter 10)             | `[[lint], [test], [deploy]]`: three sequential waves |
 
 **What to notice:** drop the `needs` and the waves become `[[deploy, lint, test]]`, one wave of three. Same file, different behavior, no error. That is the failure to look for first.
 
@@ -125,7 +129,7 @@ Our model (`intro_gha.migrate.gitlab_to_workflow`) converts the GitLab file's st
 
 One observed detail: inside the slim image there is **no `git`**, and `actions/checkout` fell back to downloading a **tarball** (the log shows `tar xz`) instead of cloning. It worked, but the checkout has no `.git` directory, so any step that runs `git log` would fail. We did not test which common steps break.
 
-The GitLab `tags: [linux]` has no direct meaning here: tags select *your* runners, while `ubuntu-latest` is a GitHub-hosted label. The model reports it as a note rather than guess.
+The GitLab `tags: [linux]` has no direct meaning here: tags select _your_ runners, while `ubuntu-latest` is a GitHub-hosted label. The model reports it as a note rather than guess.
 
 ## 6. `post` Has No Keyword
 
@@ -139,19 +143,19 @@ post:
 
 Three real runs of `ch22-translated.yml` (a `fail` input forces the test stage to exit 1):
 
-| Run | lint | test | deploy | post |
-| --- | --- | --- | --- | --- |
-| `fail=false` (37337727565) | success | success | success | success; saw `success/success/success` |
-| `fail=true` (37337741533) | success | **failure** | **skipped** | **success**; saw `success/failure/skipped` |
+| Run                        | lint    | test        | deploy      | post                                       |
+| -------------------------- | ------- | ----------- | ----------- | ------------------------------------------ |
+| `fail=false` (37337727565) | success | success     | success     | success; saw `success/success/success`     |
+| `fail=true` (37337741533)  | success | **failure** | **skipped** | **success**; saw `success/failure/skipped` |
 
 **What to notice:** with `if: always()` the `post` job ran after a failure and could read each upstream result through `needs.<job>.result`. Without it, `post` would have been skipped like `deploy`.
 
 **The trap we hit: `failure()` is not the same at job and step level.** We added a step to `post` with `if: ${{ failure() }}`, expecting it to play Jenkins' `post { failure }`. In run 37337741533 that step was **skipped**. A run adding a separate job with `needs: [test]` and `if: ${{ failure() }}` (run 37338093415) **ran**:
 
-| Where `failure()` is used | Upstream `test` failed | Observed |
-| --- | --- | --- |
-| Job-level `if:` on a job that `needs: [test]` | yes | **ran** |
-| Step-level `if:` inside the `post` job | yes (a direct dependency) | **skipped** |
+| Where `failure()` is used                     | Upstream `test` failed    | Observed    |
+| --------------------------------------------- | ------------------------- | ----------- |
+| Job-level `if:` on a job that `needs: [test]` | yes                       | **ran**     |
+| Step-level `if:` inside the `post` job        | yes (a direct dependency) | **skipped** |
 
 The docs say `failure()` "Returns `true` when any previous step of a job fails. If you have a chain of dependent jobs, `failure()` returns `true` if any ancestor job fails." Our step-level observation does not match the second sentence. We did not find why; we report what ran. To get a "failure" branch inside the `post` job, test the result explicitly:
 
@@ -179,14 +183,14 @@ GitLab `rules` can express `when: manual`, `allow_failure` and variable matching
 
 From the docs (verified 2026-10): it supports "Azure DevOps, Bamboo, Bitbucket Pipelines, CircleCI, GitLab (both cloud and self-hosted), Jenkins, Travis CI"; it is "distributed as a Docker container, and uses a GitHub CLI extension" installed with `gh extension install github/gh-actions-importer`. Its commands:
 
-| Command | Purpose (docs wording) |
-| --- | --- |
-| `audit` | "Plan your CI/CD migration by analyzing your current CI/CD footprint" |
-| `forecast` | reviews historical usage to forecast Actions usage |
-| `dry-run` | converts pipelines and writes the workflow to your local filesystem |
-| `migrate` | converts a pipeline and opens a pull request |
+| Command    | Purpose (docs wording)                                                |
+| ---------- | --------------------------------------------------------------------- |
+| `audit`    | "Plan your CI/CD migration by analyzing your current CI/CD footprint" |
+| `forecast` | reviews historical usage to forecast Actions usage                    |
+| `dry-run`  | converts pipelines and writes the workflow to your local filesystem   |
+| `migrate`  | converts a pipeline and opens a pull request                          |
 
-> **We did not run the Importer.** It is not installed here (`gh actions-importer` is an unknown command), it needs Docker and credentials for the source system, and this course has no Jenkins or GitLab server. Everything above is from the docs. The part we *did* test is the manual translation it automates.
+> **We did not run the Importer.** It is not installed here (`gh actions-importer` is an unknown command), it needs Docker and credentials for the source system, and this course has no Jenkins or GitLab server. Everything above is from the docs. The part we _did_ test is the manual translation it automates.
 
 Use the order the docs imply: `audit` to size the job, `forecast` for cost, `dry-run` to read what it produces, and only then `migrate`.
 
@@ -220,17 +224,17 @@ A Jenkins build on your own agent costs nothing per minute; on hosted runners ev
 
 ## 13. Case Study: The Migration That Stopped Reporting Failures
 
-A team migrates a Jenkins pipeline whose `post { failure { notify } }` block posts to chat. In the translation, the notify is a step with `if: failure()` in a final `post` job. Weeks later a deployment breaks and nobody is told. The step was never running: `failure()` at step level inside a *different* job did not fire (Section 6). The happy-path migration test passed because the step is skipped when everything is green, exactly as it should be. The fix is a job-level `if: failure()` job (observed to run) or an explicit `needs.<job>.result` check, **plus a migration test that makes a stage fail on purpose**. (The scenario is constructed; the skipped step is observed.)
+A team migrates a Jenkins pipeline whose `post { failure { notify } }` block posts to chat. In the translation, the notify is a step with `if: failure()` in a final `post` job. Weeks later a deployment breaks and nobody is told. The step was never running: `failure()` at step level inside a _different_ job did not fire (Section 6). The happy-path migration test passed because the step is skipped when everything is green, exactly as it should be. The fix is a job-level `if: failure()` job (observed to run) or an explicit `needs.<job>.result` check, **plus a migration test that makes a stage fail on purpose**. (The scenario is constructed; the skipped step is observed.)
 
 ## 14. Comparison: Migration Approaches
 
-| Approach | Setup Effort | Control | Failure Visibility | Security Exposure | Maintenance Burden |
-| --- | --- | --- | --- | --- | --- |
-| Manual rewrite | High | Full | Excellent if you test error paths | Low | Low once done |
-| Importer `dry-run` then edit | Moderate - needs Docker, source credentials | Moderate - you review output | Fair - gaps are in the unconverted 20% | Moderate - holds source-system credentials | Low |
-| Importer `migrate` (PR) | Moderate | Low until reviewed | Fair | Moderate | Low |
-| Run both in parallel for a period | Moderate | High | Excellent - compare results | Low | Temporarily doubled |
-| Stay on the old system | None | Full | Whatever you have | Whatever you have | Ongoing |
+| Approach                          | Setup Effort                                | Control                      | Failure Visibility                     | Security Exposure                          | Maintenance Burden  |
+| --------------------------------- | ------------------------------------------- | ---------------------------- | -------------------------------------- | ------------------------------------------ | ------------------- |
+| Manual rewrite                    | High                                        | Full                         | Excellent if you test error paths      | Low                                        | Low once done       |
+| Importer `dry-run` then edit      | Moderate - needs Docker, source credentials | Moderate - you review output | Fair - gaps are in the unconverted 20% | Moderate - holds source-system credentials | Low                 |
+| Importer `migrate` (PR)           | Moderate                                    | Low until reviewed           | Fair                                   | Moderate                                   | Low                 |
+| Run both in parallel for a period | Moderate                                    | High                         | Excellent - compare results            | Low                                        | Temporarily doubled |
+| Stay on the old system            | None                                        | Full                         | Whatever you have                      | Whatever you have                          | Ongoing             |
 
 ## 15. Practical Tips
 
@@ -290,7 +294,7 @@ All verified 2026-10.
 - GitHub Docs, [Migrating from Jenkins to GitHub Actions](https://docs.github.com/en/actions/migrating-to-github-actions/manually-migrating-to-github-actions/migrating-from-jenkins-to-github-actions) (concept table; `post` "None")
 - GitHub Docs, [Expressions: status check functions](https://docs.github.com/en/actions/reference/workflows-and-actions/expressions) (`failure()`, `always()`)
 - GitHub Docs, [Workflow syntax](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax) (`needs`, `container`, `if`)
-- Laster, *Learning GitHub Actions* (O'Reilly), Chapter 14
+- Laster, _Learning GitHub Actions_ (O'Reilly), Chapter 14
 
 ## 20. Appendix A: Code Index
 

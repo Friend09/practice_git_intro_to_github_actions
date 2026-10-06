@@ -42,29 +42,33 @@
 
 ## Table of Contents
 
-<!-- TOC -->
-- [1. The Token Behind Every Run](#1-the-token-behind-every-run)
-- [2. Running Example: Six Jobs That Differ by One Line](#2-running-example-six-jobs-that-differ-by-one-line)
-- [3. What the Token Looks Like](#3-what-the-token-looks-like)
-- [4. The Default: Read-Only](#4-the-default-read-only)
-- [5. Writing `permissions:`](#5-writing-permissions)
-- [6. The Matrix, Measured](#6-the-matrix-measured)
-- [7. Reading a 403](#7-reading-a-403)
-- [8. What the Token Can Never Do](#8-what-the-token-can-never-do)
-- [9. Least Privilege in Practice](#9-least-privilege-in-practice)
-- [10. Rate Limits](#10-rate-limits)
-- [11. Forks](#11-forks)
-- [12. Tokens That Are Not `GITHUB_TOKEN`](#12-tokens-that-are-not-github_token)
-- [13. Case Study: The Workflow That Could Do Everything](#13-case-study-the-workflow-that-could-do-everything)
-- [14. Comparison: How to Set Permissions](#14-comparison-how-to-set-permissions)
-- [15. Practical Tips](#15-practical-tips)
-- [16. Demonstrated Failure Modes](#16-demonstrated-failure-modes)
-- [17. Key Takeaways](#17-key-takeaways)
-- [18. Exercises](#18-exercises)
-- [19. Additional Resources](#19-additional-resources)
-- [20. Appendix A: Code Index](#20-appendix-a-code-index)
-   - [A.1 Resolve the token permissions and predict the matrix](#a1-resolve-the-token-permissions-and-predict-the-matrix)
-<!-- /TOC -->
+<!-- toc-start -->
+
+- [Chapter 15: GITHUB\_TOKEN, Permissions and Least Privilege](#chapter-15-github_token-permissions-and-least-privilege)
+  - [Beginner's Guide](#beginners-guide)
+  - [What You'll Learn](#what-youll-learn)
+  - [Table of Contents](#table-of-contents)
+  - [1. The Token Behind Every Run](#1-the-token-behind-every-run)
+  - [2. Running Example: Six Jobs That Differ by One Line](#2-running-example-six-jobs-that-differ-by-one-line)
+  - [3. What the Token Looks Like](#3-what-the-token-looks-like)
+  - [4. The Default: Read-Only](#4-the-default-read-only)
+  - [5. Writing `permissions:`](#5-writing-permissions)
+  - [6. The Matrix, Measured](#6-the-matrix-measured)
+  - [7. Reading a 403](#7-reading-a-403)
+  - [8. What the Token Can Never Do](#8-what-the-token-can-never-do)
+  - [9. Least Privilege in Practice](#9-least-privilege-in-practice)
+  - [10. Rate Limits](#10-rate-limits)
+  - [11. Forks](#11-forks)
+  - [12. Tokens That Are Not `GITHUB_TOKEN`](#12-tokens-that-are-not-github_token)
+  - [13. Case Study: The Workflow That Could Do Everything](#13-case-study-the-workflow-that-could-do-everything)
+  - [14. Comparison: How to Set Permissions](#14-comparison-how-to-set-permissions)
+  - [15. Practical Tips](#15-practical-tips)
+  - [16. Demonstrated Failure Modes](#16-demonstrated-failure-modes)
+  - [17. Key Takeaways](#17-key-takeaways)
+  - [18. Exercises](#18-exercises)
+  - [19. Additional Resources](#19-additional-resources)
+  - [20. Appendix A: Code Index](#20-appendix-a-code-index)
+    - [A.1 Resolve the token permissions and predict the matrix](#a1-resolve-the-token-permissions-and-predict-the-matrix)
 
 ---
 
@@ -80,13 +84,13 @@ Every job has a credential in `github.token` (also `secrets.GITHUB_TOKEN`), crea
 
 Printing only the first four characters and the length (never the token):
 
-| Property | Value |
-| --- | --- |
-| Prefix | `ghs_` |
-| Length | **377** characters (identical in all six jobs) |
+| Property            | Value                                                                                 |
+| ------------------- | ------------------------------------------------------------------------------------- |
+| Prefix              | `ghs_`                                                                                |
+| Length              | **377** characters (identical in all six jobs)                                        |
 | Where it comes from | `${{ github.token }}`, passed to steps via `env:` (here `GH_TOKEN`, which `gh` reads) |
 
-The `ghs_` prefix is GitHub's format for an installation access token, which fits the error wording in Section 7 ("not accessible by **integration**"): the token acts as an app installed on the repository. GitHub masks it in logs (Chapter 08), but masking does not stop a step from sending it somewhere, so what it *can* do is the real protection.
+The `ghs_` prefix is GitHub's format for an installation access token, which fits the error wording in Section 7 ("not accessible by **integration**"): the token acts as an app installed on the repository. GitHub masks it in logs (Chapter 08), but masking does not stop a step from sending it somewhere, so what it _can_ do is the real protection.
 
 ## 4. The Default: Read-Only
 
@@ -99,11 +103,11 @@ GET /repos/OWNER/REPO/actions/permissions/workflow
 
 `read` means the token gets **read** access to repository contents and nothing else (docs: "read access only for repository contents"); the switch letting workflows approve pull-request reviews is off. The separate workflow `ch15-default-permissions.yml` has no `permissions:` key, and its job ran our probes:
 
-| Probe | Status with the repository default |
-| --- | --- |
-| tag (needs `contents: write`) | **403** |
-| label (needs `issues: write`) | **403** |
-| secrets list | **403** |
+| Probe                         | Status with the repository default |
+| ----------------------------- | ---------------------------------- |
+| tag (needs `contents: write`) | **403**                            |
+| label (needs `issues: write`) | **403**                            |
+| secrets list                  | **403**                            |
 
 **What to notice:** with the default, every write was refused. Docs (verified 2026-10): "It's good security practice to set the default permission for the `GITHUB_TOKEN` to read access only for repository contents", with increases granted per job. This repository follows that advice. Older repositories may have the permissive default (read and write); check your own setting, and do not rely on it: put an explicit `permissions:` block in **every workflow** (our convention since Chapter 03).
 
@@ -112,12 +116,12 @@ GET /repos/OWNER/REPO/actions/permissions/workflow
 The scopes (docs, verified 2026-10): `actions`, `artifact-metadata`, `attestations`, `checks`, `code-quality`, `contents`, `deployments`, `discussions`, `id-token`, `issues`, `packages`, `pages`, `pull-requests`, `security-events`, `statuses`, `vulnerability-alerts`: sixteen. Each takes `read`, `write` or `none`, and **`write` includes `read`**.
 
 ```yaml
-permissions:            # workflow level: applies to every job unless it overrides
+permissions: # workflow level: applies to every job unless it overrides
   contents: read
 
 jobs:
   publish:
-    permissions:        # job level: REPLACES the workflow block for this job
+    permissions: # job level: REPLACES the workflow block for this job
       contents: read
       packages: write
 ```
@@ -130,14 +134,14 @@ Shorthands: `permissions: {}` (every scope `none`), `read-all`, `write-all`. And
 
 All six jobs, three probes, real HTTP statuses (run 37325286661):
 
-| Job `permissions` | tag (`contents: write`) | label (`issues: write`) | secrets list |
-| --- | --- | --- | --- |
-| `{}` | 403 | 403 | 403 |
-| `contents: read` | 403 | 403 | 403 |
-| `contents: write` | **201** | 403 | 403 |
-| `issues: write` | **403** | **201** | 403 |
-| `contents: write` + `issues: write` | **201** | **201** | 403 |
-| `write-all` | **201** | **201** | **403** |
+| Job `permissions`                   | tag (`contents: write`) | label (`issues: write`) | secrets list |
+| ----------------------------------- | ----------------------- | ----------------------- | ------------ |
+| `{}`                                | 403                     | 403                     | 403          |
+| `contents: read`                    | 403                     | 403                     | 403          |
+| `contents: write`                   | **201**                 | 403                     | 403          |
+| `issues: write`                     | **403**                 | **201**                 | 403          |
+| `contents: write` + `issues: write` | **201**                 | **201**                 | 403          |
+| `write-all`                         | **201**                 | **201**                 | **403**      |
 
 **What to notice:**
 
@@ -155,13 +159,13 @@ Every refused call returned HTTP 403 with the same body message:
 Resource not accessible by integration
 ```
 
-"Integration" is GitHub's word for an app: the token is the app's, and the app lacks that permission. The message does not say *which* permission, but a response header does: **`X-Accepted-GitHub-Permissions`**. The real values:
+"Integration" is GitHub's word for an app: the token is the app's, and the app lacks that permission. The message does not say _which_ permission, but a response header does: **`X-Accepted-GitHub-Permissions`**. The real values:
 
-| Call | `X-Accepted-GitHub-Permissions` | Meaning |
-| --- | --- | --- |
-| create a tag | `contents=write;contents=write,workflows=write` | `contents: write`, **or** `contents: write` **and** `workflows: write` (the second form covers tags whose commits touch workflow files) |
-| create a label | `issues=write;pull_requests=write` | `issues: write` **or** `pull-requests: write` |
-| list secrets | `secrets=read` | a permission that does not exist for the workflow token (Section 8) |
+| Call           | `X-Accepted-GitHub-Permissions`                 | Meaning                                                                                                                                 |
+| -------------- | ----------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| create a tag   | `contents=write;contents=write,workflows=write` | `contents: write`, **or** `contents: write` **and** `workflows: write` (the second form covers tags whose commits touch workflow files) |
+| create a label | `issues=write;pull_requests=write`              | `issues: write` **or** `pull-requests: write`                                                                                           |
+| list secrets   | `secrets=read`                                  | a permission that does not exist for the workflow token (Section 8)                                                                     |
 
 How to read it: **`;` separates alternatives; `,` joins permissions that are all required.** Our `satisfies()` function implements exactly that. In practice, when a step fails with `Resource not accessible by integration`, rerun the call with `gh api -i` and read this header: it names the line to add to `permissions:`.
 
@@ -169,7 +173,7 @@ How to read it: **`;` separates alternatives; `,` joins permissions that are all
 
 ## 8. What the Token Can Never Do
 
-The `secrets` column is 403 in **every** row, including `write-all`. Its required permission, `secrets=read`, is not one of the sixteen scopes you can put in `permissions:`. There is no setting that gives a workflow token the ability to *list or manage* the repository's secrets through the API. (A job still **uses** a secret you pass it with `${{ secrets.NAME }}`; Chapter 08. What it cannot do is enumerate or administer them.)
+The `secrets` column is 403 in **every** row, including `write-all`. Its required permission, `secrets=read`, is not one of the sixteen scopes you can put in `permissions:`. There is no setting that gives a workflow token the ability to _list or manage_ the repository's secrets through the API. (A job still **uses** a secret you pass it with `${{ secrets.NAME }}`; Chapter 08. What it cannot do is enumerate or administer them.)
 
 The same is true of repository administration generally: the token is a deliberately limited identity. If automation must change settings (create environments, set branch protection), it needs a personal access token or a GitHub App with the right scope, which is a bigger decision than a `permissions:` line.
 
@@ -179,23 +183,23 @@ A pattern that has run through this course:
 
 ```yaml
 permissions:
-  contents: read            # workflow default: read-only
+  contents: read # workflow default: read-only
 
 jobs:
-  test:                     # inherits read-only
+  test: # inherits read-only
     ...
   release:
     permissions:
-      contents: write       # only this job can write, and only contents
+      contents: write # only this job can write, and only contents
 ```
 
-| Job in this course | Permissions it actually needs |
-| --- | --- |
-| CI lint and tests (Chapter 11) | `contents: read` |
-| Publish a container (Chapter 12) | `contents: read`, `packages: write` |
+| Job in this course                 | Permissions it actually needs       |
+| ---------------------------------- | ----------------------------------- |
+| CI lint and tests (Chapter 11)     | `contents: read`                    |
+| Publish a container (Chapter 12)   | `contents: read`, `packages: write` |
 | Request an OIDC token (Chapter 13) | `contents: read`, `id-token: write` |
-| Create a release (Chapter 14) | `contents: write` |
-| Post a label (this chapter) | `issues: write` |
+| Create a release (Chapter 14)      | `contents: write`                   |
+| Post a label (this chapter)        | `issues: write`                     |
 
 Rules: start from `contents: read` at workflow level; add the minimum per **job**, never per workflow; never use `write-all` in a workflow that runs code you did not write; and re-read each job's block when you add a step.
 
@@ -205,11 +209,11 @@ Rules: start from `contents: read` at workflow level; add the minimum per **job*
 
 The token is also rate-limited. The docs we read (rate-limits page, verified 2026-10) say **1,000 requests per hour per repository** for `GITHUB_TOKEN`, versus 5,000 for an authenticated user. We tested it: a job made **1,150** cheap authenticated calls in a row with the job token (run 37325596047, 363 seconds):
 
-| Measure | Value |
-| --- | --- |
-| Calls made / succeeded / failed | 1,150 / **1,150** / **0** |
-| `x-ratelimit-limit` header | **5000** (resource `core`) |
-| `x-ratelimit-remaining` before / after | 4,921 / 3,852 |
+| Measure                                | Value                      |
+| -------------------------------------- | -------------------------- |
+| Calls made / succeeded / failed        | 1,150 / **1,150** / **0**  |
+| `x-ratelimit-limit` header             | **5000** (resource `core`) |
+| `x-ratelimit-remaining` before / after | 4,921 / 3,852              |
 
 **What to notice:** the documented 1,000 did **not** apply to this token on this day: we exceeded it by 150 calls with no error, and the response headers reported a limit of 5,000. We do not know whether the docs are stale, whether the figure depends on plan or repository type (ours is a public repository on a free account), or whether the limit changed; **measure your own** (`gh api rate_limit`, or the `x-ratelimit-*` headers) before designing around either number. The secondary limit (docs): no more than 100 concurrent requests, and 900 points per minute for REST, where a read costs 1 point and a write 5.
 
@@ -231,13 +235,13 @@ A repository sets `permissions: write-all` "to stop the 403s". Six months later 
 
 ## 14. Comparison: How to Set Permissions
 
-| Approach | Setup Effort | Control | Failure Visibility | Security Exposure | Maintenance Burden |
-| --- | --- | --- | --- | --- | --- |
-| Rely on the repository default | Minimal - nothing to write | Weak - invisible in the file | Fair - 403 later | Moderate - whatever the setting says | Low - but drifts with settings |
-| Workflow-level `contents: read`, job-level adds | Low - a few lines | Strong - explicit per job | Strong - failures point at a job | Low - minimal grants | Low |
-| `write-all` | Minimal | Weak - everything allowed | Weak - nothing ever fails | Very High - full write for any step | Low until an incident |
-| `permissions: {}` plus per-job grants | Moderate - list everything | Excellent - nothing implicit | Strong | Very Low - nothing by default | Moderate - every job lists its needs |
-| PAT or App token | High - create and store | Strong - separate identity | Moderate | High if over-scoped | High - rotation |
+| Approach                                        | Setup Effort               | Control                      | Failure Visibility               | Security Exposure                    | Maintenance Burden                   |
+| ----------------------------------------------- | -------------------------- | ---------------------------- | -------------------------------- | ------------------------------------ | ------------------------------------ |
+| Rely on the repository default                  | Minimal - nothing to write | Weak - invisible in the file | Fair - 403 later                 | Moderate - whatever the setting says | Low - but drifts with settings       |
+| Workflow-level `contents: read`, job-level adds | Low - a few lines          | Strong - explicit per job    | Strong - failures point at a job | Low - minimal grants                 | Low                                  |
+| `write-all`                                     | Minimal                    | Weak - everything allowed    | Weak - nothing ever fails        | Very High - full write for any step  | Low until an incident                |
+| `permissions: {}` plus per-job grants           | Moderate - list everything | Excellent - nothing implicit | Strong                           | Very Low - nothing by default        | Moderate - every job lists its needs |
+| PAT or App token                                | High - create and store    | Strong - separate identity   | Moderate                         | High if over-scoped                  | High - rotation                      |
 
 ## 15. Practical Tips
 
@@ -301,7 +305,7 @@ All verified 2026-10.
 - GitHub Docs: Authenticate with the GITHUB_TOKEN - https://docs.github.com/en/actions/tutorials/authenticate-with-github_token
 - GitHub REST: Workflow permissions for a repository - https://docs.github.com/en/rest/actions/permissions
 - Live evidence: runs 37325286661, 37325291300 and 37325596047 in this repo
-- Laster, *Learning GitHub Actions* (O'Reilly), Chapter 9
+- Laster, _Learning GitHub Actions_ (O'Reilly), Chapter 9
 
 ## 20. Appendix A: Code Index
 

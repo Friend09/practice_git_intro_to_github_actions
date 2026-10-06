@@ -43,30 +43,34 @@
 
 ## Table of Contents
 
-<!-- TOC -->
-- [1. What CI for Python Must Do](#1-what-ci-for-python-must-do)
-- [2. Running Example: Tally Gets a Real Pipeline](#2-running-example-tally-gets-a-real-pipeline)
-- [3. The Shape of the Workflow](#3-the-shape-of-the-workflow)
-- [4. Installing Python, Four Times](#4-installing-python-four-times)
-- [5. Caching pip, Honestly Measured](#5-caching-pip-honestly-measured)
-- [6. The Coverage Gate](#6-the-coverage-gate)
-- [7. The Gate Job: One Required Check](#7-the-gate-job-one-required-check)
-- [8. Lint Annotations](#8-lint-annotations)
-- [9. Per-Leg Coverage Artifacts](#9-per-leg-coverage-artifacts)
-- [10. Concurrency per Branch](#10-concurrency-per-branch)
-- [11. Making It Faster](#11-making-it-faster)
-- [12. Alternatives to pip](#12-alternatives-to-pip)
-- [13. Case Study: The Gate That Never Reported](#13-case-study-the-gate-that-never-reported)
-- [14. Comparison: Where to Run Checks](#14-comparison-where-to-run-checks)
-- [15. Practical Tips](#15-practical-tips)
-- [16. Demonstrated Failure Modes](#16-demonstrated-failure-modes)
-- [17. Key Takeaways](#17-key-takeaways)
-- [18. Exercises](#18-exercises)
-- [19. Additional Resources](#19-additional-resources)
-- [20. Appendix A: Code Index](#20-appendix-a-code-index)
-   - [A.1 The gate rule and coverage arithmetic](#a1-the-gate-rule-and-coverage-arithmetic)
-   - [A.2 Detect the working-directory trap](#a2-detect-the-working-directory-trap)
-<!-- /TOC -->
+<!-- toc-start -->
+
+- [Chapter 11: CI for Python: Lint, Test, Coverage Matrix](#chapter-11-ci-for-python-lint-test-coverage-matrix)
+  - [Beginner's Guide](#beginners-guide)
+  - [What You'll Learn](#what-youll-learn)
+  - [Table of Contents](#table-of-contents)
+  - [1. What CI for Python Must Do](#1-what-ci-for-python-must-do)
+  - [2. Running Example: Tally Gets a Real Pipeline](#2-running-example-tally-gets-a-real-pipeline)
+  - [3. The Shape of the Workflow](#3-the-shape-of-the-workflow)
+  - [4. Installing Python, Four Times](#4-installing-python-four-times)
+  - [5. Caching pip, Honestly Measured](#5-caching-pip-honestly-measured)
+  - [6. The Coverage Gate](#6-the-coverage-gate)
+  - [7. The Gate Job: One Required Check](#7-the-gate-job-one-required-check)
+  - [8. Lint Annotations](#8-lint-annotations)
+  - [9. Per-Leg Coverage Artifacts](#9-per-leg-coverage-artifacts)
+  - [10. Concurrency per Branch](#10-concurrency-per-branch)
+  - [11. Making It Faster](#11-making-it-faster)
+  - [12. Alternatives to pip](#12-alternatives-to-pip)
+  - [13. Case Study: The Gate That Never Reported](#13-case-study-the-gate-that-never-reported)
+  - [14. Comparison: Where to Run Checks](#14-comparison-where-to-run-checks)
+  - [15. Practical Tips](#15-practical-tips)
+  - [16. Demonstrated Failure Modes](#16-demonstrated-failure-modes)
+  - [17. Key Takeaways](#17-key-takeaways)
+  - [18. Exercises](#18-exercises)
+  - [19. Additional Resources](#19-additional-resources)
+  - [20. Appendix A: Code Index](#20-appendix-a-code-index)
+    - [A.1 The gate rule and coverage arithmetic](#a1-the-gate-rule-and-coverage-arithmetic)
+    - [A.2 Detect the working-directory trap](#a2-detect-the-working-directory-trap)
 
 ---
 
@@ -85,8 +89,16 @@ jobs:
   lint:
     steps: [checkout, setup-python (cache: pip), pip install, ruff check]
   test:
-    strategy: { fail-fast: false, matrix: { python: ['3.11','3.12','3.13','3.14'] } }
-    steps: [checkout, setup-python (cache: pip), pip install, pytest --cov ..., upload coverage]
+    strategy:
+      { fail-fast: false, matrix: { python: ["3.11", "3.12", "3.13", "3.14"] } }
+    steps:
+      [
+        checkout,
+        setup-python (cache: pip),
+        pip install,
+        pytest --cov ...,
+        upload coverage,
+      ]
   ci-ok:
     needs: [lint, test]
     if: ${{ always() }}
@@ -101,12 +113,12 @@ Triggers: `push` and `pull_request` filtered to `sandbox/**` plus the workflow f
 
 `actions/setup-python@v7` installs the version you ask for. The real `python -V` printed by each matrix leg:
 
-| Requested | Got |
-| --- | --- |
-| `'3.11'` | Python **3.11.16** |
-| `'3.12'` | Python **3.12.14** |
-| `'3.13'` | Python **3.13.15** |
-| `'3.14'` | Python **3.14.7** |
+| Requested | Got                |
+| --------- | ------------------ |
+| `'3.11'`  | Python **3.11.16** |
+| `'3.12'`  | Python **3.12.14** |
+| `'3.13'`  | Python **3.13.15** |
+| `'3.14'`  | Python **3.14.7**  |
 
 **What to notice:** you ask for a minor version and receive the **latest patch** available that day. Two runs a month apart can run different patch versions. And every version here was **quoted** (Chapter 00: an unquoted `3.10` would have been the float `3.1`).
 
@@ -122,11 +134,11 @@ Read it left to right: tool, OS, architecture, **runner image version** (`24.04-
 
 What happened across three runs (`Cache saved` / `Cache hit` lines from the logs):
 
-| Run | lint | 3.11 | 3.12 | 3.13 | 3.14 |
-| --- | --- | --- | --- | --- | --- |
-| 37321016076 (first) | **saved** | no save | no save | no save | no save |
-| 37321165485 (second) | hit | **saved** | hit | **saved** | **saved** |
-| 37321351215 (third) | hit | hit | hit | hit | hit |
+| Run                  | lint      | 3.11      | 3.12    | 3.13      | 3.14      |
+| -------------------- | --------- | --------- | ------- | --------- | --------- |
+| 37321016076 (first)  | **saved** | no save   | no save | no save   | no save   |
+| 37321165485 (second) | hit       | **saved** | hit     | **saved** | **saved** |
+| 37321351215 (third)  | hit       | hit       | hit     | hit       | hit       |
 
 **What to notice:**
 
@@ -135,11 +147,11 @@ What happened across three runs (`Cache saved` / `Cache hit` lines from the logs
 - By the third run every job hit. Now: did it help?
 
 | Python | pip install, cold | pip install, warm |
-| --- | --- | --- |
-| 3.11 | 4 s | 3 s |
-| 3.12 | 4 s | 4 s |
-| 3.13 | 3 s | 3 s |
-| 3.14 | 4 s | 4 s |
+| ------ | ----------------- | ----------------- |
+| 3.11   | 4 s               | 3 s               |
+| 3.12   | 4 s               | 4 s               |
+| 3.13   | 3 s               | 3 s               |
+| 3.14   | 4 s               | 4 s               |
 
 **It barely did.** Three small packages install in 3-4 seconds from PyPI, so a warm cache saves at most a second. Whole-job time was no better (cold 9-14 s, warm 11-17 s: noise dominates). With every job under a minute, the bill is identical (below). Caching pays when installs are long (hundreds of megabytes, compiled wheels) and, as in Chapter 09, **only moves the bill when it crosses a minute boundary**. Measure before you add cache complexity.
 
@@ -164,7 +176,7 @@ The numerator counts statements that ran at least once. With 9 of 17 executed th
 **What to notice:**
 
 - The fix to a failing gate is **tests**, not lowering the threshold. A gate that is quietly lowered each time it fails stops being a gate.
-- Coverage counts **lines executed**, not lines *verified*: a test that calls `median` and asserts nothing would also reach 100%.
+- Coverage counts **lines executed**, not lines _verified_: a test that calls `median` and asserts nothing would also reach 100%.
 - The gate is a `pytest` flag, so every leg enforces it. We pass the threshold through an environment variable (`MIN_COV`) so the dispatch input is not pasted into the shell.
 
 ## 7. The Gate Job: One Required Check
@@ -186,16 +198,16 @@ ci-ok:
 
 `needs.test.result` is **one value for the whole matrix**: `success` only if every leg succeeded. `if: always()` is essential: without it, a failing `lint` would make `ci-ok` **skipped** (Chapter 10), and a skipped job is commonly reported as passing to branch protection (a behavior we did not test here). Real verdict when we injected a lint error (run 37321582147): the report line read `lint=failure test=success` and `ci-ok` failed. Tests were green; the gate still said no.
 
-(Making this job a *required status check* is a ruleset setting; Chapter 16 Section 5 tested it on throwaway branches: a red `ci-ok` blocks the merge, and so does a `ci-ok` that never reports. We still did not test a *skipped* required job.)
+(Making this job a _required status check_ is a ruleset setting; Chapter 16 Section 5 tested it on throwaway branches: a red `ci-ok` blocks the merge, and so does a `ci-ok` that never reports. We still did not test a _skipped_ required job.)
 
 ## 8. Lint Annotations
 
 `ruff check --output-format=github .` prints findings in the workflow-command format that GitHub turns into **annotations** on the exact file and line. The real annotations from run 37321582147, where we appended `import os` to `add.py`:
 
-| Annotation | File and line | Rule |
-| --- | --- | --- |
-| failure | `sandbox/tally/tally/add.py:7` | `ruff (F401)` `os` imported but unused |
-| failure | `sandbox/tally/tally/add.py:7` | `ruff (E402)` module level import not at top of file |
+| Annotation | File and line                  | Rule                                                 |
+| ---------- | ------------------------------ | ---------------------------------------------------- |
+| failure    | `sandbox/tally/tally/add.py:7` | `ruff (F401)` `os` imported but unused               |
+| failure    | `sandbox/tally/tally/add.py:7` | `ruff (E402)` module level import not at top of file |
 
 and from run 37321165485: `tests/test_stats.py:3` `ruff (I001)` import block is un-sorted. They appear in the run summary and on the pull request's changed lines, which is far faster to act on than reading a log.
 
@@ -236,12 +248,12 @@ The cause was one line at the top of the file: `defaults: run: working-directory
 
 ## 14. Comparison: Where to Run Checks
 
-| Approach | Setup Effort | Control | Failure Visibility | Security Exposure | Maintenance Burden |
-| --- | --- | --- | --- | --- | --- |
-| Pre-commit hooks | Low - install per clone | Moderate - skippable | Weak - local only | Minimal | Moderate - drifts per clone |
-| CI lint + test (this chapter) | Low - one file | Strong - runs for everyone | Excellent - annotations on the PR | Moderate - runs on shared infra | Low |
-| CI with one required gate job | Moderate - plus a protection setting | Excellent - cannot be skipped | Excellent - one clear verdict | Moderate | Low - stable name |
-| Third-party coverage service | Moderate - account and token | Moderate - trends and diffs | Strong - dashboards | High - external token | Moderate |
+| Approach                      | Setup Effort                         | Control                       | Failure Visibility                | Security Exposure               | Maintenance Burden          |
+| ----------------------------- | ------------------------------------ | ----------------------------- | --------------------------------- | ------------------------------- | --------------------------- |
+| Pre-commit hooks              | Low - install per clone              | Moderate - skippable          | Weak - local only                 | Minimal                         | Moderate - drifts per clone |
+| CI lint + test (this chapter) | Low - one file                       | Strong - runs for everyone    | Excellent - annotations on the PR | Moderate - runs on shared infra | Low                         |
+| CI with one required gate job | Moderate - plus a protection setting | Excellent - cannot be skipped | Excellent - one clear verdict     | Moderate                        | Low - stable name           |
+| Third-party coverage service  | Moderate - account and token         | Moderate - trends and diffs   | Strong - dashboards               | High - external token           | Moderate                    |
 
 ## 15. Practical Tips
 
@@ -303,7 +315,7 @@ All verified 2026-10.
 - pytest-cov documentation (`--cov-fail-under`) - https://pytest-cov.readthedocs.io/
 - GitHub Docs: Workflow syntax (`defaults.run`, `jobs.<id>.defaults`) - https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax
 - Live evidence: runs 37321016076, 37321165485, 37321351215, 37321500402, 37321582147 in this repo
-- Laster, *Learning GitHub Actions* (O'Reilly), Chapters 4 and 7
+- Laster, _Learning GitHub Actions_ (O'Reilly), Chapters 4 and 7
 
 ## 20. Appendix A: Code Index
 

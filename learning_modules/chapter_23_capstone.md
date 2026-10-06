@@ -43,30 +43,34 @@
 
 ## Table of Contents
 
-<!-- TOC -->
-- [1. What a Pipeline Is For](#1-what-a-pipeline-is-for)
-- [2. Running Example: The Tally Pipeline](#2-running-example-the-tally-pipeline)
-- [3. The Map Back to the Course](#3-the-map-back-to-the-course)
-- [4. The Shape: Waves](#4-the-shape-waves)
-- [5. Least Privilege, Job by Job](#5-least-privilege-job-by-job)
-- [6. The Green Run](#6-the-green-run)
-- [7. Variants on the Same Pipeline](#7-variants-on-the-same-pipeline)
-- [8. Concurrency](#8-concurrency)
-- [9. Failure Reporting with a Final Job](#9-failure-reporting-with-a-final-job)
-- [10. The Review Checklist, as Code](#10-the-review-checklist-as-code)
-- [11. Observability](#11-observability)
-- [12. Cost](#12-cost)
-- [13. Case Study: The Token That Did Too Much](#13-case-study-the-token-that-did-too-much)
-- [14. Comparison: Pipeline Designs](#14-comparison-pipeline-designs)
-- [15. Practical Tips](#15-practical-tips)
-- [16. Demonstrated Failure Modes](#16-demonstrated-failure-modes)
-- [17. Key Takeaways](#17-key-takeaways)
-- [18. Exercises](#18-exercises)
-- [19. Additional Resources](#19-additional-resources)
-- [20. Appendix A: Code Index](#20-appendix-a-code-index)
-   - [A.1 The review checklist](#a1-the-review-checklist)
-   - [A.2 Waves and cost of the pipeline](#a2-waves-and-cost-of-the-pipeline)
-<!-- /TOC -->
+<!-- toc-start -->
+
+- [Chapter 23: Capstone: The Full Tally Pipeline](#chapter-23-capstone-the-full-tally-pipeline)
+  - [Beginner's Guide](#beginners-guide)
+  - [What You'll Learn](#what-youll-learn)
+  - [Table of Contents](#table-of-contents)
+  - [1. What a Pipeline Is For](#1-what-a-pipeline-is-for)
+  - [2. Running Example: The Tally Pipeline](#2-running-example-the-tally-pipeline)
+  - [3. The Map Back to the Course](#3-the-map-back-to-the-course)
+  - [4. The Shape: Waves](#4-the-shape-waves)
+  - [5. Least Privilege, Job by Job](#5-least-privilege-job-by-job)
+  - [6. The Green Run](#6-the-green-run)
+  - [7. Variants on the Same Pipeline](#7-variants-on-the-same-pipeline)
+  - [8. Concurrency](#8-concurrency)
+  - [9. Failure Reporting with a Final Job](#9-failure-reporting-with-a-final-job)
+  - [10. The Review Checklist, as Code](#10-the-review-checklist-as-code)
+  - [11. Observability](#11-observability)
+  - [12. Cost](#12-cost)
+  - [13. Case Study: The Token That Did Too Much](#13-case-study-the-token-that-did-too-much)
+  - [14. Comparison: Pipeline Designs](#14-comparison-pipeline-designs)
+  - [15. Practical Tips](#15-practical-tips)
+  - [16. Demonstrated Failure Modes](#16-demonstrated-failure-modes)
+  - [17. Key Takeaways](#17-key-takeaways)
+  - [18. Exercises](#18-exercises)
+  - [19. Additional Resources](#19-additional-resources)
+  - [20. Appendix A: Code Index](#20-appendix-a-code-index)
+    - [A.1 The review checklist](#a1-the-review-checklist)
+    - [A.2 Waves and cost of the pipeline](#a2-waves-and-cost-of-the-pipeline)
 
 ## 1. What a Pipeline Is For
 
@@ -76,46 +80,46 @@ A push should answer four questions in order: does the code work, can we build i
 
 > 📌 **Running Example: Tally, CI to staging.** The file is `.github/workflows/ch23-pipeline.yml`, started by `workflow_dispatch` with two boolean inputs: `break_tests` (fails the Python 3.13 test leg on purpose) and `to_production`. Its seven job ids and what each does:
 >
-> | Job | What it does | Needs | Permissions beyond `contents: read` |
-> | --- | --- | --- | --- |
-> | `lint` | `ruff check .` in `sandbox/tally`, Python 3.12, pip cache | none | none |
-> | `test` | matrix of Python 3.11, 3.12, 3.13; pytest with `--cov-fail-under=80`; `fail-fast: false` | none | none |
-> | `build` | builds the wheel, records its SHA-256, attests provenance, uploads the artifact | `lint`, `test` | `id-token: write`, `attestations: write` |
-> | `verify` | downloads the wheel, re-checks the digest, runs `gh attestation verify` | `build` | `attestations: read` |
-> | `deploy_staging` | `environment: staging`; prints the commit | `verify` | none |
-> | `deploy_production` | `environment: production`; guarded by `inputs.to_production && vars.GHA_ENABLE_PROD == 'true'` | `deploy_staging` | none |
-> | `summary` | `if: always()`; writes a results table to the run summary | all of the above | none |
+> | Job                 | What it does                                                                                   | Needs            | Permissions beyond `contents: read`      |
+> | ------------------- | ---------------------------------------------------------------------------------------------- | ---------------- | ---------------------------------------- |
+> | `lint`              | `ruff check .` in `sandbox/tally`, Python 3.12, pip cache                                      | none             | none                                     |
+> | `test`              | matrix of Python 3.11, 3.12, 3.13; pytest with `--cov-fail-under=80`; `fail-fast: false`       | none             | none                                     |
+> | `build`             | builds the wheel, records its SHA-256, attests provenance, uploads the artifact                | `lint`, `test`   | `id-token: write`, `attestations: write` |
+> | `verify`            | downloads the wheel, re-checks the digest, runs `gh attestation verify`                        | `build`          | `attestations: read`                     |
+> | `deploy_staging`    | `environment: staging`; prints the commit                                                      | `verify`         | none                                     |
+> | `deploy_production` | `environment: production`; guarded by `inputs.to_production && vars.GHA_ENABLE_PROD == 'true'` | `deploy_staging` | none                                     |
+> | `summary`           | `if: always()`; writes a results table to the run summary                                      | all of the above | none                                     |
 >
 > Every job has `timeout-minutes`; the workflow has a `concurrency` group on the ref with `cancel-in-progress: false`. We return to it throughout.
 
 ## 3. The Map Back to the Course
 
-| Feature in the pipeline | Chapter |
-| --- | --- |
-| `workflow_dispatch` inputs, `on:` | 03, 06 |
-| Matrix, `fail-fast: false`, `needs`, `concurrency`, `timeout-minutes` | 10 |
-| `defaults.run.working-directory` on jobs, not the workflow | 11 |
-| pip cache through `setup-python` | 09, 18 |
-| Wheel as an artifact between jobs | 09 |
-| `environment: staging` / `production` | 08, 13 |
-| Top-level `permissions: contents: read`, per-job grants | 15 |
-| SHA-pinned actions, attestation, `gh attestation verify` | 16 |
-| `if: always()` summary job | 22 |
-| `vars.GHA_ENABLE_PROD` guard (skip, not fail, without credentials) | 13 |
-| Billing arithmetic | 18 |
+| Feature in the pipeline                                               | Chapter |
+| --------------------------------------------------------------------- | ------- |
+| `workflow_dispatch` inputs, `on:`                                     | 03, 06  |
+| Matrix, `fail-fast: false`, `needs`, `concurrency`, `timeout-minutes` | 10      |
+| `defaults.run.working-directory` on jobs, not the workflow            | 11      |
+| pip cache through `setup-python`                                      | 09, 18  |
+| Wheel as an artifact between jobs                                     | 09      |
+| `environment: staging` / `production`                                 | 08, 13  |
+| Top-level `permissions: contents: read`, per-job grants               | 15      |
+| SHA-pinned actions, attestation, `gh attestation verify`              | 16      |
+| `if: always()` summary job                                            | 22      |
+| `vars.GHA_ENABLE_PROD` guard (skip, not fail, without credentials)    | 13      |
+| Billing arithmetic                                                    | 18      |
 
 ## 4. The Shape: Waves
 
 From the `needs` graph (`execution_waves`, Chapter 10), the seven job ids run in six waves:
 
-| Wave | Jobs |
-| --- | --- |
-| 1 | `lint`, `test` (three legs in parallel) |
-| 2 | `build` |
-| 3 | `verify` |
-| 4 | `deploy_staging` |
-| 5 | `deploy_production` |
-| 6 | `summary` |
+| Wave | Jobs                                    |
+| ---- | --------------------------------------- |
+| 1    | `lint`, `test` (three legs in parallel) |
+| 2    | `build`                                 |
+| 3    | `verify`                                |
+| 4    | `deploy_staging`                        |
+| 5    | `deploy_production`                     |
+| 6    | `summary`                               |
 
 **What to notice:** `lint` and `test` start together; nothing after them starts until both finish. Seven job ids give nine job runs: the matrix adds two legs, and a skipped job still appears in the run.
 
@@ -127,17 +131,17 @@ The workflow-level grant is `contents: read`. Only `build` adds `id-token: write
 
 Run 37338733951, dispatched with `to_production=true`, **success**:
 
-| Job | Seconds (API timestamps) | Result |
-| --- | --- | --- |
-| `lint` | 12 | success |
-| `test (3.11)` | 9 | success |
-| `test (3.12)` | 11 | success |
-| `test (3.13)` | 15 | success |
-| `build` | 21 | success |
-| `verify` | 45 | success; digest matched; attestation verified |
-| `deploy_staging` | 5 | success; sha `74d7cdb` |
-| `deploy_production` | 0 | **skipped** |
-| `summary` | 3 | success; reported `production=skipped` |
+| Job                 | Seconds (API timestamps) | Result                                        |
+| ------------------- | ------------------------ | --------------------------------------------- |
+| `lint`              | 12                       | success                                       |
+| `test (3.11)`       | 9                        | success                                       |
+| `test (3.12)`       | 11                       | success                                       |
+| `test (3.13)`       | 15                       | success                                       |
+| `build`             | 21                       | success                                       |
+| `verify`            | 45                       | success; digest matched; attestation verified |
+| `deploy_staging`    | 5                        | success; sha `74d7cdb`                        |
+| `deploy_production` | 0                        | **skipped**                                   |
+| `summary`           | 3                        | success; reported `production=skipped`        |
 
 The wheel's digest was `sha256:2bb486690c2aa144d880598731ce3985150a0f431430edeefae2ca178f3a1360`, recorded by `build`, re-computed by `verify`, and verified against the attestation.
 
@@ -149,12 +153,12 @@ The wheel's digest was `sha256:2bb486690c2aa144d880598731ce3985150a0f431430edeef
 
 ## 7. Variants on the Same Pipeline
 
-| Change | Effect | Where taught |
-| --- | --- | --- |
-| `break_tests=true` | `test (3.13)` fails; `build` onward skipped | Section 16 |
-| `to_production=true` and set `vars.GHA_ENABLE_PROD` to `true` | `deploy_production` would run (not done here) | Chapter 13 |
-| Add a leg to the matrix | one more parallel job in wave 1 | Chapter 10 |
-| Merge `lint` into `test` | fewer jobs, less parallelism, fewer billed minutes | Section 12 |
+| Change                                                        | Effect                                             | Where taught |
+| ------------------------------------------------------------- | -------------------------------------------------- | ------------ |
+| `break_tests=true`                                            | `test (3.13)` fails; `build` onward skipped        | Section 16   |
+| `to_production=true` and set `vars.GHA_ENABLE_PROD` to `true` | `deploy_production` would run (not done here)      | Chapter 13   |
+| Add a leg to the matrix                                       | one more parallel job in wave 1                    | Chapter 10   |
+| Merge `lint` into `test`                                      | fewer jobs, less parallelism, fewer billed minutes | Section 12   |
 
 We did not set `GHA_ENABLE_PROD` or run the production job in this chapter.
 
@@ -186,11 +190,11 @@ The run summary table is the first thing a reader sees. Job names (`test (3.13)`
 
 Each job rounds up to a whole minute (Chapter 18). From the measured durations in Section 6 (private repository, Linux at $0.006 per minute):
 
-| Run | Jobs with runner time | Billed minutes | Cost |
-| --- | --- | --- | --- |
-| Green (`37338733951`) | 8 | 8 | **$0.048** |
-| Red (`37338751943`) | 5 | 5 | **$0.030** |
-| Green as **one job** (121 s total) | 1 | 3 | $0.018 |
+| Run                                | Jobs with runner time | Billed minutes | Cost       |
+| ---------------------------------- | --------------------- | -------------- | ---------- |
+| Green (`37338733951`)              | 8                     | 8              | **$0.048** |
+| Red (`37338751943`)                | 5                     | 5              | **$0.030** |
+| Green as **one job** (121 s total) | 1                     | 3              | $0.018     |
 
 The seconds are the API's `started_at` to `completed_at` per job, so GitHub's own bill could differ by a few seconds. **What to notice:** splitting into jobs bought parallelism and clear gates and cost 8 minutes against 3. That is a fair price for a pipeline that wants gates; it is a poor price for one that does not. On a public repository, standard runners are free.
 
@@ -200,12 +204,12 @@ A pipeline like this one is copied into five repositories. In one copy, someone 
 
 ## 14. Comparison: Pipeline Designs
 
-| Design | Setup Effort | Control | Failure Visibility | Security Exposure | Maintenance Burden |
-| --- | --- | --- | --- | --- | --- |
-| One job, many steps | Minimal | Low - no parallelism, no gates | Fair - one log | Higher - all steps share one token | Low |
-| One job per stage (this chapter) | Moderate | High - gates and per-job permissions | Excellent - per-stage results | Low - least privilege per job | Moderate |
-| Reusable workflow per stage (Chapter 20) | Higher | High - shared, versioned | Good - names include the caller | Low if inputs are validated | Lower across repos |
-| Matrix everything | Moderate | High | Fair - many legs to read | Low | Moderate - cost grows with legs |
+| Design                                   | Setup Effort | Control                              | Failure Visibility              | Security Exposure                  | Maintenance Burden              |
+| ---------------------------------------- | ------------ | ------------------------------------ | ------------------------------- | ---------------------------------- | ------------------------------- |
+| One job, many steps                      | Minimal      | Low - no parallelism, no gates       | Fair - one log                  | Higher - all steps share one token | Low                             |
+| One job per stage (this chapter)         | Moderate     | High - gates and per-job permissions | Excellent - per-stage results   | Low - least privilege per job      | Moderate                        |
+| Reusable workflow per stage (Chapter 20) | Higher       | High - shared, versioned             | Good - names include the caller | Low if inputs are validated        | Lower across repos              |
+| Matrix everything                        | Moderate     | High                                 | Fair - many legs to read        | Low                                | Moderate - cost grows with legs |
 
 ## 15. Practical Tips
 
@@ -221,12 +225,12 @@ A pipeline like this one is copied into five repositories. In one copy, someone 
 
 **Failure 1: the broken leg (observed).** Run 37338751943 with `break_tests=true`:
 
-| Job | Result |
-| --- | --- |
-| `lint`, `test (3.11)`, `test (3.12)` | success |
-| `test (3.13)` | **failure** |
-| `build`, `verify`, `deploy_staging`, `deploy_production` | **skipped** |
-| `summary` | success; reported `test=failure build=skipped verify=skipped staging=skipped production=skipped` |
+| Job                                                      | Result                                                                                           |
+| -------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| `lint`, `test (3.11)`, `test (3.12)`                     | success                                                                                          |
+| `test (3.13)`                                            | **failure**                                                                                      |
+| `build`, `verify`, `deploy_staging`, `deploy_production` | **skipped**                                                                                      |
+| `summary`                                                | success; reported `test=failure build=skipped verify=skipped staging=skipped production=skipped` |
 
 `fail-fast: false` let the other legs finish, so the report shows exactly which leg broke. The run's overall conclusion is **failure** even though the `summary` job succeeded: the run is as red as its worst required job.
 
@@ -272,7 +276,7 @@ All verified 2026-10.
 - GitHub Docs, [Using artifact attestations](https://docs.github.com/en/actions/security-for-github-actions/using-artifact-attestations/using-artifact-attestations-to-establish-provenance-for-builds)
 - GitHub Docs, [Actions billing](https://docs.github.com/en/billing/managing-billing-for-your-products/managing-billing-for-github-actions/about-billing-for-github-actions)
 - GitHub Docs, [Expressions: status check functions](https://docs.github.com/en/actions/reference/workflows-and-actions/expressions)
-- Laster, *Learning GitHub Actions* (O'Reilly), the whole book
+- Laster, _Learning GitHub Actions_ (O'Reilly), the whole book
 
 ## 20. Appendix A: Code Index
 

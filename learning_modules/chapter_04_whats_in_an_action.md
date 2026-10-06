@@ -42,30 +42,34 @@
 
 ## Table of Contents
 
-<!-- TOC -->
-- [1. What `uses:` Does](#1-what-uses-does)
-- [2. Running Example: Five Forms in One Job](#2-running-example-five-forms-in-one-job)
-- [3. The Five Forms of `uses:`](#3-the-five-forms-of-uses)
-- [4. What Is Inside an Action](#4-what-is-inside-an-action)
-- [5. The Three Action Types](#5-the-three-action-types)
-- [6. Worked Trace: How a Tag Becomes a Commit](#6-worked-trace-how-a-tag-becomes-a-commit)
-- [7. Versions: Tags, Floating Majors and SHAs](#7-versions-tags-floating-majors-and-shas)
-- [8. Runtimes Expire: The Node 20 Story](#8-runtimes-expire-the-node-20-story)
-- [9. Judging an Action from the Marketplace](#9-judging-an-action-from-the-marketplace)
-- [10. Pre, Main and Post Steps](#10-pre-main-and-post-steps)
-- [11. Inputs, Defaults and the `INPUT_` Convention](#11-inputs-defaults-and-the-input_-convention)
-- [12. `action.yml` Versus `action.yaml` and Subpaths](#12-actionyml-versus-actionyaml-and-subpaths)
-- [13. Case Study: The Copy-Paste Pin](#13-case-study-the-copy-paste-pin)
-- [14. Comparison: Reference Styles](#14-comparison-reference-styles)
-- [15. Practical Tips](#15-practical-tips)
-- [16. Demonstrated Failure Modes](#16-demonstrated-failure-modes)
-- [17. Key Takeaways](#17-key-takeaways)
-- [18. Exercises](#18-exercises)
-- [19. Additional Resources](#19-additional-resources)
-- [20. Appendix A: Code Index](#20-appendix-a-code-index)
-   - [A.1 Audit which commit each action ran](#a1-audit-which-commit-each-action-ran)
-   - [A.2 Classify a reference](#a2-classify-a-reference)
-<!-- /TOC -->
+<!-- toc-start -->
+
+- [Chapter 04: What's in an Action: uses, Marketplace, Versioning](#chapter-04-whats-in-an-action-uses-marketplace-versioning)
+  - [Beginner's Guide](#beginners-guide)
+  - [What You'll Learn](#what-youll-learn)
+  - [Table of Contents](#table-of-contents)
+  - [1. What `uses:` Does](#1-what-uses-does)
+  - [2. Running Example: Five Forms in One Job](#2-running-example-five-forms-in-one-job)
+  - [3. The Five Forms of `uses:`](#3-the-five-forms-of-uses)
+  - [4. What Is Inside an Action](#4-what-is-inside-an-action)
+  - [5. The Three Action Types](#5-the-three-action-types)
+  - [6. Worked Trace: How a Tag Becomes a Commit](#6-worked-trace-how-a-tag-becomes-a-commit)
+  - [7. Versions: Tags, Floating Majors and SHAs](#7-versions-tags-floating-majors-and-shas)
+  - [8. Runtimes Expire: The Node 20 Story](#8-runtimes-expire-the-node-20-story)
+  - [9. Judging an Action from the Marketplace](#9-judging-an-action-from-the-marketplace)
+  - [10. Pre, Main and Post Steps](#10-pre-main-and-post-steps)
+  - [11. Inputs, Defaults and the `INPUT_` Convention](#11-inputs-defaults-and-the-input_-convention)
+  - [12. `action.yml` Versus `action.yaml` and Subpaths](#12-actionyml-versus-actionyaml-and-subpaths)
+  - [13. Case Study: The Copy-Paste Pin](#13-case-study-the-copy-paste-pin)
+  - [14. Comparison: Reference Styles](#14-comparison-reference-styles)
+  - [15. Practical Tips](#15-practical-tips)
+  - [16. Demonstrated Failure Modes](#16-demonstrated-failure-modes)
+  - [17. Key Takeaways](#17-key-takeaways)
+  - [18. Exercises](#18-exercises)
+  - [19. Additional Resources](#19-additional-resources)
+  - [20. Appendix A: Code Index](#20-appendix-a-code-index)
+    - [A.1 Audit which commit each action ran](#a1-audit-which-commit-each-action-ran)
+    - [A.2 Classify a reference](#a2-classify-a-reference)
 
 ---
 
@@ -89,13 +93,13 @@ steps:
 
 ## 3. The Five Forms of `uses:`
 
-| Form | Example | Points at | Mutable? |
-| --- | --- | --- | --- |
-| Tag | `actions/checkout@v7` | A tag in the action's repo | Yes: maintainer can move it |
-| Branch | `actions/checkout@main` | A branch tip | Yes: changes every commit |
-| SHA | `actions/checkout@3d3c42e...` | One exact commit | **No** |
-| Local path | `./.github/actions/tally-greet` | A folder in **your** repo, at the run's commit | Moves with your commits |
-| Docker | `docker://alpine:3.20` | A container image | By tag, yes |
+| Form       | Example                         | Points at                                      | Mutable?                    |
+| ---------- | ------------------------------- | ---------------------------------------------- | --------------------------- |
+| Tag        | `actions/checkout@v7`           | A tag in the action's repo                     | Yes: maintainer can move it |
+| Branch     | `actions/checkout@main`         | A branch tip                                   | Yes: changes every commit   |
+| SHA        | `actions/checkout@3d3c42e...`   | One exact commit                               | **No**                      |
+| Local path | `./.github/actions/tally-greet` | A folder in **your** repo, at the run's commit | Moves with your commits     |
+| Docker     | `docker://alpine:3.20`          | A container image                              | By tag, yes                 |
 
 The general shape for a remote action is `owner/repo[/subpath]@ref`. A `subpath` lets one repo hold many actions (`owner/repo/path/to/action@ref`).
 
@@ -110,22 +114,26 @@ name: Tally greet
 inputs:
   who: { description: Name to greet, required: false, default: world }
 outputs:
-  message: { description: The greeting produced, value: '${{ steps.say.outputs.message }}' }
+  message:
+    {
+      description: The greeting produced,
+      value: "${{ steps.say.outputs.message }}",
+    }
 runs:
   using: composite
   steps:
     - id: say
       shell: bash
-      env: { WHO: '${{ inputs.who }}' }
+      env: { WHO: "${{ inputs.who }}" }
       run: echo "message=hello, $WHO" >> "$GITHUB_OUTPUT"
 ```
 
-| Metadata key | Meaning | In `tally-greet` |
-| --- | --- | --- |
-| `name` / `description` | Human labels | `Tally greet` |
-| `inputs` | Values the caller sets with `with:` | `who`, default `world` |
-| `outputs` | Values later steps can read | `message` |
-| `runs.using` | The runtime | `composite` |
+| Metadata key           | Meaning                             | In `tally-greet`       |
+| ---------------------- | ----------------------------------- | ---------------------- |
+| `name` / `description` | Human labels                        | `Tally greet`          |
+| `inputs`               | Values the caller sets with `with:` | `who`, default `world` |
+| `outputs`              | Values later steps can read         | `message`              |
+| `runs.using`           | The runtime                         | `composite`            |
 
 **State before / after the call.** Before: the caller passes `with: { who: Tally }`. During: the composite step receives `WHO=Tally` and writes `message=hello, Tally` to the special file `$GITHUB_OUTPUT`. After: step 5 reads `steps.greet.outputs.message` and prints `composite said hello, Tally`.
 
@@ -133,11 +141,11 @@ Note that the input is passed through an environment variable (`WHO`) instead of
 
 ## 5. The Three Action Types
 
-| Type | `runs.using` | Runs as | Example here |
-| --- | --- | --- | --- |
-| JavaScript | `node24` (or `node20`) | Node.js on the runner | `actions/checkout@v7` |
-| Composite | `composite` | A list of steps, like a mini-workflow | `./.github/actions/tally-greet` |
-| Docker | `docker` | A container built or pulled for the step | `docker://alpine:3.20` |
+| Type       | `runs.using`           | Runs as                                  | Example here                    |
+| ---------- | ---------------------- | ---------------------------------------- | ------------------------------- |
+| JavaScript | `node24` (or `node20`) | Node.js on the runner                    | `actions/checkout@v7`           |
+| Composite  | `composite`            | A list of steps, like a mini-workflow    | `./.github/actions/tally-greet` |
+| Docker     | `docker`               | A container built or pulled for the step | `docker://alpine:3.20`          |
 
 We verified the JavaScript runtime declarations by reading each version's `action.yml` (fixture `action_tags_2026_10.json`): `checkout@v4` declares `node20`; `checkout@v6` and `@v7` declare `node24`; `setup-python@v5` declares `node20`, `@v7` declares `node24`.
 
@@ -164,13 +172,13 @@ Download action repository 'actions/checkout@3d3c42e5aac5ba805825da76410c181273b
 
 Maintainers usually publish an exact version tag (`v7.0.1`) **and** move a floating major tag (`v7`) to follow the latest release. Real data for `actions/checkout`, verified 2026-10-05:
 
-| Tag | Resolves to commit | Note |
-| --- | --- | --- |
-| `v4` | `11d5960a3267` | declares `node20` |
-| `v5` | `fbc6f3992d24` | |
-| `v6` | `d23441a48e51` | same as release `v6.1.0` |
-| `v7` | `3d3c42e5aac5` | same as release `v7.0.1` (latest) |
-| `v7.0.0` | `9c091bb21b7c` | an older point release; **not** what `v7` points to now |
+| Tag      | Resolves to commit | Note                                                    |
+| -------- | ------------------ | ------------------------------------------------------- |
+| `v4`     | `11d5960a3267`     | declares `node20`                                       |
+| `v5`     | `fbc6f3992d24`     |                                                         |
+| `v6`     | `d23441a48e51`     | same as release `v6.1.0`                                |
+| `v7`     | `3d3c42e5aac5`     | same as release `v7.0.1` (latest)                       |
+| `v7.0.0` | `9c091bb21b7c`     | an older point release; **not** what `v7` points to now |
 
 **What to notice:**
 
@@ -190,24 +198,24 @@ Today's date is after both. Yet our Chapter 03 runs, which used `checkout@v4` an
 
 The Marketplace is a search page over public actions. A listing is not a vetting. Before you adopt one, check:
 
-| Check | Where | Healthy sign |
-| --- | --- | --- |
-| Who maintains it | The repo owner | A first-party org, or a maintainer you can name |
-| Last release | Releases page | Recent, with a changelog |
-| Runtime | `action.yml` `runs.using` | `node24` today, not `node20` or older |
-| Permissions it needs | README | Needs nothing your job does not already have |
-| Reference style offered | README | Documents exact versions or SHAs |
-| Could `run:` do it? | You | If a one-line command does the same job, skip the action |
+| Check                   | Where                     | Healthy sign                                             |
+| ----------------------- | ------------------------- | -------------------------------------------------------- |
+| Who maintains it        | The repo owner            | A first-party org, or a maintainer you can name          |
+| Last release            | Releases page             | Recent, with a changelog                                 |
+| Runtime                 | `action.yml` `runs.using` | `node24` today, not `node20` or older                    |
+| Permissions it needs    | README                    | Needs nothing your job does not already have             |
+| Reference style offered | README                    | Documents exact versions or SHAs                         |
+| Could `run:` do it?     | You                       | If a one-line command does the same job, skip the action |
 
 ## 10. Pre, Main and Post Steps
 
 Some actions register cleanup. In run 37312325910 the step list ends:
 
-| Step | Name |
-| --- | --- |
-| 13 | Post 2. Full-SHA reference (immutable) |
-| 14 | Post 1. Tag reference (movable major) |
-| 15 | Complete job |
+| Step | Name                                   |
+| ---- | -------------------------------------- |
+| 13   | Post 2. Full-SHA reference (immutable) |
+| 14   | Post 1. Tag reference (movable major)  |
+| 15   | Complete job                           |
 
 **What to notice:** the **post** steps run in **reverse order** of the main steps (2 before 1), like stack unwinding. The numbers jump (7 to 13) because GitHub reserves slots for each action's pre/post hooks; do not depend on step numbers, depend on names.
 
@@ -229,12 +237,12 @@ A tutorial from 2023 shows `actions/checkout@v3`. A team copies it into 40 repos
 
 ## 14. Comparison: Reference Styles
 
-| Style | Setup Effort | Control | Failure Visibility | Security Exposure | Maintenance Burden |
-| --- | --- | --- | --- | --- | --- |
-| Floating major (`@v7`) | Minimal - copy one line | Weak - maintainer moves it | Fair - log shows SHA | Moderate - trusts maintainer | Low - fixes arrive free |
-| Exact version (`@v7.0.1`) | Minimal - one line | Moderate - fixed until you bump | Fair - tag could still move | Moderate - tag is mutable | Moderate - manual bumps |
-| Full SHA | Low - look up the SHA | Excellent - immutable | Strong - exact commit named | Low - cannot be swapped | Moderate - needs a bot |
-| Branch (`@main`) | Minimal - one line | Weak - changes every push | Weak - unpredictable | High - any commit runs | Low - but surprising |
+| Style                     | Setup Effort            | Control                         | Failure Visibility          | Security Exposure            | Maintenance Burden      |
+| ------------------------- | ----------------------- | ------------------------------- | --------------------------- | ---------------------------- | ----------------------- |
+| Floating major (`@v7`)    | Minimal - copy one line | Weak - maintainer moves it      | Fair - log shows SHA        | Moderate - trusts maintainer | Low - fixes arrive free |
+| Exact version (`@v7.0.1`) | Minimal - one line      | Moderate - fixed until you bump | Fair - tag could still move | Moderate - tag is mutable    | Moderate - manual bumps |
+| Full SHA                  | Low - look up the SHA   | Excellent - immutable           | Strong - exact commit named | Low - cannot be swapped      | Moderate - needs a bot  |
+| Branch (`@main`)          | Minimal - one line      | Weak - changes every push       | Weak - unpredictable        | High - any commit runs       | Low - but surprising    |
 
 ## 15. Practical Tips
 
@@ -249,10 +257,10 @@ A tutorial from 2023 shows `actions/checkout@v3`. A team copies it into 40 repos
 
 **Failure 1: the tag that does not exist.** We referenced `astral-sh/setup-uv@v10` (the repo's latest release is `v10.2.0`). Real run **37312465693**:
 
-| Step | Result |
-| --- | --- |
-| 1 Set up job | **failure** |
-| every later step | never ran |
+| Step             | Result      |
+| ---------------- | ----------- |
+| 1 Set up job     | **failure** |
+| every later step | never ran   |
 
 ```
 ##[error]Unable to resolve action `astral-sh/setup-uv@v10`, unable to find version `v10`
@@ -300,7 +308,7 @@ All verified 2026-10.
 - GitHub changelog: Deprecation of Node 20 on GitHub Actions runners - https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
 - actions/checkout releases - https://github.com/actions/checkout/releases
 - Live evidence: runs 37312325910 (five forms) and 37312465693 (unresolvable tag) in this repo
-- Laster, *Learning GitHub Actions* (O'Reilly), Chapter 3
+- Laster, _Learning GitHub Actions_ (O'Reilly), Chapter 3
 
 ## 20. Appendix A: Code Index
 

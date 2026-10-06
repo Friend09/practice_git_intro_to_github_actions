@@ -43,39 +43,43 @@
 
 ## Table of Contents
 
-<!-- TOC -->
-- [1. Three Budgets](#1-three-budgets)
-- [2. Running Example: The Course's Own Bill](#2-running-example-the-courses-own-bill)
-- [3. The Bill Model](#3-the-bill-model)
-- [4. What the Course Would Have Cost](#4-what-the-course-would-have-cost)
-- [5. The Biggest Lever: Fewer, Longer Jobs](#5-the-biggest-lever-fewer-longer-jobs)
-- [6. Where Time Goes: Queue Latency](#6-where-time-goes-queue-latency)
-- [7. A Performance Experiment That Surprised Us](#7-a-performance-experiment-that-surprised-us)
-- [8. The Limits That Matter](#8-the-limits-that-matter)
-- [9. Cost Levers, Ranked by Evidence](#9-cost-levers-ranked-by-evidence)
-- [10. Larger Runners and Self-Hosting](#10-larger-runners-and-self-hosting)
-- [11. Scheduled Workflows](#11-scheduled-workflows)
-- [12. Spending Controls](#12-spending-controls)
-- [13. Case Study: The Five-Minute Heartbeat](#13-case-study-the-five-minute-heartbeat)
-- [14. Comparison: Ways to Spend Less](#14-comparison-ways-to-spend-less)
-- [15. Practical Tips](#15-practical-tips)
-- [16. Demonstrated Failure Modes](#16-demonstrated-failure-modes)
-- [17. Key Takeaways](#17-key-takeaways)
-- [18. Exercises](#18-exercises)
-- [19. Additional Resources](#19-additional-resources)
-- [20. Appendix A: Code Index](#20-appendix-a-code-index)
-   - [A.1 Price a job history and the merge what-if](#a1-price-a-job-history-and-the-merge-what-if)
-<!-- /TOC -->
+<!-- toc-start -->
+
+- [Chapter 18: Cost, Performance and Limits](#chapter-18-cost-performance-and-limits)
+  - [Beginner's Guide](#beginners-guide)
+  - [What You'll Learn](#what-youll-learn)
+  - [Table of Contents](#table-of-contents)
+  - [1. Three Budgets](#1-three-budgets)
+  - [2. Running Example: The Course's Own Bill](#2-running-example-the-courses-own-bill)
+  - [3. The Bill Model](#3-the-bill-model)
+  - [4. What the Course Would Have Cost](#4-what-the-course-would-have-cost)
+  - [5. The Biggest Lever: Fewer, Longer Jobs](#5-the-biggest-lever-fewer-longer-jobs)
+  - [6. Where Time Goes: Queue Latency](#6-where-time-goes-queue-latency)
+  - [7. A Performance Experiment That Surprised Us](#7-a-performance-experiment-that-surprised-us)
+  - [8. The Limits That Matter](#8-the-limits-that-matter)
+  - [9. Cost Levers, Ranked by Evidence](#9-cost-levers-ranked-by-evidence)
+  - [10. Larger Runners and Self-Hosting](#10-larger-runners-and-self-hosting)
+  - [11. Scheduled Workflows](#11-scheduled-workflows)
+  - [12. Spending Controls](#12-spending-controls)
+  - [13. Case Study: The Five-Minute Heartbeat](#13-case-study-the-five-minute-heartbeat)
+  - [14. Comparison: Ways to Spend Less](#14-comparison-ways-to-spend-less)
+  - [15. Practical Tips](#15-practical-tips)
+  - [16. Demonstrated Failure Modes](#16-demonstrated-failure-modes)
+  - [17. Key Takeaways](#17-key-takeaways)
+  - [18. Exercises](#18-exercises)
+  - [19. Additional Resources](#19-additional-resources)
+  - [20. Appendix A: Code Index](#20-appendix-a-code-index)
+    - [A.1 Price a job history and the merge what-if](#a1-price-a-job-history-and-the-merge-what-if)
 
 ---
 
 ## 1. Three Budgets
 
-| Budget | Measured in | You pay with |
-| --- | --- | --- |
-| Money | billed minutes x rate | the invoice, past the free allowance |
-| Time | wall-clock seconds | developer waiting |
-| Limits | job length, matrix size, concurrency, storage | hard stops |
+| Budget | Measured in                                   | You pay with                         |
+| ------ | --------------------------------------------- | ------------------------------------ |
+| Money  | billed minutes x rate                         | the invoice, past the free allowance |
+| Time   | wall-clock seconds                            | developer waiting                    |
+| Limits | job length, matrix size, concurrency, storage | hard stops                           |
 
 This chapter treats each as a number to measure.
 
@@ -97,14 +101,14 @@ In plain English: for each job that actually ran, round its seconds up to whole 
 
 Pricing all 337 jobs that ran:
 
-| Measure | Value |
-| --- | --- |
-| Jobs that ran | 337 |
-| Time actually used | **6,357 seconds** (106 minutes) |
-| Billed minutes | **390** |
-| **Billed / used** | **3.68x** |
-| Cost on a private repo | **2,400 mills = $2.40** |
-| Share of the Free plan's 2,000 monthly minutes | 19.5% |
+| Measure                                        | Value                           |
+| ---------------------------------------------- | ------------------------------- |
+| Jobs that ran                                  | 337                             |
+| Time actually used                             | **6,357 seconds** (106 minutes) |
+| Billed minutes                                 | **390**                         |
+| **Billed / used**                              | **3.68x**                       |
+| Cost on a private repo                         | **2,400 mills = $2.40**         |
+| Share of the Free plan's 2,000 monthly minutes | 19.5%                           |
 
 **What to notice:**
 
@@ -114,13 +118,13 @@ Pricing all 337 jobs that ran:
 
 Where the minutes went, by workflow (top rows):
 
-| Workflow | Jobs | Billed minutes | Mills |
-| --- | --- | --- | --- |
-| `ch11-python-ci.yml` | 90 | 90 | 540 |
-| `ci.yml` | 57 | 57 | 342 |
-| `ch09-output-limits.yml` | 4 | **39** | **234** |
-| `ch03-tally-ci.yml` | 18 | 18 | 108 |
-| `ch07-expressions.yml` | 16 | 16 | 96 |
+| Workflow                 | Jobs | Billed minutes | Mills   |
+| ------------------------ | ---- | -------------- | ------- |
+| `ch11-python-ci.yml`     | 90   | 90             | 540     |
+| `ci.yml`                 | 57   | 57             | 342     |
+| `ch09-output-limits.yml` | 4    | **39**         | **234** |
+| `ch03-tally-ci.yml`      | 18   | 18             | 108     |
+| `ch07-expressions.yml`   | 16   | 16             | 96      |
 
 **Outliers.** `ch09-output-limits.yml` has only **4 jobs** yet billed **39 minutes (10% of the whole bill)** because of the slow-completing oversized-output probes of Chapter 09: its two failing jobs ran **787 and 784 seconds**. Four jobs out of 337 produced a tenth of the cost. And the only macOS job (5 seconds) cost **62 mills, 2.6% of the total on its own** (Chapter 05). Both are "look at the top of the list" findings, which is what Section 12 of Chapter 17's monitoring approach is for.
 
@@ -128,11 +132,11 @@ Where the minutes went, by workflow (top rows):
 
 Chapter 01 showed the rounding penalty on one workflow. Now measure it on all of history. For every run, group its jobs by OS and bill the **sum of their seconds** once, as if each run's same-OS jobs were merged into one:
 
-| Layout | Cost (mills) |
-| --- | --- |
-| As it ran (one bill per job) | **2,400** |
-| Same-OS jobs of each run merged into one job | **1,500** |
-| **Saving** | **900 mills, 38%** |
+| Layout                                       | Cost (mills)       |
+| -------------------------------------------- | ------------------ |
+| As it ran (one bill per job)                 | **2,400**          |
+| Same-OS jobs of each run merged into one job | **1,500**          |
+| **Saving**                                   | **900 mills, 38%** |
 
 Only 52 of the 173 runs had more than one job, so the saving comes from a minority of runs, but it is large: **merging small jobs would have cut the bill by more than a third**.
 
@@ -142,38 +146,38 @@ Only 52 of the 173 runs had more than one job, so the saving comes from a minori
 
 For each job that ran we computed `started_at - created_at`, the time between the run being created and a runner starting the job:
 
-| Statistic | Seconds |
-| --- | --- |
-| Median | **3** |
-| 90th percentile | **4** |
-| Maximum | **72** |
-| Jobs measured | 337 |
+| Statistic       | Seconds |
+| --------------- | ------- |
+| Median          | **3**   |
+| 90th percentile | **4**   |
+| Maximum         | **72**  |
+| Jobs measured   | 337     |
 
 **What to notice:** a typical job waits **3 seconds** to start, so for our tiny jobs the platform overhead (queue, "Set up job", "Complete job") is a large share of wall-clock time. The 72-second maximum is a reminder that queue time has a tail you cannot control (we did not investigate its cause). In our single macOS run (Chapter 05) the job began about 6 seconds after the Linux jobs of the same run, so expect other platforms to differ. **You cannot tune queue time; you can only avoid doing work that multiplies it** (more jobs means more waits).
 
 ## 7. A Performance Experiment That Surprised Us
 
-Chapter 11 measured a pip cache on a 3-second install and found it saved a second. The skeptic's reply: "try a *heavy* install." We did. `sandbox/ch18/requirements.txt` is PyTorch (CPU), NumPy, pandas, scikit-learn and Matplotlib: **1,329 MB of site-packages, a 301 MB pip cache**.
+Chapter 11 measured a pip cache on a 3-second install and found it saved a second. The skeptic's reply: "try a _heavy_ install." We did. `sandbox/ch18/requirements.txt` is PyTorch (CPU), NumPy, pandas, scikit-learn and Matplotlib: **1,329 MB of site-packages, a 301 MB pip cache**.
 
 **Experiment A: pip, with `setup-python` caching** (runs on `ubuntu-latest`, same job each time):
 
-| Run | Cache | `pip install` | Notes |
-| --- | --- | --- | --- |
-| 37330675284 | none | **49 s** | job 54 s |
-| 37330856258 | miss, saved 302 MiB | **44 s** | restored an unrelated **14 MB stale cache** via a restore key |
-| 37331043640 | **exact hit**, 303 MB restored | **43 s** | job 50 s |
+| Run         | Cache                          | `pip install` | Notes                                                         |
+| ----------- | ------------------------------ | ------------- | ------------------------------------------------------------- |
+| 37330675284 | none                           | **49 s**      | job 54 s                                                      |
+| 37330856258 | miss, saved 302 MiB            | **44 s**      | restored an unrelated **14 MB stale cache** via a restore key |
+| 37331043640 | **exact hit**, 303 MB restored | **43 s**      | job 50 s                                                      |
 
-**It barely helped: 49 s to 43 s.** The cache restored 303 MB at about **230 MB/s (roughly 2 seconds)**, yet `pip install` still took 43 seconds. Downloading the wheels from PyPI was fast; the time is in **installing 1.3 GB of files** (unpacking and writing them). Caching the *download* did not touch that cost.
+**It barely helped: 49 s to 43 s.** The cache restored 303 MB at about **230 MB/s (roughly 2 seconds)**, yet `pip install` still took 43 seconds. Downloading the wheels from PyPI was fast; the time is in **installing 1.3 GB of files** (unpacking and writing them). Caching the _download_ did not touch that cost.
 
 **A subtlety.** The "miss" run did not start cold: its log said `Cache hit for restore-key: setup-python-...-pip-08e32bcf...`. `setup-python` tries **prefix keys**, and found Chapter 11's cache (a different dependency file, 14 MB) and restored that. It is not an exact hit, so it saved nothing here, but be aware that a restore-key hit can load **stale, unrelated** content.
 
 **Experiment B: `uv`, the same requirements file:**
 
-| Run | uv cache | `uv pip install` | `Set up uv` | Post (save) | Job total |
-| --- | --- | --- | --- | --- | --- |
-| 37331343049 | off | **3 s** | 1 s | 0 s | **9 s** |
-| 37331411088 | on, miss | 4 s | 1 s | **6 s** | 16 s |
-| 37331557757 | on, **hit** (248 MB) | **1 s** | **5 s** | 0 s | 13 s |
+| Run         | uv cache             | `uv pip install` | `Set up uv` | Post (save) | Job total |
+| ----------- | -------------------- | ---------------- | ----------- | ----------- | --------- |
+| 37331343049 | off                  | **3 s**          | 1 s         | 0 s         | **9 s**   |
+| 37331411088 | on, miss             | 4 s              | 1 s         | **6 s**     | 16 s      |
+| 37331557757 | on, **hit** (248 MB) | **1 s**          | **5 s**     | 0 s         | 13 s      |
 
 **What to notice:**
 
@@ -187,36 +191,36 @@ Chapter 11 measured a pip cache on a 3-second install and found it saved a secon
 
 Verified against GitHub Docs on 2026-10-05 (the limits page and billing page), with the Chapter where each appears:
 
-| Limit | Value | Chapter |
-| --- | --- | --- |
-| Job runtime on a hosted runner | **6 hours** | 01, 10 |
-| Workflow run runtime | **35 days** | 01 |
-| Jobs from one matrix | **256** | 01, 10 |
-| Concurrent jobs, Free plan | **20** (Pro 40, Team 60, Enterprise 500) | 05 |
-| Concurrent macOS jobs | **5** on Free, Pro, Team; 50 on Enterprise | 05 |
-| Workflow runs queued | **500 per 10 seconds** | here |
-| Self-hosted job queue time | **24 hours** before auto-cancel | 05 |
-| Self-hosted job runtime | **5 days** | 05 |
-| Cache storage | **10 GB per repository** (7 days without access evicts) | 09 |
-| Artifact storage, Free plan | **500 MB** | 09 |
-| Job outputs | **1,048,576 bytes** (measured ~524,288 ASCII chars) | 09 |
-| Step summary | **1 MiB per step** | 17 |
-| Annotations | **10 per level per step** (measured) | 17 |
-| Free minutes, Free plan | **2,000 per month** (Pro/Team 3,000) | 01 |
+| Limit                          | Value                                                   | Chapter |
+| ------------------------------ | ------------------------------------------------------- | ------- |
+| Job runtime on a hosted runner | **6 hours**                                             | 01, 10  |
+| Workflow run runtime           | **35 days**                                             | 01      |
+| Jobs from one matrix           | **256**                                                 | 01, 10  |
+| Concurrent jobs, Free plan     | **20** (Pro 40, Team 60, Enterprise 500)                | 05      |
+| Concurrent macOS jobs          | **5** on Free, Pro, Team; 50 on Enterprise              | 05      |
+| Workflow runs queued           | **500 per 10 seconds**                                  | here    |
+| Self-hosted job queue time     | **24 hours** before auto-cancel                         | 05      |
+| Self-hosted job runtime        | **5 days**                                              | 05      |
+| Cache storage                  | **10 GB per repository** (7 days without access evicts) | 09      |
+| Artifact storage, Free plan    | **500 MB**                                              | 09      |
+| Job outputs                    | **1,048,576 bytes** (measured ~524,288 ASCII chars)     | 09      |
+| Step summary                   | **1 MiB per step**                                      | 17      |
+| Annotations                    | **10 per level per step** (measured)                    | 17      |
+| Free minutes, Free plan        | **2,000 per month** (Pro/Team 3,000)                    | 01      |
 
 **One number we could not reproduce.** The docs say `GITHUB_TOKEN` is limited to **1,000 requests per hour per repository**. In Chapter 15 a job made 1,150 calls with no failure and the response header reported **5,000**. Treat documented numbers as claims to check, especially ones that gate your automation.
 
 ## 9. Cost Levers, Ranked by Evidence
 
-| Lever | Evidence from this repo | Effect |
-| --- | --- | --- |
-| Merge sub-minute jobs | History what-if: 2,400 to 1,500 mills | **-38% cost**, at the price of parallelism |
-| Faster tool, not a cache | pip 43 to 49 s vs uv 3 s | **-45 s wall-clock** per run; bill unchanged here |
-| Do not cache cheap installs | uv cache on: 13 to 16 s vs 9 s off | cache **added** 4 to 7 s |
-| Stop outlier jobs early | 2 probe jobs = 28 billed minutes, 7% of the bill | `timeout-minutes` and an eye on the top-10 list |
-| Keep tag pushes from running CI | 4 of 8 tag-push runs were `paths`-filtered workflows running anyway (Chapter 06) | removes avoidable runs |
-| Use Linux unless you need another OS | one 5 s macOS job = 2.6% of cost | rate is 10x Linux's |
-| Cancel superseded runs | `concurrency` + `cancel-in-progress` (Chapter 10) | not measured here |
+| Lever                                | Evidence from this repo                                                          | Effect                                            |
+| ------------------------------------ | -------------------------------------------------------------------------------- | ------------------------------------------------- |
+| Merge sub-minute jobs                | History what-if: 2,400 to 1,500 mills                                            | **-38% cost**, at the price of parallelism        |
+| Faster tool, not a cache             | pip 43 to 49 s vs uv 3 s                                                         | **-45 s wall-clock** per run; bill unchanged here |
+| Do not cache cheap installs          | uv cache on: 13 to 16 s vs 9 s off                                               | cache **added** 4 to 7 s                          |
+| Stop outlier jobs early              | 2 probe jobs = 28 billed minutes, 7% of the bill                                 | `timeout-minutes` and an eye on the top-10 list   |
+| Keep tag pushes from running CI      | 4 of 8 tag-push runs were `paths`-filtered workflows running anyway (Chapter 06) | removes avoidable runs                            |
+| Use Linux unless you need another OS | one 5 s macOS job = 2.6% of cost                                                 | rate is 10x Linux's                               |
+| Cancel superseded runs               | `concurrency` + `cancel-in-progress` (Chapter 10)                                | not measured here                                 |
 
 ## 10. Larger Runners and Self-Hosting
 
@@ -242,14 +246,14 @@ A team adds `on: schedule: - cron: '*/5 * * * *'` to ping a service, "just in ca
 
 ## 14. Comparison: Ways to Spend Less
 
-| Approach | Setup Effort | Control | Failure Visibility | Security Exposure | Maintenance Burden |
-| --- | --- | --- | --- | --- | --- |
-| Merge sub-minute jobs | Low - restructure YAML | Moderate - lose parallelism | Fair - fewer, coarser checks | Minimal | Low |
-| Faster tooling (uv) | Low - swap one command | Strong | Strong | Low - another tool to pin | Low |
-| Add dependency caching | Low - one input | Weak - may be slower | Fair - extra restore/save steps | Moderate - cache poisoning (Chapter 16) | Moderate - key design |
-| Timeouts and outlier review | Minimal - one line | Strong - caps the damage | Strong - fails loudly | Minimal | Low |
-| Larger runner | Low - choose a label | Moderate | Strong | Low | Low - higher price |
-| Self-hosted runners | High | Excellent | Strong | High | High |
+| Approach                    | Setup Effort           | Control                     | Failure Visibility              | Security Exposure                       | Maintenance Burden    |
+| --------------------------- | ---------------------- | --------------------------- | ------------------------------- | --------------------------------------- | --------------------- |
+| Merge sub-minute jobs       | Low - restructure YAML | Moderate - lose parallelism | Fair - fewer, coarser checks    | Minimal                                 | Low                   |
+| Faster tooling (uv)         | Low - swap one command | Strong                      | Strong                          | Low - another tool to pin               | Low                   |
+| Add dependency caching      | Low - one input        | Weak - may be slower        | Fair - extra restore/save steps | Moderate - cache poisoning (Chapter 16) | Moderate - key design |
+| Timeouts and outlier review | Minimal - one line     | Strong - caps the damage    | Strong - fails loudly           | Minimal                                 | Low                   |
+| Larger runner               | Low - choose a label   | Moderate                    | Strong                          | Low                                     | Low - higher price    |
+| Self-hosted runners         | High                   | Excellent                   | Strong                          | High                                    | High                  |
 
 ## 15. Practical Tips
 
@@ -318,7 +322,7 @@ All verified 2026-10.
 - GitHub REST: Workflow jobs (timestamps and labels) - https://docs.github.com/en/rest/actions/workflow-jobs
 - astral-sh/setup-uv (`enable-cache`) - https://github.com/astral-sh/setup-uv
 - Live evidence: this repository's 178-run history, and runs 37330675284, 37330856258, 37331043640 (pip) and 37331343049, 37331411088, 37331557757 (uv)
-- Laster, *Learning GitHub Actions* (O'Reilly), Chapters 5 and 10
+- Laster, _Learning GitHub Actions_ (O'Reilly), Chapters 5 and 10
 
 ## 20. Appendix A: Code Index
 

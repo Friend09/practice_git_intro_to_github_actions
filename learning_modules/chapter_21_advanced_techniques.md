@@ -13,7 +13,7 @@
 
 ## Beginner's Guide
 
-> ⭐ **Optional deep-dive.** Everything you need for a working pipeline was in Chapters 00-20. This chapter adds three techniques that make workflows *adaptive*. Skip it on a first pass and return when you need one.
+> ⭐ **Optional deep-dive.** Everything you need for a working pipeline was in Chapters 00-20. This chapter adds three techniques that make workflows _adaptive_. Skip it on a first pass and return when you need one.
 
 **Focus on first:** Section 3 (a matrix computed at run time and what happens when the computation is wrong) and Section 5 (a bot that takes commands in comments).
 
@@ -44,30 +44,35 @@
 
 ## Table of Contents
 
-<!-- TOC -->
-- [1. Why Adaptive Workflows](#1-why-adaptive-workflows)
-- [2. Running Example: Three Small Workflows](#2-running-example-three-small-workflows)
-- [3. Dynamic Matrices](#3-dynamic-matrices)
-- [4. `github-script`](#4-github-script)
-- [5. ChatOps: Commands in Comments](#5-chatops-commands-in-comments)
-- [6. Reacting and Replying Safely](#6-reacting-and-replying-safely)
-- [7. Choosing Inputs: `choice`, `boolean`, `string`](#7-choosing-inputs-choice-boolean-string)
-- [8. Matrices from Changed Files](#8-matrices-from-changed-files)
-- [9. Cost Notes](#9-cost-notes)
-- [10. Testing a Plan Locally](#10-testing-a-plan-locally)
-- [11. Observability](#11-observability)
-- [12. Limits](#12-limits)
-- [13. Case Study: The Green Run That Tested Nothing](#13-case-study-the-green-run-that-tested-nothing)
-- [14. Comparison: Adaptive Techniques](#14-comparison-adaptive-techniques)
-- [15. Practical Tips](#15-practical-tips)
-- [16. Demonstrated Failure Modes](#16-demonstrated-failure-modes)
-- [17. Key Takeaways](#17-key-takeaways)
-- [18. Exercises](#18-exercises)
-- [19. Additional Resources](#19-additional-resources)
-- [20. Appendix A: Code Index](#20-appendix-a-code-index)
-   - [A.1 Validate a plan and model the guard](#a1-validate-a-plan-and-model-the-guard)
-   - [A.2 Authorize and parse a ChatOps command](#a2-authorize-and-parse-a-chatops-command)
-<!-- /TOC -->
+<!-- toc-start -->
+
+- [Chapter 21: Advanced Techniques: Dynamic Matrices, github-script, ChatOps](#chapter-21-advanced-techniques-dynamic-matrices-github-script-chatops)
+  - [Beginner's Guide](#beginners-guide)
+  - [What You'll Learn](#what-youll-learn)
+  - [Table of Contents](#table-of-contents)
+  - [1. Why Adaptive Workflows](#1-why-adaptive-workflows)
+  - [2. Running Example: Three Small Workflows](#2-running-example-three-small-workflows)
+  - [3. Dynamic Matrices](#3-dynamic-matrices)
+  - [4. `github-script`](#4-github-script)
+    - [The built-in output called `result`](#the-built-in-output-called-result)
+  - [5. ChatOps: Commands in Comments](#5-chatops-commands-in-comments)
+  - [6. Reacting and Replying Safely](#6-reacting-and-replying-safely)
+  - [7. Choosing Inputs: `choice`, `boolean`, `string`](#7-choosing-inputs-choice-boolean-string)
+  - [8. Matrices from Changed Files](#8-matrices-from-changed-files)
+  - [9. Cost Notes](#9-cost-notes)
+  - [10. Testing a Plan Locally](#10-testing-a-plan-locally)
+  - [11. Observability](#11-observability)
+  - [12. Limits](#12-limits)
+  - [13. Case Study: The Green Run That Tested Nothing](#13-case-study-the-green-run-that-tested-nothing)
+  - [14. Comparison: Adaptive Techniques](#14-comparison-adaptive-techniques)
+  - [15. Practical Tips](#15-practical-tips)
+  - [16. Demonstrated Failure Modes](#16-demonstrated-failure-modes)
+  - [17. Key Takeaways](#17-key-takeaways)
+  - [18. Exercises](#18-exercises)
+  - [19. Additional Resources](#19-additional-resources)
+  - [20. Appendix A: Code Index](#20-appendix-a-code-index)
+    - [A.1 Validate a plan and model the guard](#a1-validate-a-plan-and-model-the-guard)
+    - [A.2 Authorize and parse a ChatOps command](#a2-authorize-and-parse-a-chatops-command)
 
 ---
 
@@ -99,10 +104,10 @@ run:
 
 **The two bad cases**, and the docs' silence on both ("does not specify error handling for invalid JSON"):
 
-| Plan emitted | Run | Jobs that appeared | Message |
-| --- | --- | --- | --- |
-| invalid JSON (`this is not json`) | **failure** (37333707626) | `plan` only | none via `gh` or the API |
-| empty matrix (`{"include":[]}`) | **failure** (37333767896) | `plan` only | none via `gh` or the API |
+| Plan emitted                      | Run                       | Jobs that appeared | Message                  |
+| --------------------------------- | ------------------------- | ------------------ | ------------------------ |
+| invalid JSON (`this is not json`) | **failure** (37333707626) | `plan` only        | none via `gh` or the API |
+| empty matrix (`{"include":[]}`)   | **failure** (37333767896) | `plan` only        | none via `gh` or the API |
 
 In both cases the `run` job **never appears**: the error is raised when GitHub expands the matrix, before any job exists, so there is nothing to attach a log to. (The explanation is only on the run page; we could not retrieve it from the CLI or API, the same limit as Chapters 05, 16 and 20.)
 
@@ -116,11 +121,11 @@ run:
 
 The plan computed `count` with `jq`. For a malformed matrix `jq` fails to parse the document, so `count` is **empty** (not `-1`; see Section 10). Results with the guard:
 
-| Plan emitted | Run job | Run conclusion |
-| --- | --- | --- |
-| valid | 3 legs ran | success (37335428986) |
-| empty | **skipped** | success (37335372099) |
-| invalid | **skipped** | **success** (37335483478) |
+| Plan emitted | Run job     | Run conclusion            |
+| ------------ | ----------- | ------------------------- |
+| valid        | 3 legs ran  | success (37335428986)     |
+| empty        | **skipped** | success (37335372099)     |
+| invalid      | **skipped** | **success** (37335483478) |
 
 **What to notice:** the empty case is now handled cleanly. But the **invalid** case is now **green**. A false `if:` means the matrix expression is never evaluated, so the malformed JSON that used to fail the run now produces a skipped job and a successful run. **A guard converted a loud error into a silent no-op.** A broken planner would now go unnoticed until someone asks why nothing was tested.
 
@@ -150,10 +155,10 @@ Needs `permissions: pull-requests: write` and `issues: write` (a PR comment is a
 
 **Idempotent by design.** We opened a throwaway PR (#6) and watched:
 
-| Event | Run | Output | Comment |
-| --- | --- | --- | --- |
-| PR opened with 1 file | 37334461487 | `action=created files=1` | one comment: `this PR changes 1 file(s): sandbox/ch21/note.txt` |
-| second commit pushed (`synchronize`) | 37334803026 | **`action=updated files=2`** | **still one comment**, now `2 file(s): note.txt, note2.txt` |
+| Event                                | Run         | Output                       | Comment                                                         |
+| ------------------------------------ | ----------- | ---------------------------- | --------------------------------------------------------------- |
+| PR opened with 1 file                | 37334461487 | `action=created files=1`     | one comment: `this PR changes 1 file(s): sandbox/ch21/note.txt` |
+| second commit pushed (`synchronize`) | 37334803026 | **`action=updated files=2`** | **still one comment**, now `2 file(s): note.txt, note2.txt`     |
 
 The hidden **marker** (`<!-- ch21-tally-bot -->`) is how the bot recognizes its own comment. Without it, every push would add another comment.
 
@@ -196,18 +201,18 @@ and, inside a `github-script` step: **react** with 👀 so the user knows it was
 
 We opened a throwaway issue (#7) and posted four comments:
 
-| Comment | Run | Job | Bot reply | Reaction |
-| --- | --- | --- | --- | --- |
-| `/tally ping` | 37334895791 | success | `pong` | 👀 |
-| `/tally echo hello    from   chatops` | 37334907699 | success | `hello from chatops` | 👀 |
-| `/tally nonsense` | 37334914023 | success | `Commands: /tally ping, /tally echo <text>` | 👀 |
-| `just a normal comment, no command` | 37334926790 | **skipped** | none | none |
+| Comment                               | Run         | Job         | Bot reply                                   | Reaction |
+| ------------------------------------- | ----------- | ----------- | ------------------------------------------- | -------- |
+| `/tally ping`                         | 37334895791 | success     | `pong`                                      | 👀       |
+| `/tally echo hello    from   chatops` | 37334907699 | success     | `hello from chatops`                        | 👀       |
+| `/tally nonsense`                     | 37334914023 | success     | `Commands: /tally ping, /tally echo <text>` | 👀       |
+| `just a normal comment, no command`   | 37334926790 | **skipped** | none                                        | none     |
 
 (A fifth run, 37334883686, was **skipped** too: it was my own `gh pr close --comment ...` text on PR #6, a PR comment, which is also an `issue_comment`.)
 
 **What to notice:**
 
-- **Every comment makes a run.** Five runs for five comments, two of them skipped because the job-level `if` was false. A job-level filter cannot stop the *run* being created, so a busy repository fills its Actions list with skipped runs (they are not billed: no runner), and there is no trigger-level filter for comment text.
+- **Every comment makes a run.** Five runs for five comments, two of them skipped because the job-level `if` was false. A job-level filter cannot stop the _run_ being created, so a busy repository fills its Actions list with skipped runs (they are not billed: no runner), and there is no trigger-level filter for comment text.
 - **The bot's three replies started zero runs.** They were created with `GITHUB_TOKEN`, and events from that token start no workflow (Chapter 06). That is what prevents an infinite loop of the bot answering itself.
 - **Whitespace was collapsed**: `hello    from   chatops` became `hello from chatops` (the handler splits on whitespace). Parse commands deliberately.
 - **Authorization uses `author_association`.** My comments carried `OWNER`; the bot's replies carried **`NONE`**. The handler allows only `OWNER`, `MEMBER` and `COLLABORATOR`. We had one account, so the **denial path was not exercised live**; the lab models it. Without this check, **anyone who can comment** could run a command, and in a public repository that is everyone.
@@ -264,13 +269,13 @@ A monorepo's CI plan job computes which packages changed and emits them. A refac
 
 ## 14. Comparison: Adaptive Techniques
 
-| Technique | Setup Effort | Control | Failure Visibility | Security Exposure | Maintenance Burden |
-| --- | --- | --- | --- | --- | --- |
-| Static matrix | Minimal | Moderate - fixed legs | Excellent - every leg named in the file | Low | Low |
-| Dynamic matrix | Moderate - a plan job | Strong - legs follow the repo | Weak - bad plans give a startup error or a silent skip | Low | Moderate - plan is a contract |
-| `github-script` | Low - inline JS | Strong - full REST API | Fair - script errors in the log | Moderate - `script:` is an injection sink; token scope | Moderate - keep scripts small |
-| ChatOps via `issue_comment` | Moderate | Strong - humans trigger on demand | Fair - replies show results | High - untrusted text; needs authorization | Moderate - skipped-run noise |
-| Plain `workflow_dispatch` | Minimal | Moderate - needs UI or CLI | Excellent | Low - write access only | Low |
+| Technique                   | Setup Effort          | Control                           | Failure Visibility                                     | Security Exposure                                      | Maintenance Burden            |
+| --------------------------- | --------------------- | --------------------------------- | ------------------------------------------------------ | ------------------------------------------------------ | ----------------------------- |
+| Static matrix               | Minimal               | Moderate - fixed legs             | Excellent - every leg named in the file                | Low                                                    | Low                           |
+| Dynamic matrix              | Moderate - a plan job | Strong - legs follow the repo     | Weak - bad plans give a startup error or a silent skip | Low                                                    | Moderate - plan is a contract |
+| `github-script`             | Low - inline JS       | Strong - full REST API            | Fair - script errors in the log                        | Moderate - `script:` is an injection sink; token scope | Moderate - keep scripts small |
+| ChatOps via `issue_comment` | Moderate              | Strong - humans trigger on demand | Fair - replies show results                            | High - untrusted text; needs authorization             | Moderate - skipped-run noise  |
+| Plain `workflow_dispatch`   | Minimal               | Moderate - needs UI or CLI        | Excellent                                              | Low - write access only                                | Low                           |
 
 ## 15. Practical Tips
 
@@ -337,7 +342,7 @@ All verified 2026-10.
 - GitHub REST: Issue comments and reactions - https://docs.github.com/en/rest/issues/comments
 - Octokit REST (the client inside `github-script`) - https://octokit.github.io/rest.js/
 - Live evidence: runs 37333637267, 37333707626, 37333767896, 37335428986, 37335372099, 37335483478 (matrix); 37334461487, 37334803026 (PR bot); 37334895791, 37334907699, 37334914023, 37335212282 (ChatOps)
-- Laster, *Learning GitHub Actions* (O'Reilly), Chapter 13
+- Laster, _Learning GitHub Actions_ (O'Reilly), Chapter 13
 
 ## 20. Appendix A: Code Index
 

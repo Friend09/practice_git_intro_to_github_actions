@@ -1,4 +1,4 @@
-"""Fill the ``<!-- TOC -->`` block of each chapter from its ``## N.`` headings.
+"""Fill the ``<!-- toc-start -->`` block of each chapter from its ``## N.`` headings.
 
 Usage: ``uv run python scripts/gen_toc.py [chapter_XX ...]``. Anchors use the same
 slug algorithm as ``validate_chapters.py``, so link integrity holds by construction.
@@ -15,7 +15,10 @@ sys.path.insert(0, str(ROOT / "scripts"))
 
 from validate_chapters import github_slug, strip_code_fences  # noqa: E402
 
-TOC_RE = re.compile(r"<!-- TOC -->.*?<!-- /TOC -->", re.S)
+# Marked 2 auto-expands ``<!-- TOC -->`` and duplicates the list, so use toc-start/end.
+# The old markers are still matched so existing chapters migrate on the next run.
+START, END = "<!-- toc-start -->", "<!-- toc-end -->"
+TOC_RE = re.compile(r"<!-- (?:TOC|toc-start) -->.*?<!-- (?:/TOC|toc-end) -->", re.S)
 
 
 def build_toc(text: str) -> str:
@@ -28,7 +31,7 @@ def build_toc(text: str) -> str:
         title = m.group(2).strip()
         indent = "   " if m.group(1) == "###" else ""
         lines.append(f"{indent}- [{title}](#{github_slug(title)})")
-    return "<!-- TOC -->\n" + "\n".join(lines) + "\n<!-- /TOC -->"
+    return f"{START}\n" + "\n".join(lines) + f"\n{END}"
 
 
 def main() -> None:
@@ -38,7 +41,7 @@ def main() -> None:
         if prefixes and not any(path.name.startswith(p) for p in prefixes):
             continue
         text = path.read_text()
-        if "<!-- TOC -->" not in text:
+        if not TOC_RE.search(text):
             continue
         toc = build_toc(text)
         path.write_text(TOC_RE.sub(lambda _m, toc=toc: toc, text))

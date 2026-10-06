@@ -43,30 +43,37 @@
 
 ## Table of Contents
 
-<!-- TOC -->
-- [1. Why This Chapter Exists](#1-why-this-chapter-exists)
-- [2. Meet Tally: The Running Example](#2-meet-tally-the-running-example)
-- [3. YAML in Ten Minutes](#3-yaml-in-ten-minutes)
-- [4. The Two Traps](#4-the-two-traps)
-- [5. Git Refs: The Names Your Workflows See](#5-git-refs-the-names-your-workflows-see)
-- [6. The Event That Starts Everything](#6-the-event-that-starts-everything)
-- [7. CI, Continuous Delivery, Continuous Deployment](#7-ci-continuous-delivery-continuous-deployment)
-- [8. Pipelines, Stages and Artifacts](#8-pipelines-stages-and-artifacts)
-- [9. Where Workflow Files Live](#9-where-workflow-files-live)
-- [10. YAML Anchors and Aliases](#10-yaml-anchors-and-aliases)
-- [11. Multi-Document Files and Comments](#11-multi-document-files-and-comments)
-- [12. Git Plumbing You Can Ignore for Now](#12-git-plumbing-you-can-ignore-for-now)
-- [13. Case Study: A Typo That Looked Fine](#13-case-study-a-typo-that-looked-fine)
-- [14. Comparison: Three Ways to Automate "Run the Tests"](#14-comparison-three-ways-to-automate-run-the-tests)
-- [15. Practical Tips](#15-practical-tips)
-- [16. Demonstrated Failure Modes](#16-demonstrated-failure-modes)
-- [17. Key Takeaways](#17-key-takeaways)
-- [18. Exercises](#18-exercises)
-- [19. Additional Resources](#19-additional-resources)
-- [20. Appendix A: Code Index](#20-appendix-a-code-index)
-   - [A.1 load_workflow and the `on` fix](#a1-load_workflow-and-the-on-fix)
-   - [A.2 Reproduce both traps](#a2-reproduce-both-traps)
-<!-- /TOC -->
+<!-- toc-start -->
+
+- [Chapter 00: Essentials: YAML, Git Refs, CI/CD Vocabulary](#chapter-00-essentials-yaml-git-refs-cicd-vocabulary)
+  - [Beginner's Guide](#beginners-guide)
+  - [What You'll Learn](#what-youll-learn)
+  - [Table of Contents](#table-of-contents)
+  - [1. Why This Chapter Exists](#1-why-this-chapter-exists)
+  - [2. Meet Tally: The Running Example](#2-meet-tally-the-running-example)
+  - [3. YAML in Ten Minutes](#3-yaml-in-ten-minutes)
+    - [Block strings: `|` and `>`](#block-strings--and-)
+  - [4. The Two Traps](#4-the-two-traps)
+    - [Trap 1: `3.10` is the float 3.1](#trap-1-310-is-the-float-31)
+    - [Trap 2: `on` is a boolean](#trap-2-on-is-a-boolean)
+  - [5. Git Refs: The Names Your Workflows See](#5-git-refs-the-names-your-workflows-see)
+  - [6. The Event That Starts Everything](#6-the-event-that-starts-everything)
+  - [7. CI, Continuous Delivery, Continuous Deployment](#7-ci-continuous-delivery-continuous-deployment)
+  - [8. Pipelines, Stages and Artifacts](#8-pipelines-stages-and-artifacts)
+  - [9. Where Workflow Files Live](#9-where-workflow-files-live)
+  - [10. YAML Anchors and Aliases](#10-yaml-anchors-and-aliases)
+  - [11. Multi-Document Files and Comments](#11-multi-document-files-and-comments)
+  - [12. Git Plumbing You Can Ignore for Now](#12-git-plumbing-you-can-ignore-for-now)
+  - [13. Case Study: A Typo That Looked Fine](#13-case-study-a-typo-that-looked-fine)
+  - [14. Comparison: Three Ways to Automate "Run the Tests"](#14-comparison-three-ways-to-automate-run-the-tests)
+  - [15. Practical Tips](#15-practical-tips)
+  - [16. Demonstrated Failure Modes](#16-demonstrated-failure-modes)
+  - [17. Key Takeaways](#17-key-takeaways)
+  - [18. Exercises](#18-exercises)
+  - [19. Additional Resources](#19-additional-resources)
+  - [20. Appendix A: Code Index](#20-appendix-a-code-index)
+    - [A.1 load\_workflow and the `on` fix](#a1-load_workflow-and-the-on-fix)
+    - [A.2 Reproduce both traps](#a2-reproduce-both-traps)
 
 ---
 
@@ -90,10 +97,10 @@ def add(a: int, b: int) -> int:
 
 **Tally's three commits** (we use these SHAs throughout, shortened to 7 characters as GitHub does):
 
-| Commit | Message | Parent |
-| --- | --- | --- |
-| `a1b2c3d` | Add add() | none |
-| `e4f5a6b` | Add tests | `a1b2c3d` |
+| Commit    | Message            | Parent    |
+| --------- | ------------------ | --------- |
+| `a1b2c3d` | Add add()          | none      |
+| `e4f5a6b` | Add tests          | `a1b2c3d` |
 | `9c8d7e6` | Add first workflow | `e4f5a6b` |
 
 ## 3. YAML in Ten Minutes
@@ -121,14 +128,14 @@ jobs:
 
 **How to read it, line by line:**
 
-| Line | YAML meaning | Parsed Python value |
-| --- | --- | --- |
-| `name: CI` | map entry, string value | `"name": "CI"` |
-| `on: push` | map entry (see Section 4!) | `True: "push"` |
-| `jobs:` | map whose value is a nested map | `"jobs": {...}` |
-| `steps:` | key whose value is a list | `[{...}, {...}]` |
+| Line          | YAML meaning                       | Parsed Python value               |
+| ------------- | ---------------------------------- | --------------------------------- |
+| `name: CI`    | map entry, string value            | `"name": "CI"`                    |
+| `on: push`    | map entry (see Section 4!)         | `True: "push"`                    |
+| `jobs:`       | map whose value is a nested map    | `"jobs": {...}`                   |
+| `steps:`      | key whose value is a list          | `[{...}, {...}]`                  |
 | `- uses: ...` | one list item that is itself a map | `{"uses": "actions/checkout@v4"}` |
-| `- run: ...` | the second list item | `{"run": "python -m pytest"}` |
+| `- run: ...`  | the second list item               | `{"run": "python -m pytest"}`     |
 
 **Worked trace: parse it.** Before: the text above, as a string. Command: `yaml.safe_load(text)`. After:
 
@@ -169,11 +176,11 @@ Both traps are silent: the YAML is valid, the parse succeeds, and the result is 
 State the parse results before you run anything:
 
 | YAML text | Parsed type | Parsed value | What `setup-python` receives |
-| --- | --- | --- | --- |
-| `3.9` | float | `3.9` | `3.9` (works by luck) |
-| `3.10` | float | `3.1` | `3.1`: **wrong version** |
-| `3.11` | float | `3.11` | `3.11` (works) |
-| `'3.10'` | string | `'3.10'` | `3.10` (correct) |
+| --------- | ----------- | ------------ | ---------------------------- |
+| `3.9`     | float       | `3.9`        | `3.9` (works by luck)        |
+| `3.10`    | float       | `3.1`        | `3.1`: **wrong version**     |
+| `3.11`    | float       | `3.11`       | `3.11` (works)               |
+| `'3.10'`  | string      | `'3.10'`     | `3.10` (correct)             |
 
 **What to notice:** the number `3.10` and the number `3.1` are the same float. The trailing zero is gone before GitHub ever sees the file. Your matrix silently tests 3.1 (which does not exist, so the job fails with "version not found", or worse, resolves to something you did not intend).
 
@@ -183,11 +190,11 @@ State the parse results before you run anything:
 
 In YAML 1.1 (the version PyYAML implements) the bare words `on`, `off`, `yes`, `no`, `y` and `n` are booleans. So the key `on:` parses as `True`. GitHub's own parser handles it correctly, so your workflow works. But **any tool you write in Python** will see `True` instead of `"on"` and look up the wrong key.
 
-| Source | Key you see |
-| --- | --- |
-| GitHub's runner | `on` (understood correctly) |
-| `yaml.safe_load` in Python | `True` |
-| `intro_gha.workflow.load_workflow` | `"on"` (we normalize it) |
+| Source                             | Key you see                 |
+| ---------------------------------- | --------------------------- |
+| GitHub's runner                    | `on` (understood correctly) |
+| `yaml.safe_load` in Python         | `True`                      |
+| `intro_gha.workflow.load_workflow` | `"on"` (we normalize it)    |
 
 **The fix in tooling:** normalize `True` back to `"on"` right after loading. We do this once, in `src/intro_gha/workflow.py`, and every chapter reuses it.
 
@@ -205,12 +212,12 @@ a1b2c3d <- e4f5a6b <- 9c8d7e6
                       main (refs/heads/main), HEAD
 ```
 
-| Thing | Full name | Moves? | Example value |
-| --- | --- | --- | --- |
-| Branch | `refs/heads/main` | Yes, on every commit | `9c8d7e6...` |
-| Tag | `refs/tags/v0.1.0` | No (by convention) | `9c8d7e6...` |
-| SHA | (the commit itself) | Never | `9c8d7e6...` |
-| `HEAD` | (local only) | Yes | whatever you checked out |
+| Thing  | Full name           | Moves?               | Example value            |
+| ------ | ------------------- | -------------------- | ------------------------ |
+| Branch | `refs/heads/main`   | Yes, on every commit | `9c8d7e6...`             |
+| Tag    | `refs/tags/v0.1.0`  | No (by convention)   | `9c8d7e6...`             |
+| SHA    | (the commit itself) | Never                | `9c8d7e6...`             |
+| `HEAD` | (local only)        | Yes                  | whatever you checked out |
 
 **Command and after-state.** Tally's owner makes a fourth commit `1d2e3f4` and tags the old one:
 
@@ -248,11 +255,11 @@ Chapter 02 builds the full model (event, workflow, job, step, runner). For now r
 
 These three terms are used loosely. Use them precisely:
 
-| Term | What is automated | Human step remaining |
-| --- | --- | --- |
-| Continuous integration (CI) | Build + test every change | Decide to merge |
-| Continuous delivery | CI + produce a releasable artifact every time | Decide to release |
-| Continuous deployment | CI + release + deploy to production | None |
+| Term                        | What is automated                             | Human step remaining |
+| --------------------------- | --------------------------------------------- | -------------------- |
+| Continuous integration (CI) | Build + test every change                     | Decide to merge      |
+| Continuous delivery         | CI + produce a releasable artifact every time | Decide to release    |
+| Continuous deployment       | CI + release + deploy to production           | None                 |
 
 > **Analogy: the kitchen pass.** CI is the cook tasting every dish before it leaves the kitchen. Delivery is plating every dish so it is ready to serve. Deployment is a robot waiter carrying it to the table without asking. The analogy breaks at rollback: a dish cannot be un-served, but a deployment can be reverted.
 
@@ -274,12 +281,12 @@ An **artifact** is a file produced by one stage and consumed by a later one (a w
 
 Per GitHub Docs, workflow files must be stored in `.github/workflows/` in the repository and have a `.yml` or `.yaml` extension. A file anywhere else is ignored without warning.
 
-| Location | Result |
-| --- | --- |
-| `.github/workflows/ci.yml` | Loaded |
-| `.github/workflows/ci.yaml` | Loaded |
+| Location                         | Result               |
+| -------------------------------- | -------------------- |
+| `.github/workflows/ci.yml`       | Loaded               |
+| `.github/workflows/ci.yaml`      | Loaded               |
 | `.github/workflow/ci.yml` (typo) | **Silently ignored** |
-| `workflows/ci.yml` | **Silently ignored** |
+| `workflows/ci.yml`               | **Silently ignored** |
 
 This is the first "why didn't it fire" cause you will meet; Chapter 17 collects the rest.
 
@@ -291,7 +298,7 @@ YAML lets you name a block with `&name` and reuse it with `*name`:
 
 ```yaml
 defaults: &py
-  python-version: '3.12'
+  python-version: "3.12"
 a: *py
 ```
 
@@ -317,11 +324,11 @@ A teammate renames `.github/workflows/` to `.github/workflow/` while tidying. No
 
 ## 14. Comparison: Three Ways to Automate "Run the Tests"
 
-| Approach | Setup Effort | Control | Failure Visibility | Security Exposure | Maintenance Burden |
-| --- | --- | --- | --- | --- | --- |
-| A shell script you run by hand | Minimal - one file | Strong - full local control | Weak - only you see it | Minimal - runs locally | Low - until you forget |
-| A Git pre-commit hook | Low - per-clone setup | Moderate - skippable with `--no-verify` | Weak - local only | Minimal - local | Moderate - drifts per clone |
-| GitHub Actions workflow | Low - one YAML file | Strong - runs on every push | Excellent - shown on the PR | Moderate - runs on shared infra | Low - versioned with the code |
+| Approach                       | Setup Effort          | Control                                 | Failure Visibility          | Security Exposure               | Maintenance Burden            |
+| ------------------------------ | --------------------- | --------------------------------------- | --------------------------- | ------------------------------- | ----------------------------- |
+| A shell script you run by hand | Minimal - one file    | Strong - full local control             | Weak - only you see it      | Minimal - runs locally          | Low - until you forget        |
+| A Git pre-commit hook          | Low - per-clone setup | Moderate - skippable with `--no-verify` | Weak - local only           | Minimal - local                 | Moderate - drifts per clone   |
+| GitHub Actions workflow        | Low - one YAML file   | Strong - runs on every push             | Excellent - shown on the PR | Moderate - runs on shared infra | Low - versioned with the code |
 
 Chapter 01 expands this comparison to include Jenkins and other servers.
 
@@ -337,10 +344,10 @@ Chapter 01 expands this comparison to include Jenkins and other servers.
 
 **Failure 1: the 3.10 matrix.** Tally's workflow lists `[3.9, 3.10, 3.11]` unquoted.
 
-| Step | State |
-| --- | --- |
-| Parse | matrix values: `[3.9, 3.1, 3.11]` |
-| Expand | 3 jobs named `test (3.9)`, `test (3.1)`, `test (3.11)` |
+| Step      | State                                                        |
+| --------- | ------------------------------------------------------------ |
+| Parse     | matrix values: `[3.9, 3.1, 3.11]`                            |
+| Expand    | 3 jobs named `test (3.9)`, `test (3.1)`, `test (3.11)`       |
 | Run job 2 | `setup-python` is asked for `3.1`: fails "version not found" |
 
 **Symptom:** a red job labelled `3.1`, a version you never wrote. **Cause:** YAML floats drop trailing zeros. **Fix:** quote.
@@ -389,7 +396,7 @@ All verified 2026-10.
 - YAML 1.1 specification, boolean type (why `on` is `True`) - https://yaml.org/type/bool.html
 - YAML 1.2 specification (what newer parsers fix) - https://yaml.org/spec/1.2.2/
 - Pro Git, "Git Internals: Git References" - https://git-scm.com/book/en/v2/Git-Internals-Git-References
-- Laster, *Learning GitHub Actions* (O'Reilly), Chapter 1
+- Laster, _Learning GitHub Actions_ (O'Reilly), Chapter 1
 
 ## 20. Appendix A: Code Index
 

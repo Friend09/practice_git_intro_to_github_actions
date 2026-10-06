@@ -43,30 +43,37 @@
 
 ## Table of Contents
 
-<!-- TOC -->
-- [1. Configuration Has Four Homes](#1-configuration-has-four-homes)
-- [2. Running Example: Config Under a Microscope](#2-running-example-config-under-a-microscope)
-- [3. Three Scopes of `env`](#3-three-scopes-of-env)
-- [4. `GITHUB_ENV`: Writing for the Next Step](#4-github_env-writing-for-the-next-step)
-- [5. Default Variables](#5-default-variables)
-- [6. Variables (`vars`) and Precedence](#6-variables-vars-and-precedence)
-- [7. Secrets and Masking](#7-secrets-and-masking)
-- [8. Scope: Repository Secrets vs Environment Secrets](#8-scope-repository-secrets-vs-environment-secrets)
-- [9. Environments and the Approval Gate](#9-environments-and-the-approval-gate)
-- [10. Wait Timers and Deployment Branches](#10-wait-timers-and-deployment-branches)
-- [11. A Preview of OIDC](#11-a-preview-of-oidc)
-- [12. Large and Structured Secrets](#12-large-and-structured-secrets)
-- [13. Case Study: The Base64 "Hiding Place"](#13-case-study-the-base64-hiding-place)
-- [14. Comparison: Where to Keep a Value](#14-comparison-where-to-keep-a-value)
-- [15. Practical Tips](#15-practical-tips)
-- [16. Demonstrated Failure Modes](#16-demonstrated-failure-modes)
-- [17. Key Takeaways](#17-key-takeaways)
-- [18. Exercises](#18-exercises)
-- [19. Additional Resources](#19-additional-resources)
-- [20. Appendix A: Code Index](#20-appendix-a-code-index)
-   - [A.1 The environment and mask checks](#a1-the-environment-and-mask-checks)
-   - [A.2 Resolve `env` scope](#a2-resolve-env-scope)
-<!-- /TOC -->
+<!-- toc-start -->
+
+- [Chapter 08: Variables, Secrets, Configuration and Environments](#chapter-08-variables-secrets-configuration-and-environments)
+  - [Beginner's Guide](#beginners-guide)
+  - [What You'll Learn](#what-youll-learn)
+  - [Table of Contents](#table-of-contents)
+  - [1. Configuration Has Four Homes](#1-configuration-has-four-homes)
+  - [2. Running Example: Config Under a Microscope](#2-running-example-config-under-a-microscope)
+  - [3. Three Scopes of `env`](#3-three-scopes-of-env)
+  - [4. `GITHUB_ENV`: Writing for the Next Step](#4-github_env-writing-for-the-next-step)
+  - [5. Default Variables](#5-default-variables)
+  - [6. Variables (`vars`) and Precedence](#6-variables-vars-and-precedence)
+  - [7. Secrets and Masking](#7-secrets-and-masking)
+    - [What is stored and who sees it](#what-is-stored-and-who-sees-it)
+    - [Masking, measured](#masking-measured)
+    - [Secrets cannot gate steps](#secrets-cannot-gate-steps)
+  - [8. Scope: Repository Secrets vs Environment Secrets](#8-scope-repository-secrets-vs-environment-secrets)
+  - [9. Environments and the Approval Gate](#9-environments-and-the-approval-gate)
+  - [10. Wait Timers and Deployment Branches](#10-wait-timers-and-deployment-branches)
+  - [11. A Preview of OIDC](#11-a-preview-of-oidc)
+  - [12. Large and Structured Secrets](#12-large-and-structured-secrets)
+  - [13. Case Study: The Base64 "Hiding Place"](#13-case-study-the-base64-hiding-place)
+  - [14. Comparison: Where to Keep a Value](#14-comparison-where-to-keep-a-value)
+  - [15. Practical Tips](#15-practical-tips)
+  - [16. Demonstrated Failure Modes](#16-demonstrated-failure-modes)
+  - [17. Key Takeaways](#17-key-takeaways)
+  - [18. Exercises](#18-exercises)
+  - [19. Additional Resources](#19-additional-resources)
+  - [20. Appendix A: Code Index](#20-appendix-a-code-index)
+    - [A.1 The environment and mask checks](#a1-the-environment-and-mask-checks)
+    - [A.2 Resolve `env` scope](#a2-resolve-env-scope)
 
 ---
 
@@ -74,12 +81,12 @@
 
 A value your workflow needs can live in four places, and the choice decides who can see it, who can change it and how safe it is. The four, from most visible to least:
 
-| Home | Where it is set | Visible in logs | Who can read it |
-| --- | --- | --- | --- |
-| `env:` in the file | the YAML | yes | anyone who can read the repo |
-| `vars` | Settings, or `gh variable set` | yes | anyone who can run the workflow |
-| `secrets` | Settings, or `gh secret set` | masked as `***` | the job that receives it |
-| Environment-scoped `vars`/`secrets` | the environment's settings | as above | only jobs that name that environment |
+| Home                                | Where it is set                | Visible in logs | Who can read it                      |
+| ----------------------------------- | ------------------------------ | --------------- | ------------------------------------ |
+| `env:` in the file                  | the YAML                       | yes             | anyone who can read the repo         |
+| `vars`                              | Settings, or `gh variable set` | yes             | anyone who can run the workflow      |
+| `secrets`                           | Settings, or `gh secret set`   | masked as `***` | the job that receives it             |
+| Environment-scoped `vars`/`secrets` | the environment's settings     | as above        | only jobs that name that environment |
 
 We test each against real runs, because the interesting behavior is in the exceptions.
 
@@ -91,11 +98,11 @@ We test each against real runs, because the interesting behavior is in the excep
 
 `ch08-config.yml` sets `SCOPE` at the workflow level (`workflow`), again at the job level (`job`), and again on one step (`step`). What each place read:
 
-| Where the `echo` ran | `$SCOPE` printed |
-| --- | --- |
-| a step in a job with its own `SCOPE: job`, no step override | `job` |
-| a step with `env: SCOPE: step` in that job | `step` |
-| a step in another job with **no** `SCOPE` of its own | `workflow` |
+| Where the `echo` ran                                        | `$SCOPE` printed |
+| ----------------------------------------------------------- | ---------------- |
+| a step in a job with its own `SCOPE: job`, no step override | `job`            |
+| a step with `env: SCOPE: step` in that job                  | `step`           |
+| a step in another job with **no** `SCOPE` of its own        | `workflow`       |
 
 **What to notice:** the **closest** definition wins: step beats job beats workflow. The workflow-level value was still available (`workflow`) in the job that did not override it. Overriding is local: the step override did not change the value seen by later steps.
 
@@ -109,11 +116,11 @@ echo "FROM_FILE=written-by-previous-step" >> "$GITHUB_ENV"
 
 Real results:
 
-| Where | What it saw |
-| --- | --- |
-| The **same** step, reading `${FROM_FILE:-unset}` right after writing | `unset` |
-| The **next** step, `$FROM_FILE` in the shell | `written-by-previous-step` |
-| The next step, `${{ env.FROM_FILE }}` as an expression | `written-by-previous-step` |
+| Where                                                                | What it saw                |
+| -------------------------------------------------------------------- | -------------------------- |
+| The **same** step, reading `${FROM_FILE:-unset}` right after writing | `unset`                    |
+| The **next** step, `$FROM_FILE` in the shell                         | `written-by-previous-step` |
+| The next step, `${{ env.FROM_FILE }}` as an expression               | `written-by-previous-step` |
 
 **What to notice:** the write takes effect **after** the step finishes. Within the writing step the shell variable does not exist yet. The `env` context is updated between steps too, so both forms see it in the next step.
 
@@ -121,14 +128,14 @@ Real results:
 
 Every run gets variables you did not set. Real values from the run:
 
-| Variable | Value |
-| --- | --- |
-| `CI` | `true` |
-| `GITHUB_ACTIONS` | `true` |
-| `GITHUB_REPOSITORY` | `Friend09/practice_git_intro_to_github_actions` |
-| `GITHUB_EVENT_NAME` | `workflow_dispatch` |
-| `RUNNER_OS` | `Linux` |
-| `GITHUB_WORKSPACE` | `/home/runner/work/practice_git_intro_to_github_actions/practice_git_intro_to_github_actions` |
+| Variable            | Value                                                                                         |
+| ------------------- | --------------------------------------------------------------------------------------------- |
+| `CI`                | `true`                                                                                        |
+| `GITHUB_ACTIONS`    | `true`                                                                                        |
+| `GITHUB_REPOSITORY` | `Friend09/practice_git_intro_to_github_actions`                                               |
+| `GITHUB_EVENT_NAME` | `workflow_dispatch`                                                                           |
+| `RUNNER_OS`         | `Linux`                                                                                       |
+| `GITHUB_WORKSPACE`  | `/home/runner/work/practice_git_intro_to_github_actions/practice_git_intro_to_github_actions` |
 
 Use `CI=true` and `GITHUB_ACTIONS=true` to make scripts behave differently in CI than on a laptop.
 
@@ -136,11 +143,11 @@ Use `CI=true` and `GITHUB_ACTIONS=true` to make scripts behave differently in CI
 
 **Set and read.** `gh variable set TALLY_COLOR --body blue` creates a repository variable. The workflow reads it as `${{ vars.TALLY_COLOR }}`. Results:
 
-| Expression | Value printed |
-| --- | --- |
-| `vars.TALLY_COLOR` (repo, in a job with no environment) | `blue` |
-| `vars.DOES_NOT_EXIST` | empty (printed as `[]`) |
-| `vars.TALLY_COLOR` in a job with `environment: staging` | `green` |
+| Expression                                              | Value printed           |
+| ------------------------------------------------------- | ----------------------- |
+| `vars.TALLY_COLOR` (repo, in a job with no environment) | `blue`                  |
+| `vars.DOES_NOT_EXIST`                                   | empty (printed as `[]`) |
+| `vars.TALLY_COLOR` in a job with `environment: staging` | `green`                 |
 
 Docs (verified 2026-10): an unset variable returns an empty string, which our run confirmed.
 
@@ -162,13 +169,13 @@ gh variable set TALLY_COLOR --body green --env staging
 
 The dummy secret was `tally-demo-s3cret-VALUE` (23 characters). The real log lines:
 
-| What the step printed | What the log showed |
-| --- | --- |
-| `echo "$DEMO_SECRET"` | `***` |
-| `${#DEMO_SECRET}` (the length) | `23` |
-| the secret **base64-encoded** | `***` |
-| the secret **reversed** (`rev`) | `EULAV-terc3s-omed-yllat` (**plain text**) |
-| the reversed value after `echo "::add-mask::$derived"` | `***` |
+| What the step printed                                  | What the log showed                        |
+| ------------------------------------------------------ | ------------------------------------------ |
+| `echo "$DEMO_SECRET"`                                  | `***`                                      |
+| `${#DEMO_SECRET}` (the length)                         | `23`                                       |
+| the secret **base64-encoded**                          | `***`                                      |
+| the secret **reversed** (`rev`)                        | `EULAV-terc3s-omed-yllat` (**plain text**) |
+| the reversed value after `echo "::add-mask::$derived"` | `***`                                      |
 
 **What to notice:**
 
@@ -191,10 +198,10 @@ Docs (verified 2026-10): "consider setting secrets as job-level environment vari
 
 ## 8. Scope: Repository Secrets vs Environment Secrets
 
-| Job | `DEMO_SECRET` (repo) length | `STAGING_ONLY` (staging env) length |
-| --- | --- | --- |
-| job **without** an environment | 23 | **0** (not available) |
-| job with `environment: staging` | 23 | 18 |
+| Job                             | `DEMO_SECRET` (repo) length | `STAGING_ONLY` (staging env) length |
+| ------------------------------- | --------------------------- | ----------------------------------- |
+| job **without** an environment  | 23                          | **0** (not available)               |
+| job with `environment: staging` | 23                          | 18                                  |
 
 **What to notice:** an environment secret is invisible to a job that does not name the environment (length 0, an empty string). A job that does name it gets both its environment secrets **and** the repository secrets. This is the mechanism behind "only deploy jobs can read the production key".
 
@@ -210,16 +217,20 @@ echo '{"wait_timer":0}' | gh api -X PUT repos/OWNER/REPO/environments/staging --
 
 `production` was created with one protection rule: a **required reviewer** (me). The run **37317091672**:
 
-| Job | Environment | Started | Completed | State |
-| --- | --- | --- | --- | --- |
-| staging | `staging` (no rules) | 13:28:44 | 13:28:46 | success |
-| production | `production` (reviewer) | **13:29:37** | 13:29:40 | success after approval |
+| Job        | Environment             | Started      | Completed | State                  |
+| ---------- | ----------------------- | ------------ | --------- | ---------------------- |
+| staging    | `staging` (no rules)    | 13:28:44     | 13:28:46  | success                |
+| production | `production` (reviewer) | **13:29:37** | 13:29:40  | success after approval |
 
 The run's status sat at **`waiting`** between 13:28:46 and the approval. `gh api repos/OWNER/REPO/actions/runs/37317091672/pending_deployments` returned:
 
 ```json
-{"environment":"production","current_user_can_approve":true,"wait_timer":0,
- "reviewers":["User:Friend09"]}
+{
+  "environment": "production",
+  "current_user_can_approve": true,
+  "wait_timer": 0,
+  "reviewers": ["User:Friend09"]
+}
 ```
 
 I approved with a POST to the same endpoint and the job started 51 seconds after staging finished.
@@ -232,11 +243,11 @@ I approved with a POST to the same endpoint and the job started 51 seconds after
 
 **Availability (docs, verified 2026-10):**
 
-| Feature | Public repos | Private repos |
-| --- | --- | --- |
-| Required reviewers, wait timer | Free, Pro, Team | Enterprise only |
-| Deployment branch/tag rules | all plans | Pro / Team and up |
-| Environment secrets and variables | all plans | Pro / Team and up |
+| Feature                           | Public repos    | Private repos     |
+| --------------------------------- | --------------- | ----------------- |
+| Required reviewers, wait timer    | Free, Pro, Team | Enterprise only   |
+| Deployment branch/tag rules       | all plans       | Pro / Team and up |
+| Environment secrets and variables | all plans       | Pro / Team and up |
 
 So an environment on a **private repo on the Free plan** cannot hold secrets or rules. Plan your design around the plan you have.
 
@@ -264,13 +275,13 @@ A team stores an API key and, to be safe in logs, prints only its base64 form du
 
 ## 14. Comparison: Where to Keep a Value
 
-| Home | Setup Effort | Control | Failure Visibility | Security Exposure | Maintenance Burden |
-| --- | --- | --- | --- | --- | --- |
-| `env:` in the YAML | Minimal - type it | Moderate - changes need a commit | Excellent - in the diff | High - public if repo is public | Low |
-| Repository `vars` | Low - one CLI call | Strong - change without a commit | Fair - changes are not in git history | Moderate - visible in logs | Low |
-| Repository `secrets` | Low - one CLI call | Strong - write-only | Weak - masked, hard to inspect | Moderate - any job in the repo can read it | Moderate - rotation by hand |
-| Environment `vars`/`secrets` | Moderate - create the environment | Excellent - gated by rules | Strong - approvals are logged | Low - only named jobs, after approval | Moderate |
-| OIDC (no stored secret) | High - cloud trust setup | Excellent - short-lived | Strong - cloud audit trail | Low - nothing to steal | Moderate |
+| Home                         | Setup Effort                      | Control                          | Failure Visibility                    | Security Exposure                          | Maintenance Burden          |
+| ---------------------------- | --------------------------------- | -------------------------------- | ------------------------------------- | ------------------------------------------ | --------------------------- |
+| `env:` in the YAML           | Minimal - type it                 | Moderate - changes need a commit | Excellent - in the diff               | High - public if repo is public            | Low                         |
+| Repository `vars`            | Low - one CLI call                | Strong - change without a commit | Fair - changes are not in git history | Moderate - visible in logs                 | Low                         |
+| Repository `secrets`         | Low - one CLI call                | Strong - write-only              | Weak - masked, hard to inspect        | Moderate - any job in the repo can read it | Moderate - rotation by hand |
+| Environment `vars`/`secrets` | Moderate - create the environment | Excellent - gated by rules       | Strong - approvals are logged         | Low - only named jobs, after approval      | Moderate                    |
+| OIDC (no stored secret)      | High - cloud trust setup          | Excellent - short-lived          | Strong - cloud audit trail            | Low - nothing to steal                     | Moderate                    |
 
 ## 15. Practical Tips
 
@@ -334,7 +345,7 @@ All verified 2026-10.
 - GitHub Docs: Workflow commands (`::add-mask::`, `GITHUB_ENV`) - https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-commands
 - GitHub REST: Create or update an environment - https://docs.github.com/en/rest/deployments/environments#create-or-update-an-environment
 - Live evidence: runs 37317079828 (config) and 37317091672 (environments) in this repo
-- Laster, *Learning GitHub Actions* (O'Reilly), Chapter 6
+- Laster, _Learning GitHub Actions_ (O'Reilly), Chapter 6
 
 ## 20. Appendix A: Code Index
 

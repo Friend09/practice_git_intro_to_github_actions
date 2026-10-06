@@ -29,7 +29,7 @@
 
 > **🔬 Platform Engineer's Lens:** A custom action is shared infrastructure: every workflow that uses it inherits its bugs and its trust. So write it like a library: validate inputs, test it three ways, pin it by SHA when others consume it, and keep it small. In this chapter's run, the first bug we found was not in our code but in our tooling: `actionlint` passed an action that GitHub rejected.
 
-> **🚦 Native vs Marketplace vs Custom:** This chapter *is* the custom path. Before you write an action, ask the three questions of Chapter 04: can a one-line `run:` do it; does a first-party action already; does a well-maintained third-party one. Write a composite action when you are copying the same three steps between workflows, and only reach for JavaScript or Docker when a shell script is not enough.
+> **🚦 Native vs Marketplace vs Custom:** This chapter _is_ the custom path. Before you write an action, ask the three questions of Chapter 04: can a one-line `run:` do it; does a first-party action already; does a well-maintained third-party one. Write a composite action when you are copying the same three steps between workflows, and only reach for JavaScript or Docker when a shell script is not enough.
 
 ## What You'll Learn
 
@@ -43,29 +43,33 @@
 
 ## Table of Contents
 
-<!-- TOC -->
-- [1. Why Write an Action](#1-why-write-an-action)
-- [2. Running Example: Five Actions](#2-running-example-five-actions)
-- [3. Anatomy of `action.yml`](#3-anatomy-of-actionyml)
-- [4. Composite Actions](#4-composite-actions)
-- [5. Using an Action From Another Repository](#5-using-an-action-from-another-repository)
-- [6. JavaScript Actions](#6-javascript-actions)
-- [7. Docker Actions](#7-docker-actions)
-- [8. Choosing a Type](#8-choosing-a-type)
-- [9. Testing an Action at Three Layers](#9-testing-an-action-at-three-layers)
-- [10. Publishing and Versioning](#10-publishing-and-versioning)
-- [11. `pre`, `post` and Their Conditions](#11-pre-post-and-their-conditions)
-- [12. Limits of Custom Actions](#12-limits-of-custom-actions)
-- [13. Case Study: The Action That Followed `main`](#13-case-study-the-action-that-followed-main)
-- [14. Comparison: Types of Custom Action](#14-comparison-types-of-custom-action)
-- [15. Practical Tips](#15-practical-tips)
-- [16. Demonstrated Failure Modes](#16-demonstrated-failure-modes)
-- [17. Key Takeaways](#17-key-takeaways)
-- [18. Exercises](#18-exercises)
-- [19. Additional Resources](#19-additional-resources)
-- [20. Appendix A: Code Index](#20-appendix-a-code-index)
-   - [A.1 Run the composite script and compare with the SemVer parser](#a1-run-the-composite-script-and-compare-with-the-semver-parser)
-<!-- /TOC -->
+<!-- toc-start -->
+
+- [Chapter 19: Custom Actions: Composite, JavaScript, Docker](#chapter-19-custom-actions-composite-javascript-docker)
+  - [Beginner's Guide](#beginners-guide)
+  - [What You'll Learn](#what-youll-learn)
+  - [Table of Contents](#table-of-contents)
+  - [1. Why Write an Action](#1-why-write-an-action)
+  - [2. Running Example: Five Actions](#2-running-example-five-actions)
+  - [3. Anatomy of `action.yml`](#3-anatomy-of-actionyml)
+  - [4. Composite Actions](#4-composite-actions)
+  - [5. Using an Action From Another Repository](#5-using-an-action-from-another-repository)
+  - [6. JavaScript Actions](#6-javascript-actions)
+  - [7. Docker Actions](#7-docker-actions)
+  - [8. Choosing a Type](#8-choosing-a-type)
+  - [9. Testing an Action at Three Layers](#9-testing-an-action-at-three-layers)
+  - [10. Publishing and Versioning](#10-publishing-and-versioning)
+  - [11. `pre`, `post` and Their Conditions](#11-pre-post-and-their-conditions)
+  - [12. Limits of Custom Actions](#12-limits-of-custom-actions)
+  - [13. Case Study: The Action That Followed `main`](#13-case-study-the-action-that-followed-main)
+  - [14. Comparison: Types of Custom Action](#14-comparison-types-of-custom-action)
+  - [15. Practical Tips](#15-practical-tips)
+  - [16. Demonstrated Failure Modes](#16-demonstrated-failure-modes)
+  - [17. Key Takeaways](#17-key-takeaways)
+  - [18. Exercises](#18-exercises)
+  - [19. Additional Resources](#19-additional-resources)
+  - [20. Appendix A: Code Index](#20-appendix-a-code-index)
+    - [A.1 Run the composite script and compare with the SemVer parser](#a1-run-the-composite-script-and-compare-with-the-semver-parser)
 
 ---
 
@@ -89,19 +93,19 @@ inputs:
 outputs:
   major:
     description: Major number
-    value: ${{ steps.parse.outputs.major }}     # composite only
+    value: ${{ steps.parse.outputs.major }} # composite only
 runs:
-  using: composite          # or node24, or docker
+  using: composite # or node24, or docker
   steps: [...]
 ```
 
-| Key | Rule (docs, verified 2026-10) |
-| --- | --- |
-| `name`, `description` | required |
-| `inputs.<id>` | `description` required; `required`, `default` optional |
-| `outputs.<id>` | `description` required; composite outputs also need `value` mapping to a step output |
-| `runs.using` | `composite`, `docker`, `node20` or `node24` |
-| `branding` | optional Marketplace icon and colour |
+| Key                   | Rule (docs, verified 2026-10)                                                        |
+| --------------------- | ------------------------------------------------------------------------------------ |
+| `name`, `description` | required                                                                             |
+| `inputs.<id>`         | `description` required; `required`, `default` optional                               |
+| `outputs.<id>`        | `description` required; composite outputs also need `value` mapping to a step output |
+| `runs.using`          | `composite`, `docker`, `node20` or `node24`                                          |
+| `branding`            | optional Marketplace icon and colour                                                 |
 
 Outputs are **strings**, as everywhere (Chapter 09). The docs state a maximum of 1 MB of outputs per job and 50 MB per workflow run (our Chapter 09 measurement of the per-job limit: about 524,288 ASCII characters).
 
@@ -128,10 +132,10 @@ Three rules to notice:
 
 Real run, `ch19-custom-actions.yml` job `composite`:
 
-| Call | Input | Result |
-| --- | --- | --- |
-| first | `1.2.3-rc.1` | `normalized=1.2.3-rc.1`, `major.minor.patch=1.2.3`, `is-prerelease=true` |
-| second (`continue-on-error`) | `1.2` | outcome **`failure`**; outputs empty (`bad_normalized=[]`) |
+| Call                         | Input        | Result                                                                   |
+| ---------------------------- | ------------ | ------------------------------------------------------------------------ |
+| first                        | `1.2.3-rc.1` | `normalized=1.2.3-rc.1`, `major.minor.patch=1.2.3`, `is-prerelease=true` |
+| second (`continue-on-error`) | `1.2`        | outcome **`failure`**; outputs empty (`bad_normalized=[]`)               |
 
 The failure's annotation: title **`Not a semantic version`**, message `'1.2' is not MAJOR.MINOR.PATCH`. That is the script's own `::error` (Chapter 17), so the failure explains itself.
 
@@ -177,12 +181,12 @@ runs:
 
 Real run, job `javascript`, with `who-to-greet: Tally` and `shout: 'true'`:
 
-| Observation | Value |
-| --- | --- |
-| Greeting output | `HELLO, TALLY` |
-| Node version on the runner | **`v24.19.0`** |
-| `INPUT_` variables the runner provided | **`INPUT_SHOUT,INPUT_WHO-TO-GREET`** |
-| `post` step ran | **yes**, and read the `started` value saved by `main` (`state_started_present=yes`) |
+| Observation                            | Value                                                                               |
+| -------------------------------------- | ----------------------------------------------------------------------------------- |
+| Greeting output                        | `HELLO, TALLY`                                                                      |
+| Node version on the runner             | **`v24.19.0`**                                                                      |
+| `INPUT_` variables the runner provided | **`INPUT_SHOUT,INPUT_WHO-TO-GREET`**                                                |
+| `post` step ran                        | **yes**, and read the `started` value saved by `main` (`state_started_present=yes`) |
 
 **What to notice:**
 
@@ -192,10 +196,10 @@ Real run, job `javascript`, with `who-to-greet: Tally` and `shout: 'true'`:
 
 **`post` runs even when the job fails.** Job `javascript_post_after_failure` ran the action and then a step that does `exit 1`:
 
-| Step | Conclusion |
-| --- | --- |
-| Run `./.github/actions/tally-js` | success |
-| Fail on purpose after the action ran | **failure** |
+| Step                                      | Conclusion                                  |
+| ----------------------------------------- | ------------------------------------------- |
+| Run `./.github/actions/tally-js`          | success                                     |
+| Fail on purpose after the action ran      | **failure**                                 |
 | **Post Run `./.github/actions/tally-js`** | **success** (and printed `js_post_ran=yes`) |
 
 Docs (verified 2026-10): `post` and `pre` default to `always()`. That is why cleanup in a `post` step is reliable, and why it should be written to tolerate a half-finished job.
@@ -206,12 +210,12 @@ Docs (verified 2026-10): `post` and `pre` default to `always()`. That is why cle
 
 A container action runs in an image. Two ways, both measured (run 37332265631):
 
-| Action | `runs.image` | What happens each run | Step time |
-| --- | --- | --- | --- |
-| `tally-docker` | `Dockerfile` | the runner **builds the image from the Dockerfile** | **8 s** |
-| `tally-docker-prebuilt` | `docker://alpine:3.20` | the runner **pulls** a prebuilt public image | **2 s** |
+| Action                  | `runs.image`           | What happens each run                               | Step time |
+| ----------------------- | ---------------------- | --------------------------------------------------- | --------- |
+| `tally-docker`          | `Dockerfile`           | the runner **builds the image from the Dockerfile** | **8 s**   |
+| `tally-docker-prebuilt` | `docker://alpine:3.20` | the runner **pulls** a prebuilt public image        | **2 s**   |
 
-The built action's entrypoint reported `os=alpine uid=0` (it ran as root inside an Alpine container, which is *not* the runner's Ubuntu) and wrote `result=ok` to `GITHUB_OUTPUT`.
+The built action's entrypoint reported `os=alpine uid=0` (it ran as root inside an Alpine container, which is _not_ the runner's Ubuntu) and wrote `result=ok` to `GITHUB_OUTPUT`.
 
 **What to notice:**
 
@@ -221,37 +225,37 @@ The built action's entrypoint reported `os=alpine uid=0` (it ran as root inside 
 
 ## 8. Choosing a Type
 
-| Need | Choose | Why |
-| --- | --- | --- |
-| Reuse a few steps, mostly shell and other actions | **Composite** | no build, no runtime choice, easiest to write and read |
-| Logic that is awkward in shell; fast startup; use the toolkit | **JavaScript** | runs directly on the runner's Node |
-| A specific OS, language or system tool | **Docker** | the image is the environment |
-| Must also run on Windows or macOS runners | Composite or JavaScript | they run directly on the runner |
+| Need                                                          | Choose                  | Why                                                    |
+| ------------------------------------------------------------- | ----------------------- | ------------------------------------------------------ |
+| Reuse a few steps, mostly shell and other actions             | **Composite**           | no build, no runtime choice, easiest to write and read |
+| Logic that is awkward in shell; fast startup; use the toolkit | **JavaScript**          | runs directly on the runner's Node                     |
+| A specific OS, language or system tool                        | **Docker**              | the image is the environment                           |
+| Must also run on Windows or macOS runners                     | Composite or JavaScript | they run directly on the runner                        |
 
 Docs (verified 2026-10): **Docker container actions can only execute on runners with a Linux operating system** (self-hosted ones also need Docker installed), whereas JavaScript actions work on all GitHub-hosted runner platforms and composite actions on Linux, macOS and Windows. Our runs used Linux only.
 
 ## 9. Testing an Action at Three Layers
 
-| Layer | What it catches | Our tool |
-| --- | --- | --- |
-| **Unit tests** | the logic, without GitHub | `node --test`, and bash + Python for `parse.sh` |
-| **Metadata tests** | a malformed `action.yml` | `tests/test_actions_metadata.py` (checks each action against the docs' rules) |
-| **Workflow tests** | the action inside the real runner | `ch19-custom-actions.yml` |
+| Layer              | What it catches                   | Our tool                                                                      |
+| ------------------ | --------------------------------- | ----------------------------------------------------------------------------- |
+| **Unit tests**     | the logic, without GitHub         | `node --test`, and bash + Python for `parse.sh`                               |
+| **Metadata tests** | a malformed `action.yml`          | `tests/test_actions_metadata.py` (checks each action against the docs' rules) |
+| **Workflow tests** | the action inside the real runner | `ch19-custom-actions.yml`                                                     |
 
 The third layer found the one thing the others missed. We wrote a composite action whose `run:` step has **no `shell`** (`tally-noshell`) and tried each layer:
 
-| Tool | Result on `tally-noshell` |
-| --- | --- |
-| `actionlint` | **passed** (exit 0, no message) |
-| Our metadata test | **fails** (it asserts every composite `run:` step has `shell`), so the action is exempted by name |
+| Tool                     | Result on `tally-noshell`                                                                                                                                                                             |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `actionlint`             | **passed** (exit 0, no message)                                                                                                                                                                       |
+| Our metadata test        | **fails** (it asserts every composite `run:` step has `shell`), so the action is exempted by name                                                                                                     |
 | GitHub (run 37332464081) | the job's step **fails** with: `Failed to load .../tally-noshell/action.yml` ... `TemplateValidationException: The template is not valid. ... (Line: 6, Col: 7): Required property is missing: shell` |
 
 **What to notice:** the failure is at the **step** that uses the action, not at "Set up job", so the earlier steps (checkout) had already run. And **`actionlint` is not a complete validator of action metadata**: it did catch two other mistakes (below), but not this one. Two more scratch tests:
 
-| Mistake | `actionlint` said |
-| --- | --- |
-| `runs.main: does-not-exist.js` | `file "does-not-exist.js" does not exist in ... it is specified at "main" key in "runs" section` |
-| `runs.using: node12` | `invalid runner name "node12" ... valid runners are "composite", "docker", "node20", and "node24"` |
+| Mistake                        | `actionlint` said                                                                                  |
+| ------------------------------ | -------------------------------------------------------------------------------------------------- |
+| `runs.main: does-not-exist.js` | `file "does-not-exist.js" does not exist in ... it is specified at "main" key in "runs" section`   |
+| `runs.using: node12`           | `invalid runner name "node12" ... valid runners are "composite", "docker", "node20", and "node24"` |
 
 (`actionlint` found these only when the checked project had a `.git` root; in a bare folder it reported nothing.) The lesson: validate action metadata yourself, as we do, and run the action for real.
 
@@ -259,7 +263,7 @@ The third layer found the one thing the others missed. We wrote a composite acti
 
 > ⚠️ ADVANCED TOPIC: Skip on first read.
 
-To share an action beyond one repository: put it at the repository root (or in a subfolder), push it, and **tag releases**. Convention is an exact tag (`v1.2.0`) and a floating major tag (`v1`) that you move forward, and a `README` with inputs and outputs. To list it on the Marketplace, add `branding` and publish a release from the repository settings. We did not publish to the Marketplace (it needs a dedicated public repository); the path reference of Section 5 is the mechanism consumers use either way. Chapter 04's cautions apply to *your* consumers: a floating tag of yours is a trust you ask them to extend, so document the SHA.
+To share an action beyond one repository: put it at the repository root (or in a subfolder), push it, and **tag releases**. Convention is an exact tag (`v1.2.0`) and a floating major tag (`v1`) that you move forward, and a `README` with inputs and outputs. To list it on the Marketplace, add `branding` and publish a release from the repository settings. We did not publish to the Marketplace (it needs a dedicated public repository); the path reference of Section 5 is the mechanism consumers use either way. Chapter 04's cautions apply to _your_ consumers: a floating tag of yours is a trust you ask them to extend, so document the SHA.
 
 ## 11. `pre`, `post` and Their Conditions
 
@@ -279,13 +283,13 @@ A platform team publishes `acme/setup-tools` and tells everyone to use `@main` "
 
 ## 14. Comparison: Types of Custom Action
 
-| Type | Setup Effort | Control | Failure Visibility | Security Exposure | Maintenance Burden |
-| --- | --- | --- | --- | --- | --- |
-| Composite | Minimal - YAML and a script | Moderate - steps only | Strong - each step visible in the log | Low - runs on the runner | Low |
-| JavaScript (no dependencies) | Low - a few files | Strong - full language | Strong - own annotations | Low - nothing bundled | Low |
-| JavaScript (with toolkit) | Moderate - bundling | Strong | Strong | Moderate - dependency tree | Moderate - rebuild bundle |
-| Docker (Dockerfile) | Moderate - image to build | Excellent - own OS | Fair - build and run logs | Moderate - base image | Moderate - rebuilt every run |
-| Docker (prebuilt image) | High - publish and pin an image | Excellent | Fair | Moderate - pin by digest | Moderate |
+| Type                         | Setup Effort                    | Control                | Failure Visibility                    | Security Exposure          | Maintenance Burden           |
+| ---------------------------- | ------------------------------- | ---------------------- | ------------------------------------- | -------------------------- | ---------------------------- |
+| Composite                    | Minimal - YAML and a script     | Moderate - steps only  | Strong - each step visible in the log | Low - runs on the runner   | Low                          |
+| JavaScript (no dependencies) | Low - a few files               | Strong - full language | Strong - own annotations              | Low - nothing bundled      | Low                          |
+| JavaScript (with toolkit)    | Moderate - bundling             | Strong                 | Strong                                | Moderate - dependency tree | Moderate - rebuild bundle    |
+| Docker (Dockerfile)          | Moderate - image to build       | Excellent - own OS     | Fair - build and run logs             | Moderate - base image      | Moderate - rebuilt every run |
+| Docker (prebuilt image)      | High - publish and pin an image | Excellent              | Fair                                  | Moderate - pin by digest   | Moderate                     |
 
 ## 15. Practical Tips
 
@@ -325,7 +329,7 @@ A platform team publishes `acme/setup-tools` and tells everyone to use `@main` "
 ## 18. Exercises
 
 1. A composite step has `run: ./script.sh` but no `shell`. What happens, and which of `actionlint`, our metadata test and GitHub catch it?
-2. An input is named `max-retries`. In JavaScript, how do you read it? In a bash `run:` inside a *JavaScript* action's job, can you write `$INPUT_MAX-RETRIES`?
+2. An input is named `max-retries`. In JavaScript, how do you read it? In a bash `run:` inside a _JavaScript_ action's job, can you write `$INPUT_MAX-RETRIES`?
 3. A job runs `tally-js`, then a step that fails. Does the `post` step run? What setting controls it, and what is its default?
 4. Your Docker action's Dockerfile build takes 40 s and the action is used 200 times a day. How much build time per day, and how do you remove it?
 5. (Hand arithmetic) The shell script's regex accepted 4 of 4 valid and rejected 5 of 5 invalid versions, matching the Python parser. If you add 3 more valid and 2 more invalid cases, how many cases must agree in total?
@@ -351,7 +355,7 @@ All verified 2026-10.
 - Node.js test runner (`node --test`) - https://nodejs.org/api/test.html
 - actionlint - https://github.com/rhysd/actionlint
 - Live evidence: runs 37332265631 and 37332464081; actions at commit `c41ee3a9fba818d86e0faeae6631bc1c08f5fcf5`
-- Laster, *Learning GitHub Actions* (O'Reilly), Chapter 11
+- Laster, _Learning GitHub Actions_ (O'Reilly), Chapter 11
 
 ## 20. Appendix A: Code Index
 

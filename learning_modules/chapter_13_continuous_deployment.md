@@ -43,30 +43,34 @@
 
 ## Table of Contents
 
-<!-- TOC -->
-- [1. What "Continuous Deployment" Adds](#1-what-continuous-deployment-adds)
-- [2. Running Example: A Deploy Workflow with Teeth](#2-running-example-a-deploy-workflow-with-teeth)
-- [3. Deployments Are Records](#3-deployments-are-records)
-- [4. The Branch Rule](#4-the-branch-rule)
-- [5. Why OIDC](#5-why-oidc)
-- [6. Asking for a Token](#6-asking-for-a-token)
-- [7. A Real Token, Taken Apart](#7-a-real-token-taken-apart)
-- [8. The `sub` Claim, Four Ways](#8-the-sub-claim-four-ways)
-- [9. Evaluating a Trust Policy](#9-evaluating-a-trust-policy)
-- [10. Setting Up a Cloud Provider](#10-setting-up-a-cloud-provider)
-- [11. Customizing Claims](#11-customizing-claims)
-- [12. Reusable Workflows and `job_workflow_ref`](#12-reusable-workflows-and-job_workflow_ref)
-- [13. Case Study: The Policy That Worked Last Year](#13-case-study-the-policy-that-worked-last-year)
-- [14. Comparison: Deploy Credentials](#14-comparison-deploy-credentials)
-- [15. Practical Tips](#15-practical-tips)
-- [16. Demonstrated Failure Modes](#16-demonstrated-failure-modes)
-- [17. Key Takeaways](#17-key-takeaways)
-- [18. Exercises](#18-exercises)
-- [19. Additional Resources](#19-additional-resources)
-- [20. Appendix A: Code Index](#20-appendix-a-code-index)
-   - [A.1 Evaluate a trust policy against real claims](#a1-evaluate-a-trust-policy-against-real-claims)
-   - [A.2 Decode and verify a token (runs inside the job)](#a2-decode-and-verify-a-token-runs-inside-the-job)
-<!-- /TOC -->
+<!-- toc-start -->
+
+- [Chapter 13: Continuous Deployment: Environments and OIDC](#chapter-13-continuous-deployment-environments-and-oidc)
+  - [Beginner's Guide](#beginners-guide)
+  - [What You'll Learn](#what-youll-learn)
+  - [Table of Contents](#table-of-contents)
+  - [1. What "Continuous Deployment" Adds](#1-what-continuous-deployment-adds)
+  - [2. Running Example: A Deploy Workflow with Teeth](#2-running-example-a-deploy-workflow-with-teeth)
+  - [3. Deployments Are Records](#3-deployments-are-records)
+  - [4. The Branch Rule](#4-the-branch-rule)
+  - [5. Why OIDC](#5-why-oidc)
+  - [6. Asking for a Token](#6-asking-for-a-token)
+  - [7. A Real Token, Taken Apart](#7-a-real-token-taken-apart)
+  - [8. The `sub` Claim, Four Ways](#8-the-sub-claim-four-ways)
+  - [9. Evaluating a Trust Policy](#9-evaluating-a-trust-policy)
+  - [10. Setting Up a Cloud Provider](#10-setting-up-a-cloud-provider)
+  - [11. Customizing Claims](#11-customizing-claims)
+  - [12. Reusable Workflows and `job_workflow_ref`](#12-reusable-workflows-and-job_workflow_ref)
+  - [13. Case Study: The Policy That Worked Last Year](#13-case-study-the-policy-that-worked-last-year)
+  - [14. Comparison: Deploy Credentials](#14-comparison-deploy-credentials)
+  - [15. Practical Tips](#15-practical-tips)
+  - [16. Demonstrated Failure Modes](#16-demonstrated-failure-modes)
+  - [17. Key Takeaways](#17-key-takeaways)
+  - [18. Exercises](#18-exercises)
+  - [19. Additional Resources](#19-additional-resources)
+  - [20. Appendix A: Code Index](#20-appendix-a-code-index)
+    - [A.1 Evaluate a trust policy against real claims](#a1-evaluate-a-trust-policy-against-real-claims)
+    - [A.2 Decode and verify a token (runs inside the job)](#a2-decode-and-verify-a-token-runs-inside-the-job)
 
 ---
 
@@ -82,15 +86,15 @@ Chapter 11 ended at a green check. Continuous deployment connects that green che
 
 Any job with an `environment:` creates a **deployment** in GitHub, with a status history you can read from the API (`GET /repos/OWNER/REPO/deployments/<id>/statuses`). The real history of the approved production deployment (run 37322974953):
 
-| Time (UTC) | State |
-| --- | --- |
-| 14:14:15 | `waiting` (pending approval) |
-| 14:14:15 | `waiting` |
-| 14:14:21 | `queued` (approved; waiting for a runner) |
-| 14:14:24 | `in_progress` |
-| 14:14:27 | `success`, with environment URL `https://tally.example.invalid` |
+| Time (UTC) | State                                                           |
+| ---------- | --------------------------------------------------------------- |
+| 14:14:15   | `waiting` (pending approval)                                    |
+| 14:14:15   | `waiting`                                                       |
+| 14:14:21   | `queued` (approved; waiting for a runner)                       |
+| 14:14:24   | `in_progress`                                                   |
+| 14:14:27   | `success`, with environment URL `https://tally.example.invalid` |
 
-The staging deployment: `in_progress` then `success` with `https://tally.example.invalid/staging`. (The REST docs list the states you can *set* as `error`, `failure`, `inactive`, `in_progress`, `pending`, `queued` and `success`; `waiting` is set by the platform itself for approval-gated deployments, and we saw it in the real history.) The first lifecycle step that matters is `waiting`: that is the unbilled approval wait from Chapter 08, now visible as a status.
+The staging deployment: `in_progress` then `success` with `https://tally.example.invalid/staging`. (The REST docs list the states you can _set_ as `error`, `failure`, `inactive`, `in_progress`, `pending`, `queued` and `success`; `waiting` is set by the platform itself for approval-gated deployments, and we saw it in the real history.) The first lifecycle step that matters is `waiting`: that is the unbilled approval wait from Chapter 08, now visible as a status.
 
 **What to notice:** the deployments list for the repo is an **audit trail**: environment, ref, SHA and time of every deploy. The API returned entries like `env=production ref=main sha=db38263` and `env=staging ref=demo/ch13 sha=db38263`, so you can answer "what was in production at 14:14?" without reading logs.
 
@@ -100,10 +104,10 @@ One workflow run can create **several** deployments: the run 37322740443 created
 
 Chapter 08 gave `production` a required reviewer. We added a **deployment branch rule**: only `main` may deploy there (`custom_branch_policies: true`, one policy named `main`, via `POST /repos/OWNER/REPO/environments/production/deployment-branch-policies`). Then we dispatched the workflow from a feature branch, `demo/ch13`, with `production=true` (run 37322900067):
 
-| Job | Result |
-| --- | --- |
-| `deploy_staging` | success (staging has no branch rule) |
-| `deploy_production` | **failure**, immediately |
+| Job                 | Result                               |
+| ------------------- | ------------------------------------ |
+| `deploy_staging`    | success (staging has no branch rule) |
+| `deploy_production` | **failure**, immediately             |
 
 The job's annotations:
 
@@ -137,10 +141,10 @@ Nothing long-lived exists. The token is valid for minutes, and the cloud decides
 
 A job gets a token only if it declares `permissions: id-token: write`. Two jobs, same workflow, differing in one line:
 
-| Job | `permissions` | `ACTIONS_ID_TOKEN_REQUEST_URL` | Token request token |
-| --- | --- | --- | --- |
-| `oidc_with_environment` | `contents: read`, **`id-token: write`** | present | present |
-| `oidc_without_permission` | `contents: read` only | **`absent`** | not set |
+| Job                       | `permissions`                           | `ACTIONS_ID_TOKEN_REQUEST_URL` | Token request token |
+| ------------------------- | --------------------------------------- | ------------------------------ | ------------------- |
+| `oidc_with_environment`   | `contents: read`, **`id-token: write`** | present                        | present             |
+| `oidc_without_permission` | `contents: read` only                   | **`absent`**                   | not set             |
 
 **What to notice:** without the permission the runner does not even provide the request endpoint. A step that tries to call it fails because the variable is empty, not because GitHub refused a request. Grant `id-token: write` to the **one job** that needs it (Chapter 15 returns to least privilege).
 
@@ -148,28 +152,28 @@ A job gets a token only if it declares `permissions: id-token: write`. Two jobs,
 
 `oidc_with_environment` requested a token with `audience=sts.amazonaws.com`, then verified and decoded it with the `PyJWT` library (never printing the token itself). Run 37322740443:
 
-| Check | Result |
-| --- | --- |
-| Signature algorithm | **RS256** |
-| Signature verified against the issuer's published keys (`https://token.actions.githubusercontent.com/.well-known/jwks`) | **valid** |
-| Wrong audience (`sts.wrong.example`) | **rejected** (`InvalidAudienceError`) |
-| Token with the last 4 signature characters altered | **rejected** (`InvalidSignatureError`) |
-| Lifetime (`exp` - `iat`) | **300 seconds** |
+| Check                                                                                                                   | Result                                 |
+| ----------------------------------------------------------------------------------------------------------------------- | -------------------------------------- |
+| Signature algorithm                                                                                                     | **RS256**                              |
+| Signature verified against the issuer's published keys (`https://token.actions.githubusercontent.com/.well-known/jwks`) | **valid**                              |
+| Wrong audience (`sts.wrong.example`)                                                                                    | **rejected** (`InvalidAudienceError`)  |
+| Token with the last 4 signature characters altered                                                                      | **rejected** (`InvalidSignatureError`) |
+| Lifetime (`exp` - `iat`)                                                                                                | **300 seconds**                        |
 
 The claims that matter:
 
-| Claim | Value |
-| --- | --- |
-| `iss` | `https://token.actions.githubusercontent.com` |
-| `aud` | `sts.amazonaws.com` (we asked for it) |
-| `sub` | `repo:Friend09@7501015/practice_git_intro_to_github_actions@1405684500:environment:staging` |
-| `repository` | `Friend09/practice_git_intro_to_github_actions` |
-| `environment` | `staging` |
-| `ref` / `ref_type` | `refs/heads/main` / `branch` |
-| `sha` | `db3826321acac1133d5f2430d0ce992dcae306ff` |
-| `event_name` | `workflow_dispatch` |
-| `runner_environment` | `github-hosted` |
-| `job_workflow_ref` | `Friend09/practice_git_intro_to_github_actions/.github/workflows/ch13-deploy.yml@refs/heads/main` |
+| Claim                | Value                                                                                             |
+| -------------------- | ------------------------------------------------------------------------------------------------- |
+| `iss`                | `https://token.actions.githubusercontent.com`                                                     |
+| `aud`                | `sts.amazonaws.com` (we asked for it)                                                             |
+| `sub`                | `repo:Friend09@7501015/practice_git_intro_to_github_actions@1405684500:environment:staging`       |
+| `repository`         | `Friend09/practice_git_intro_to_github_actions`                                                   |
+| `environment`        | `staging`                                                                                         |
+| `ref` / `ref_type`   | `refs/heads/main` / `branch`                                                                      |
+| `sha`                | `db3826321acac1133d5f2430d0ce992dcae306ff`                                                        |
+| `event_name`         | `workflow_dispatch`                                                                               |
+| `runner_environment` | `github-hosted`                                                                                   |
+| `job_workflow_ref`   | `Friend09/practice_git_intro_to_github_actions/.github/workflows/ch13-deploy.yml@refs/heads/main` |
 
 The token carried **33 claim names** in all, including `actor`, `run_id`, `ref_protected`, `repository_id`, `repository_owner_id`, `workflow_ref` and `job_workflow_sha`.
 
@@ -186,11 +190,11 @@ The token carried **33 claim names** in all, including `actor`, `run_id`, `ref_p
 The `sub` is what trust policies usually key on. Same repository, four tokens:
 
 | Where the job ran | Environment? | `sub` (after `repo:Friend09@7501015/practice_git_intro_to_github_actions@1405684500:`) |
-| --- | --- | --- |
-| `main` | `staging` | `environment:staging` |
-| `demo/ch13` | `staging` | `environment:staging` |
-| `main` | none | `ref:refs/heads/main` |
-| `demo/ch13` | none | `ref:refs/heads/demo/ch13` |
+| ----------------- | ------------ | -------------------------------------------------------------------------------------- |
+| `main`            | `staging`    | `environment:staging`                                                                  |
+| `demo/ch13`       | `staging`    | `environment:staging`                                                                  |
+| `main`            | none         | `ref:refs/heads/main`                                                                  |
+| `demo/ch13`       | none         | `ref:refs/heads/demo/ch13`                                                             |
 
 Two facts fall out of the table:
 
@@ -203,14 +207,14 @@ Two facts fall out of the table:
 
 A cloud's trust policy is a set of conditions on claims. Our teaching model (`intro_gha/oidc.py`, tested in `tests/test_oidc.py`) applies conditions the way an IAM `StringLike` does, with `*` as a wildcard. Against the real claims above:
 
-| Policy (`sub` condition) | Token | Result | Why |
-| --- | --- | --- | --- |
-| `...:environment:production` | staging token | **denied** | subject does not match |
-| `repo:Friend09/practice_git_intro_to_github_actions:environment:staging` (**legacy format**) | staging token | **denied** | the legacy name-only format never matches the new ID format |
-| `...:ref:refs/heads/main` | no-environment token on `main` | allowed | exact match |
-| `...:ref:refs/heads/main` | no-environment token on `demo/ch13` | denied | different ref |
-| `repo:Friend09@7501015/practice_git_intro_to_github_actions@1405684500:*` | any token from this repo | allowed | the wildcard accepts every ref and environment |
-| any `sub` | token with the wrong `aud` | denied | audience is checked first |
+| Policy (`sub` condition)                                                                     | Token                               | Result     | Why                                                         |
+| -------------------------------------------------------------------------------------------- | ----------------------------------- | ---------- | ----------------------------------------------------------- |
+| `...:environment:production`                                                                 | staging token                       | **denied** | subject does not match                                      |
+| `repo:Friend09/practice_git_intro_to_github_actions:environment:staging` (**legacy format**) | staging token                       | **denied** | the legacy name-only format never matches the new ID format |
+| `...:ref:refs/heads/main`                                                                    | no-environment token on `main`      | allowed    | exact match                                                 |
+| `...:ref:refs/heads/main`                                                                    | no-environment token on `demo/ch13` | denied     | different ref                                               |
+| `repo:Friend09@7501015/practice_git_intro_to_github_actions@1405684500:*`                    | any token from this repo            | allowed    | the wildcard accepts every ref and environment              |
+| any `sub`                                                                                    | token with the wrong `aud`          | denied     | audience is checked first                                   |
 
 **What to notice:**
 
@@ -251,12 +255,12 @@ A platform team keeps a Terraform module that creates a deploy role with `sub = 
 
 ## 14. Comparison: Deploy Credentials
 
-| Credential | Setup Effort | Control | Failure Visibility | Security Exposure | Maintenance Burden |
-| --- | --- | --- | --- | --- | --- |
-| Long-lived key as repository secret | Minimal - paste a key | Weak - works from any job | Weak - hard to see who used it | Very High - leakable, never expires | High - manual rotation |
-| Key as environment secret | Low - per environment | Moderate - gated by environment rules | Moderate - deployments are logged | High - still long-lived | High - manual rotation |
-| OIDC with environment `sub` | Moderate - cloud trust setup | Strong - per environment | Strong - cloud audit plus deployments | Low - 5-minute token, no stored secret | Low |
-| OIDC pinned to `ref` or `job_workflow_ref` | Moderate-High - precise policy | Excellent - one workflow, one branch | Strong | Low | Low - until formats change |
+| Credential                                 | Setup Effort                   | Control                               | Failure Visibility                    | Security Exposure                      | Maintenance Burden         |
+| ------------------------------------------ | ------------------------------ | ------------------------------------- | ------------------------------------- | -------------------------------------- | -------------------------- |
+| Long-lived key as repository secret        | Minimal - paste a key          | Weak - works from any job             | Weak - hard to see who used it        | Very High - leakable, never expires    | High - manual rotation     |
+| Key as environment secret                  | Low - per environment          | Moderate - gated by environment rules | Moderate - deployments are logged     | High - still long-lived                | High - manual rotation     |
+| OIDC with environment `sub`                | Moderate - cloud trust setup   | Strong - per environment              | Strong - cloud audit plus deployments | Low - 5-minute token, no stored secret | Low                        |
+| OIDC pinned to `ref` or `job_workflow_ref` | Moderate-High - precise policy | Excellent - one workflow, one branch  | Strong                                | Low                                    | Low - until formats change |
 
 ## 15. Practical Tips
 
@@ -322,7 +326,7 @@ All verified 2026-10.
 - aws-actions/configure-aws-credentials - https://github.com/aws-actions/configure-aws-credentials
 - RFC 7519: JSON Web Token (claims `iss`, `aud`, `sub`, `exp`, `iat`) - https://www.rfc-editor.org/rfc/rfc7519
 - Live evidence: runs 37322740443, 37322900067, 37322974953 in this repo
-- Laster, *Learning GitHub Actions* (O'Reilly), Chapters 6 and 9
+- Laster, _Learning GitHub Actions_ (O'Reilly), Chapters 6 and 9
 
 ## 20. Appendix A: Code Index
 
