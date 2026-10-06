@@ -1,0 +1,4 @@
+# Workflow files can run code with repository credentials, so changes to them
+# need the owner's review (enforced only when a ruleset requires code-owner review).
+/.github/workflows/ @Friend09
+/.github/CODEOWNERS @Friend09
