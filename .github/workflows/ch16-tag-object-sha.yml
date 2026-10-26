@@ -12,7 +12,7 @@ jobs:
     continue-on-error: true
     steps:
       # a892a5a6... is the annotated TAG OBJECT for v1.14.2, not the commit
-      - uses: pypa/gh-action-pypi-publish@a892a5a61159132606e93a2fa6f4358831b04d26
+      - uses: pypa/gh-action-pypi-publish@2442bad8f54b06a326f3030ef5e6a7a674118557
         with:
           packages-dir: does-not-exist/
 
@@ -21,6 +21,6 @@ jobs:
     continue-on-error: true
     steps:
       # dc37677b... is the commit the tag points at
-      - uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
+      - uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086 # v1.14.3
         with:
           packages-dir: does-not-exist/
